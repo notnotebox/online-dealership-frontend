@@ -1,12 +1,18 @@
 import { Route, Routes } from 'react-router-dom'
 import { BackofficeLayout } from '@/app/layouts/backoffice-layout'
+import { ClientLayout } from '@/app/layouts/client-layout'
 import { PublicLayout } from '@/app/layouts/public-layout'
-import { StaffRoute } from '@/app/router/guards'
+import { ClientRoute, StaffRoute } from '@/app/router/guards'
 import { BackofficeDashboardPage } from '@/pages/backoffice/dashboard-page'
 import { BackofficeFileDetailPage } from '@/pages/backoffice/file-detail-page'
 import { BackofficeFilesPage } from '@/pages/backoffice/files-page'
 import { BackofficeVehicleFormPage } from '@/pages/backoffice/vehicle-form-page'
 import { BackofficeVehiclesPage } from '@/pages/backoffice/vehicles-page'
+import { ClientDashboardPage } from '@/pages/client/dashboard-page'
+import { ClientFilesPage } from '@/pages/client/files-page'
+import { FileTrackingPage } from '@/pages/client/file-tracking-page'
+import { NewFilePage } from '@/pages/client/new-file-page'
+import { UploadDocumentsPage } from '@/pages/client/upload-documents-page'
 import { HomePage } from '@/pages/public/home-page'
 import { ContactPage } from '@/pages/public/contact-page'
 import { LoginPage } from '@/pages/public/login-page'
@@ -30,6 +36,20 @@ export function AppRouter() {
         <Route path="/legal" element={<SimpleTextPage title="Mentions legales" />} />
         <Route path="/privacy" element={<SimpleTextPage title="Politique de confidentialite" />} />
         <Route path="/contact" element={<ContactPage />} />
+      </Route>
+
+      <Route element={<ClientRoute />}>
+        <Route element={<ClientLayout />}>
+          <Route path="/app/dashboard" element={<ClientDashboardPage />} />
+          <Route path="/app/profile" element={<SimpleTextPage title="Profil" />} />
+          <Route path="/app/favorites" element={<SimpleTextPage title="Favoris" />} />
+          <Route path="/app/files" element={<ClientFilesPage />} />
+          <Route path="/app/files/new" element={<NewFilePage />} />
+          <Route path="/app/files/new/:vehicleId" element={<NewFilePage />} />
+          <Route path="/app/files/:fileId" element={<FileTrackingPage />} />
+          <Route path="/app/files/:fileId/upload" element={<UploadDocumentsPage />} />
+          <Route path="/app/settings" element={<SimpleTextPage title="Parametres" />} />
+        </Route>
       </Route>
 
       <Route element={<StaffRoute />}>
