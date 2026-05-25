@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ContactSupportPanel } from '@/components/shared/contact-support-panel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { mockAuth } from '@/lib/constants/mock-auth'
@@ -15,26 +16,7 @@ export function ContactPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="space-y-1 p-4">
-            <p className="text-sm text-muted-foreground">Telephone</p>
-            <p className="font-medium">+33 1 80 00 00 00</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="space-y-1 p-4">
-            <p className="text-sm text-muted-foreground">Email</p>
-            <p className="font-medium">contact@m-motors.fr</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="space-y-1 p-4">
-            <p className="text-sm text-muted-foreground">Horaires</p>
-            <p className="font-medium">Lun - Ven, 9h - 18h</p>
-          </CardContent>
-        </Card>
-      </div>
+      <ContactSupportPanel />
 
       <Card>
         <CardContent className="space-y-4 p-4">
