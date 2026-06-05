@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom'
 import { ContactSupportPanel } from '@/components/shared/contact-support-panel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { mockAuth } from '@/lib/constants/mock-auth'
+import { useAuth } from '@/lib/auth/auth-context'
 
 export function ContactPage() {
-  const canSend = mockAuth.loggedIn
+  const { isAuthenticated, profile, session } = useAuth()
+  const canSend = isAuthenticated
+  const defaultEmail = profile?.email ?? session?.user.email ?? ''
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -24,7 +26,7 @@ export function ContactPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <input className="h-10 rounded border px-3" placeholder="Prenom" />
             <input className="h-10 rounded border px-3" placeholder="Nom" />
-            <input className="h-10 rounded border px-3" placeholder="Email" type="email" defaultValue={canSend ? mockAuth.user.email : ''} disabled={!canSend} />
+            <input className="h-10 rounded border px-3" placeholder="Email" type="email" defaultValue={defaultEmail} disabled={!canSend} />
             <input className="h-10 rounded border px-3" placeholder="Telephone" type="tel" />
             <input className="h-10 rounded border px-3 md:col-span-2" placeholder="Sujet" />
           </div>

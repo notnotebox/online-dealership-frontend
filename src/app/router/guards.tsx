@@ -1,14 +1,33 @@
-import { Navigate, Outlet } from 'react-router-dom'
-import { mockAuth } from '@/lib/constants/mock-auth'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '@/lib/auth/auth-context'
 
 export function ProtectedRoute() {
-  return mockAuth.loggedIn ? <Outlet /> : <Navigate to="/login" replace />
+  const { isReady, isAuthenticated } = useAuth()
+  const location = useLocation()
+
+  if (!isReady) {
+    return null
+  }
+
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace state={{ from: location.pathname }} />
 }
 
 export function ClientRoute() {
-  return mockAuth.loggedIn && mockAuth.role !== 'guest' ? <Outlet /> : <Navigate to="/login" replace />
+  const { isReady, isAuthenticated } = useAuth()
+
+  if (!isReady) {
+    return null
+  }
+
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />
 }
 
 export function StaffRoute() {
-  return mockAuth.loggedIn && mockAuth.role === 'staff' ? <Outlet /> : <Navigate to="/backoffice/login" replace />
+  const { isReady, isAuthenticated, isStaff } = useAuth()
+
+  if (!isReady) {
+    return null
+  }
+
+  return isAuthenticated && isStaff ? <Outlet /> : <Navigate to="/login" replace />
 }

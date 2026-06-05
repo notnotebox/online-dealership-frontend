@@ -9,7 +9,9 @@ import { BackofficeFilesPage } from '@/pages/backoffice/files-page'
 import { BackofficeVehicleFormPage } from '@/pages/backoffice/vehicle-form-page'
 import { BackofficeVehiclesPage } from '@/pages/backoffice/vehicles-page'
 import { ClientDashboardPage } from '@/pages/client/dashboard-page'
+import { ClientFavoritesPage } from '@/pages/client/favorites-page'
 import { ClientFilesPage } from '@/pages/client/files-page'
+import { ClientProfilePage } from '@/pages/client/profile-page'
 import { FileTrackingPage } from '@/pages/client/file-tracking-page'
 import { NewFilePage } from '@/pages/client/new-file-page'
 import { UploadDocumentsPage } from '@/pages/client/upload-documents-page'
@@ -41,8 +43,8 @@ export function AppRouter() {
       <Route element={<ClientRoute />}>
         <Route element={<ClientLayout />}>
           <Route path="/app/dashboard" element={<ClientDashboardPage />} />
-          <Route path="/app/profile" element={<SimpleTextPage title="Profil" />} />
-          <Route path="/app/favorites" element={<SimpleTextPage title="Favoris" />} />
+          <Route path="/app/profile" element={<ClientProfilePage />} />
+          <Route path="/app/favorites" element={<ClientFavoritesPage />} />
           <Route path="/app/files" element={<ClientFilesPage />} />
           <Route path="/app/files/new" element={<NewFilePage />} />
           <Route path="/app/files/new/:vehicleId" element={<NewFilePage />} />

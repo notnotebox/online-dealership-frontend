@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '@/lib/auth/auth-context'
 import { vehicles } from '@/lib/constants/mock-data'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { VehicleCard } from '@/components/shared/vehicle-card'
 
 export function HomePage() {
+  const { isAuthenticated } = useAuth()
+  const depositPath = isAuthenticated ? '/app/files/new' : '/login'
+
   return (
     <div className="space-y-10">
       <section className="grid gap-6 rounded-lg border bg-card p-8 md:grid-cols-2">
@@ -14,7 +18,7 @@ export function HomePage() {
           <p className="text-muted-foreground">Catalogue verifie, accompagnement dossier, parcours simple.</p>
           <div className="flex flex-wrap gap-2">
             <Button asChild><Link to="/vehicles">Voir les vehicules</Link></Button>
-            <Button variant="outline" asChild><Link to="/login">Deposer un dossier</Link></Button>
+            <Button variant="outline" asChild><Link to={depositPath}>Deposer un dossier</Link></Button>
           </div>
         </div>
         <Card>

@@ -3,10 +3,12 @@ import { VehicleSpecsRow } from '@/components/shared/vehicle-specs-row'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useAuth } from '@/lib/auth/auth-context'
 import { vehicles } from '@/lib/constants/mock-data'
 
 export function VehicleDetailPage() {
   const { vehicleId } = useParams()
+  const { isAuthenticated } = useAuth()
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
 
   return (
@@ -19,7 +21,7 @@ export function VehicleDetailPage() {
         <VehicleSpecsRow mileage={vehicle.mileage} fuel={vehicle.fuel} transmission={vehicle.transmission} seats={vehicle.seats} doors={vehicle.doors} />
         <Card><CardContent className="space-y-3 p-4"><p>{vehicle.description}</p><p className="text-sm text-muted-foreground">Equipements: {vehicle.equipments?.join(', ')}</p></CardContent></Card>
         <div className="flex flex-wrap gap-2">
-          <Button asChild><Link to="/login">Creer mon dossier</Link></Button>
+          <Button asChild><Link to={isAuthenticated ? '/app/files/new' : '/login'}>Creer mon dossier</Link></Button>
           <Button variant="secondary">Ajouter aux favoris</Button>
         </div>
       </div>
