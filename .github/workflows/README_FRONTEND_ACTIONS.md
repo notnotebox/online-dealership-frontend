@@ -3,6 +3,7 @@
 ## Workflows
 - `.github/workflows/ci.yml` : install + build a chaque push/PR
 - `.github/workflows/deploy.yml` : build + upload `dist/` sur VPS (push sur `main` ou manuel)
+- Les workflows installent d'abord `pnpm` puis Node afin que `pnpm install` soit toujours disponible sur le runner.
 
 ## Secrets GitHub requis
 - `VPS_HOST` : IP ou domaine du VPS
