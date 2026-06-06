@@ -8,6 +8,7 @@ export type AuthResponse = {
   lastName: string
   dateOfBirth: string
   role: AuthRole
+  createdAt?: string
 }
 
 export type UserProfile = {
