@@ -8,7 +8,7 @@ const appLinks = [
   { to: '/app/dashboard', label: 'Dashboard' },
   { to: '/app/profile', label: 'Profil' },
   { to: '/app/favorites', label: 'Favoris' },
-  { to: '/app/files', label: 'Dossiers' },
+  { to: '/app/files', label: 'Demandes' },
   { to: '/app/settings', label: 'Parametres' },
 ]
 

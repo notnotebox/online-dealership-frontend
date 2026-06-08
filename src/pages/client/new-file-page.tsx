@@ -1,208 +1,716 @@
-import { type ChangeEvent, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { applicationApi } from '@/lib/api/application-api'
+import { authApi } from '@/lib/api/auth-api'
+import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
+import { useAuth } from '@/lib/auth/auth-context'
+import type { ApplicationAcquisitionType } from '@/lib/application/application-types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-const steps = ['Infos personnelles', 'Situation', 'Informations complementaires', 'Pieces', 'Recapitulatif', 'Envoi']
+const FIRST_NAMES = ['Alex', 'Camille', 'Jordan', 'Lina', 'Noah', 'Sofia', 'Malo', 'Ines']
+const LAST_NAMES = ['Martin', 'Bernard', 'Thomas', 'Petit', 'Robert', 'Durand', 'Dubois', 'Moreau']
+const PROFESSIONAL_STATUSES = ['CDI', 'CDD', 'Independant', 'Fonctionnaire', 'Retraite', 'Etudiant']
+const FAMILY_STATUSES = ['Celibataire', 'Marie', 'Pacsé', 'En union', 'Divorce']
+const NATIONALITIES = ['Française', 'Belge', 'Suisse', 'Portugaise', 'Espagnole']
+const ACQUISITIONS: ApplicationAcquisitionType[] = ['CASH', 'CREDIT', 'LOA', 'LLD']
 
-type FormState = {
+type ApplicationFormState = {
+  vehicleId: string
+  acquisitionType: ApplicationAcquisitionType
   firstName: string
   lastName: string
-  email: string
-  phone: string
+  dateOfBirth: string
+  phoneNumber: string
+  addressLine1: string
+  addressLine2: string
+  postalCode: string
+  city: string
+  country: string
+  nationality: string
+  familyStatus: string
+  householdSize: string
   professionalStatus: string
   monthlyIncome: string
-  contribution: string
-  desiredDeliveryDate: string
+  monthlyCharges: string
+  iban: string
+  durationMonths: string
+  annualMileage: string
+  contributionAmount: string
+  expectedStartDate: string
+  tradeInDescription: string
+  insuranceIncluded: boolean
+  warrantyIncluded: boolean
+  assistanceIncluded: boolean
+  maintenanceIncluded: boolean
   comment: string
-  idDocumentName: string
-  addressProofName: string
-  incomeProofName: string
-  consentAccuracy: boolean
-  consentPrivacy: boolean
 }
 
-const initialFormState: FormState = {
+const initialState: ApplicationFormState = {
+  vehicleId: '',
+  acquisitionType: 'LOA',
   firstName: '',
   lastName: '',
-  email: '',
-  phone: '',
+  dateOfBirth: '',
+  phoneNumber: '',
+  addressLine1: '',
+  addressLine2: '',
+  postalCode: '',
+  city: '',
+  country: 'France',
+  nationality: 'Française',
+  familyStatus: '',
+  householdSize: '',
   professionalStatus: '',
   monthlyIncome: '',
-  contribution: '',
-  desiredDeliveryDate: '',
+  monthlyCharges: '',
+  iban: '',
+  durationMonths: '48',
+  annualMileage: '15000',
+  contributionAmount: '3000',
+  expectedStartDate: '',
+  tradeInDescription: '',
+  insuranceIncluded: false,
+  warrantyIncluded: false,
+  assistanceIncluded: false,
+  maintenanceIncluded: false,
   comment: '',
-  idDocumentName: '',
-  addressProofName: '',
-  incomeProofName: '',
-  consentAccuracy: false,
-  consentPrivacy: false,
+}
+
+function randomItem<T>(items: T[]) {
+  return items[Math.floor(Math.random() * items.length)]
+}
+
+function randomDigits(length: number) {
+  return Array.from({ length }, () => Math.floor(Math.random() * 10)).join('')
+}
+
+function randomEmail(firstName: string, lastName: string) {
+  const suffix = Math.floor(100 + Math.random() * 900)
+  return `${firstName}.${lastName}${suffix}`.toLowerCase().replace(/[^a-z0-9.]/g, '') + '@example.com'
+}
+
+function randomBirthDate() {
+  const now = new Date()
+  const age = 24 + Math.floor(Math.random() * 20)
+  const year = now.getFullYear() - age
+  const month = String(1 + Math.floor(Math.random() * 12)).padStart(2, '0')
+  const day = String(1 + Math.floor(Math.random() * 28)).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function randomFutureDate() {
+  const date = new Date()
+  date.setDate(date.getDate() + 15 + Math.floor(Math.random() * 120))
+  return date.toISOString().slice(0, 10)
+}
+
+function toFieldValue(value?: number | string | null) {
+  if (value == null) {
+    return ''
+  }
+  return String(value)
+}
+
+function buildFormFromProfile(profile: any | null): ApplicationFormState {
+  if (!profile) {
+    return initialState
+  }
+
+  return {
+    ...initialState,
+    firstName: profile.firstName ?? '',
+    lastName: profile.lastName ?? '',
+    dateOfBirth: profile.dateOfBirth ?? '',
+    phoneNumber: profile.phoneNumber ?? '',
+    addressLine1: profile.addressLine1 ?? '',
+    addressLine2: profile.addressLine2 ?? '',
+    postalCode: profile.postalCode ?? '',
+    city: profile.city ?? '',
+    country: profile.country ?? 'France',
+    nationality: profile.nationality ?? 'Française',
+    familyStatus: profile.familyStatus ?? '',
+    householdSize: profile.householdSize != null ? String(profile.householdSize) : '',
+    professionalStatus: profile.professionalStatus ?? '',
+    monthlyIncome: toFieldValue(profile.monthlyIncome),
+    monthlyCharges: toFieldValue(profile.monthlyCharges),
+    iban: profile.iban ?? '',
+  }
+}
+
+function downloadTextFile(filename: string, content: string) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+function createFixtureContent(profile: ApplicationFormState, email: string, vehicle?: VehicleResponse | null) {
+  return [
+    `vehicleId=${vehicle?.id ?? profile.vehicleId}`,
+    `vehicleTitle=${vehicle ? `${vehicle.brand} ${vehicle.title}` : ''}`,
+    `acquisitionType=${profile.acquisitionType}`,
+    `firstName=${profile.firstName}`,
+    `lastName=${profile.lastName}`,
+    `dateOfBirth=${profile.dateOfBirth}`,
+    `phoneNumber=${profile.phoneNumber}`,
+    `email=${email}`,
+    `addressLine1=${profile.addressLine1}`,
+    `addressLine2=${profile.addressLine2}`,
+    `postalCode=${profile.postalCode}`,
+    `city=${profile.city}`,
+    `country=${profile.country}`,
+    `nationality=${profile.nationality}`,
+    `familyStatus=${profile.familyStatus}`,
+    `householdSize=${profile.householdSize}`,
+    `professionalStatus=${profile.professionalStatus}`,
+    `monthlyIncome=${profile.monthlyIncome}`,
+    `monthlyCharges=${profile.monthlyCharges}`,
+    `iban=${profile.iban}`,
+    `durationMonths=${profile.durationMonths}`,
+    `annualMileage=${profile.annualMileage}`,
+    `contributionAmount=${profile.contributionAmount}`,
+    `expectedStartDate=${profile.expectedStartDate}`,
+    `tradeInDescription=${profile.tradeInDescription}`,
+    `insuranceIncluded=${profile.insuranceIncluded}`,
+    `warrantyIncluded=${profile.warrantyIncluded}`,
+    `assistanceIncluded=${profile.assistanceIncluded}`,
+    `maintenanceIncluded=${profile.maintenanceIncluded}`,
+    `comment=${profile.comment}`,
+  ].join('\n')
+}
+
+function countCompleted(values: Array<string | number | boolean | null | undefined>) {
+  return values.filter((value) => {
+    if (typeof value === 'boolean') {
+      return true
+    }
+    if (typeof value === 'number') {
+      return Number.isFinite(value)
+    }
+    return value != null && String(value).trim().length > 0
+  }).length
 }
 
 export function NewFilePage() {
+  const navigate = useNavigate()
   const { vehicleId } = useParams()
-  const [currentStep, setCurrentStep] = useState(0)
-  const [form, setForm] = useState<FormState>(initialFormState)
-  const isFirstStep = currentStep === 0
-  const isLastStep = currentStep === steps.length - 1
+  const { profile, refreshProfile } = useAuth()
+  const [vehicles, setVehicles] = useState<VehicleResponse[]>([])
+  const [form, setForm] = useState<ApplicationFormState>(initialState)
+  const [isLoadingVehicles, setIsLoadingVehicles] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const profileHydratedRef = useRef(false)
+  const accountEmail = profile?.email ?? ''
 
-  const updateField = (field: keyof FormState, value: string | boolean) => {
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadVehicles() {
+      try {
+        setIsLoadingVehicles(true)
+        const response = await vehicleApi.listPublicVehicles()
+        if (!cancelled) {
+          setVehicles(response)
+          setError(null)
+        }
+      } catch (cause) {
+        if (!cancelled) {
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger les vehicules')
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingVehicles(false)
+        }
+      }
+    }
+
+    void loadVehicles()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!profile || profileHydratedRef.current) {
+      return
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      ...buildFormFromProfile(profile),
+    }))
+    profileHydratedRef.current = true
+  }, [profile])
+
+  useEffect(() => {
+    if (!vehicleId) {
+      return
+    }
+    setForm((prev) => (prev.vehicleId === vehicleId ? prev : { ...prev, vehicleId }))
+  }, [vehicleId])
+
+  const selectedVehicle = useMemo(
+    () => vehicles.find((vehicle) => vehicle.id === form.vehicleId) ?? vehicles.find((vehicle) => vehicle.id === vehicleId) ?? vehicles[0] ?? null,
+    [form.vehicleId, vehicleId, vehicles],
+  )
+
+  useEffect(() => {
+    if (!form.vehicleId && selectedVehicle) {
+      setForm((prev) => ({ ...prev, vehicleId: selectedVehicle.id }))
+    }
+  }, [form.vehicleId, selectedVehicle])
+
+  const completionPercent = useMemo(() => {
+    const completed = countCompleted([
+      form.vehicleId,
+      form.acquisitionType,
+      form.firstName,
+      form.lastName,
+      form.dateOfBirth,
+      form.phoneNumber,
+      form.addressLine1,
+      form.postalCode,
+      form.city,
+      form.country,
+      form.nationality,
+      form.familyStatus,
+      form.householdSize,
+      form.professionalStatus,
+      form.monthlyIncome,
+      form.monthlyCharges,
+      form.iban,
+      form.durationMonths,
+      form.annualMileage,
+      form.contributionAmount,
+    ])
+    return Math.round((completed * 1000) / 20) / 10
+  }, [form])
+
+  function updateField(field: keyof ApplicationFormState, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleFileChange = (field: keyof FormState) => (event: ChangeEvent<HTMLInputElement>) => {
-    const fileName = event.target.files?.[0]?.name ?? ''
-    updateField(field, fileName)
+  function generateRandomData() {
+    const firstName = randomItem(FIRST_NAMES)
+    const lastName = randomItem(LAST_NAMES)
+    const generatedEmail = accountEmail || randomEmail(firstName, lastName)
+    const selectedVehicle = vehicles[Math.floor(Math.random() * Math.max(vehicles.length, 1))] ?? null
+    const nextForm: ApplicationFormState = {
+      ...initialState,
+      vehicleId: selectedVehicle?.id ?? vehicleId ?? '',
+      acquisitionType: randomItem(ACQUISITIONS),
+      firstName,
+      lastName,
+      dateOfBirth: randomBirthDate(),
+      phoneNumber: `06${randomDigits(8)}`,
+      addressLine1: `${Math.floor(10 + Math.random() * 180)} Rue de la ${randomItem(['Paix', 'Republique', 'Liberte', 'Victoire', 'Gare'])}`,
+      addressLine2: Math.random() > 0.6 ? `Batiment ${randomItem(['A', 'B', 'C'])}` : '',
+      postalCode: String(Math.floor(10000 + Math.random() * 89999)),
+      city: randomItem(['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nantes']),
+      country: 'France',
+      nationality: randomItem(NATIONALITIES),
+      familyStatus: randomItem(FAMILY_STATUSES),
+      householdSize: String(1 + Math.floor(Math.random() * 4)),
+      professionalStatus: randomItem(PROFESSIONAL_STATUSES),
+      monthlyIncome: String(1800 + Math.floor(Math.random() * 5200)),
+      monthlyCharges: String(300 + Math.floor(Math.random() * 1800)),
+      iban: `FR${randomDigits(2)}${randomDigits(2)}${randomDigits(4)}${randomDigits(4)}${randomDigits(4)}${randomDigits(4)}${randomDigits(2)}`,
+      durationMonths: String(randomItem([24, 36, 48, 60])),
+      annualMileage: String(randomItem([10000, 12000, 15000, 18000, 20000])),
+      contributionAmount: String(randomItem([0, 1500, 3000, 5000, 8000])),
+      expectedStartDate: randomFutureDate(),
+      tradeInDescription: Math.random() > 0.5 ? 'Reprise a estimer' : '',
+      insuranceIncluded: Math.random() > 0.5,
+      warrantyIncluded: Math.random() > 0.5,
+      assistanceIncluded: Math.random() > 0.5,
+      maintenanceIncluded: Math.random() > 0.5,
+      comment: 'Generer pour test de bout en bout.',
+    }
+
+    setForm(nextForm)
+    setSuccess(null)
+    setError(null)
+    downloadTextFile(
+      `application-fixture-${firstName.toLowerCase()}-${lastName.toLowerCase()}.txt`,
+      createFixtureContent(nextForm, generatedEmail, selectedVehicle),
+    )
   }
 
-  const goNext = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
+  async function handleSubmit() {
+    setError(null)
+    setSuccess(null)
+    setIsSubmitting(true)
+
+    try {
+      await authApi.updateProfile({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        dateOfBirth: form.dateOfBirth,
+        phoneNumber: form.phoneNumber,
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2 || undefined,
+        postalCode: form.postalCode,
+        city: form.city,
+        country: form.country,
+        nationality: form.nationality,
+        familyStatus: form.familyStatus,
+        householdSize: Number(form.householdSize),
+        professionalStatus: form.professionalStatus,
+        monthlyIncome: Number(form.monthlyIncome),
+        monthlyCharges: Number(form.monthlyCharges),
+        iban: form.iban,
+      })
+
+      await refreshProfile()
+
+      const response = await applicationApi.create({
+        vehicleId: form.vehicleId,
+        acquisitionType: form.acquisitionType,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        dateOfBirth: form.dateOfBirth,
+        phoneNumber: form.phoneNumber,
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2 || undefined,
+        postalCode: form.postalCode,
+        city: form.city,
+        country: form.country,
+        nationality: form.nationality,
+        familyStatus: form.familyStatus,
+        householdSize: Number(form.householdSize),
+        professionalStatus: form.professionalStatus,
+        monthlyIncome: Number(form.monthlyIncome),
+        monthlyCharges: Number(form.monthlyCharges),
+        iban: form.iban,
+        durationMonths: Number(form.durationMonths),
+        annualMileage: Number(form.annualMileage),
+        contributionAmount: Number(form.contributionAmount),
+        expectedStartDate: form.expectedStartDate || undefined,
+        tradeInDescription: form.tradeInDescription || undefined,
+        insuranceIncluded: form.insuranceIncluded,
+        warrantyIncluded: form.warrantyIncluded,
+        assistanceIncluded: form.assistanceIncluded,
+        maintenanceIncluded: form.maintenanceIncluded,
+        comment: form.comment || undefined,
+      })
+
+      setSuccess(`Demande creee avec succes: ${response.id}`)
+      navigate(`/app/files/${response.id}`, { replace: true })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Creation impossible')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const goPrevious = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0))
-  }
-
-  const handleSubmit = () => {
-    // Placeholder: integrate API call when backend is ready.
-    console.log('Dossier envoye', form)
-  }
+  const docsNeeded = [
+    "Piece d'identite",
+    'Permis de conduire',
+    'Justificatif de domicile',
+    'Bulletins de salaire',
+    "Avis d'imposition",
+    'Releve bancaire',
+  ]
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Creation de dossier</h1>
-      <Card>
-        <CardContent className="p-4 text-sm">
-          Vehicule selectionne: <span className="font-medium">{vehicleId ?? 'Non renseigne'}</span>
-        </CardContent>
-      </Card>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 rounded-2xl border bg-gradient-to-br from-background to-muted/30 p-6 shadow-sm lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Demande client</p>
+            <h1 className="text-3xl font-semibold">Completer votre profil et creer une demande</h1>
+            <p className="max-w-3xl text-sm text-muted-foreground">
+              Votre profil client sert de base pour vos demandes. Vous completez vos informations une fois, puis vous creez une demande liee au vehicule choisi.
+            </p>
+          </div>
 
-      <div className="grid gap-2 md:grid-cols-6">
-        {steps.map((step, index) => (
-          <button
-            key={step}
-            type="button"
-            onClick={() => setCurrentStep(index)}
-            className={`rounded border px-3 py-2 text-left text-sm ${
-              index === currentStep ? 'bg-primary text-primary-foreground' : 'bg-background'
-            }`}
-          >
-            {index + 1}. {step}
-          </button>
-        ))}
-      </div>
-
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          {currentStep === 0 && (
-            <>
-              <h2 className="text-base font-semibold">1. Infos personnelles</h2>
-              <div className="grid gap-3 md:grid-cols-2">
-                <input className="h-10 rounded border px-3" placeholder="Prenom *" value={form.firstName} onChange={(e) => updateField('firstName', e.target.value)} />
-                <input className="h-10 rounded border px-3" placeholder="Nom *" value={form.lastName} onChange={(e) => updateField('lastName', e.target.value)} />
-                <input className="h-10 rounded border px-3" placeholder="Email *" type="email" value={form.email} onChange={(e) => updateField('email', e.target.value)} />
-                <input className="h-10 rounded border px-3" placeholder="Telephone *" type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} />
-              </div>
-            </>
-          )}
-
-          {currentStep === 1 && (
-            <>
-              <h2 className="text-base font-semibold">2. Situation</h2>
-              <div className="grid gap-3 md:grid-cols-2">
-                <select className="h-10 rounded border bg-background px-3" value={form.professionalStatus} onChange={(e) => updateField('professionalStatus', e.target.value)}>
-                  <option value="">Situation professionnelle</option>
-                  <option value="CDI">Salarie CDI</option>
-                  <option value="CDD">Salarie CDD</option>
-                  <option value="independant">Independant</option>
-                  <option value="autre">Autre</option>
-                </select>
-                <input className="h-10 rounded border px-3" placeholder="Revenus mensuels nets (EUR)" type="number" min={0} value={form.monthlyIncome} onChange={(e) => updateField('monthlyIncome', e.target.value)} />
-                <input className="h-10 rounded border px-3 md:col-span-2" placeholder="Apport prevu (EUR)" type="number" min={0} value={form.contribution} onChange={(e) => updateField('contribution', e.target.value)} />
-              </div>
-            </>
-          )}
-
-          {currentStep === 2 && (
-            <>
-              <h2 className="text-base font-semibold">3. Informations complementaires</h2>
-              <div className="grid gap-3 md:grid-cols-2">
-                <input className="h-10 rounded border px-3" placeholder="Date souhaitee de livraison" type="date" value={form.desiredDeliveryDate} onChange={(e) => updateField('desiredDeliveryDate', e.target.value)} />
-              </div>
-              <textarea className="min-h-24 w-full rounded border px-3 py-2" placeholder="Commentaire complementaire (optionnel)" value={form.comment} onChange={(e) => updateField('comment', e.target.value)} />
-            </>
-          )}
-
-          {currentStep === 3 && (
-            <>
-              <h2 className="text-base font-semibold">4. Pieces</h2>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="text-sm text-muted-foreground">Piece d'identite</label>
-                  <input className="block w-full rounded border p-2 text-sm" type="file" onChange={handleFileChange('idDocumentName')} />
-                  {form.idDocumentName && <p className="text-xs text-muted-foreground">{form.idDocumentName}</p>}
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-muted-foreground">Justificatif de domicile</label>
-                  <input className="block w-full rounded border p-2 text-sm" type="file" onChange={handleFileChange('addressProofName')} />
-                  {form.addressProofName && <p className="text-xs text-muted-foreground">{form.addressProofName}</p>}
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm text-muted-foreground">Justificatif de revenus</label>
-                  <input className="block w-full rounded border p-2 text-sm" type="file" onChange={handleFileChange('incomeProofName')} />
-                  {form.incomeProofName && <p className="text-xs text-muted-foreground">{form.incomeProofName}</p>}
-                </div>
-              </div>
-            </>
-          )}
-
-          {currentStep === 4 && (
-            <>
-              <h2 className="text-base font-semibold">5. Recapitulatif</h2>
-              <div className="grid gap-2 text-sm md:grid-cols-2">
-                <p><span className="font-medium">Prenom:</span> {form.firstName || '-'}</p>
-                <p><span className="font-medium">Nom:</span> {form.lastName || '-'}</p>
-                <p><span className="font-medium">Email:</span> {form.email || '-'}</p>
-                <p><span className="font-medium">Telephone:</span> {form.phone || '-'}</p>
-                <p><span className="font-medium">Situation:</span> {form.professionalStatus || '-'}</p>
-                <p><span className="font-medium">Revenus:</span> {form.monthlyIncome || '-'} EUR</p>
-                <p><span className="font-medium">Apport:</span> {form.contribution || '-'} EUR</p>
-                <p><span className="font-medium">Livraison:</span> {form.desiredDeliveryDate || '-'}</p>
-                <p className="md:col-span-2"><span className="font-medium">Commentaire:</span> {form.comment || '-'}</p>
-                <p><span className="font-medium">Piece d'identite:</span> {form.idDocumentName || '-'}</p>
-                <p><span className="font-medium">Domicile:</span> {form.addressProofName || '-'}</p>
-                <p className="md:col-span-2"><span className="font-medium">Revenus:</span> {form.incomeProofName || '-'}</p>
-              </div>
-            </>
-          )}
-
-          {currentStep === 5 && (
-            <>
-              <h2 className="text-base font-semibold">6. Envoi</h2>
-              <label className="flex items-start gap-2 text-sm">
-                <input className="mt-1" type="checkbox" checked={form.consentAccuracy} onChange={(e) => updateField('consentAccuracy', e.target.checked)} />
-                <span>Je certifie que les informations renseignees sont exactes.</span>
-              </label>
-              <label className="flex items-start gap-2 text-sm">
-                <input className="mt-1" type="checkbox" checked={form.consentPrivacy} onChange={(e) => updateField('consentPrivacy', e.target.checked)} />
-                <span>J'accepte le traitement de mes donnees pour l'etude de mon dossier.</span>
-              </label>
-              <Button type="button" onClick={handleSubmit} disabled={!form.consentAccuracy || !form.consentPrivacy}>
-                Envoyer le dossier
-              </Button>
-            </>
-          )}
-
-          <div className="flex flex-wrap justify-between gap-2 border-t pt-4">
-            <Button type="button" variant="outline" onClick={goPrevious} disabled={isFirstStep}>
-              Precedent
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={generateRandomData}>
+              Generer les donnees aleatoires
             </Button>
-            <Button type="button" onClick={goNext} disabled={isLastStep}>
-              {isLastStep ? 'Termine' : 'Suivant'}
+            <Button type="button" variant="outline" onClick={() => navigate('/app/profile')}>
+              Completer le profil
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[360px]">
+          <Card>
+            <CardContent className="space-y-1 p-4">
+              <p className="text-xs uppercase text-muted-foreground">Profil complet</p>
+              <p className="text-2xl font-semibold">{completionPercent}%</p>
+              <p className="text-xs text-muted-foreground">Informations utiles pour vos demandes</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-1 p-4">
+              <p className="text-xs uppercase text-muted-foreground">Demande</p>
+              <p className="text-2xl font-semibold">{form.acquisitionType}</p>
+              <p className="text-xs text-muted-foreground">{selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : 'Aucun vehicule selectionne'}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {error && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>}
+      {success && <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700">{success}</p>}
+
+      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">1. Base du compte</h2>
+                  <p className="text-sm text-muted-foreground">Les informations saisies ici alimentent votre profil client.</p>
+                </div>
+                <span className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+                  {accountEmail || 'Compte connecte'}
+                </span>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Prenom</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.firstName} onChange={(e) => updateField('firstName', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Nom</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.lastName} onChange={(e) => updateField('lastName', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Date de naissance</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="date" value={form.dateOfBirth} onChange={(e) => updateField('dateOfBirth', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Telephone</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.phoneNumber} onChange={(e) => updateField('phoneNumber', e.target.value)} />
+                </label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="space-y-4 p-5">
+              <div>
+                <h2 className="text-lg font-semibold">2. Situation personnelle et financiere</h2>
+                <p className="text-sm text-muted-foreground">Ces champs completent votre profil client.</p>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1 text-sm md:col-span-2">
+                  <span className="text-muted-foreground">Adresse</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.addressLine1} onChange={(e) => updateField('addressLine1', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Complement d'adresse</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.addressLine2} onChange={(e) => updateField('addressLine2', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Code postal</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.postalCode} onChange={(e) => updateField('postalCode', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Ville</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.city} onChange={(e) => updateField('city', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Pays</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.country} onChange={(e) => updateField('country', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Nationalite</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.nationality} onChange={(e) => updateField('nationality', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Situation familiale</span>
+                  <select className="h-10 w-full rounded-md border px-3" value={form.familyStatus} onChange={(e) => updateField('familyStatus', e.target.value)}>
+                    <option value="">Choisir</option>
+                    {FAMILY_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Nombre de personnes au foyer</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.householdSize} onChange={(e) => updateField('householdSize', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Situation pro</span>
+                  <select className="h-10 w-full rounded-md border px-3" value={form.professionalStatus} onChange={(e) => updateField('professionalStatus', e.target.value)}>
+                    <option value="">Choisir</option>
+                    {PROFESSIONAL_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Revenus mensuels nets</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.monthlyIncome} onChange={(e) => updateField('monthlyIncome', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Charges mensuelles</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.monthlyCharges} onChange={(e) => updateField('monthlyCharges', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm md:col-span-2">
+                  <span className="text-muted-foreground">IBAN</span>
+                  <input className="h-10 w-full rounded-md border px-3" value={form.iban} onChange={(e) => updateField('iban', e.target.value)} />
+                </label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="space-y-4 p-5">
+              <div>
+                <h2 className="text-lg font-semibold">3. Demande liee au vehicule</h2>
+                <p className="text-sm text-muted-foreground">La demande est rattachee au vehicule selectionne.</p>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1 text-sm md:col-span-2">
+                  <span className="text-muted-foreground">Vehicule</span>
+                  <select className="h-10 w-full rounded-md border px-3" value={form.vehicleId} onChange={(e) => updateField('vehicleId', e.target.value)}>
+                    <option value="">Choisir un vehicule</option>
+                    {vehicles.map((vehicle) => (
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {vehicle.brand} {vehicle.title} - {vehicle.price} EUR
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Mode d'acquisition</span>
+                  <select className="h-10 w-full rounded-md border px-3" value={form.acquisitionType} onChange={(e) => updateField('acquisitionType', e.target.value as ApplicationAcquisitionType)}>
+                    {ACQUISITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Duree (mois)</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.durationMonths} onChange={(e) => updateField('durationMonths', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Kilometrage annuel</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.annualMileage} onChange={(e) => updateField('annualMileage', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Apport</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.contributionAmount} onChange={(e) => updateField('contributionAmount', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="text-muted-foreground">Date de demarrage souhaitee</span>
+                  <input className="h-10 w-full rounded-md border px-3" type="date" value={form.expectedStartDate} onChange={(e) => updateField('expectedStartDate', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm md:col-span-2">
+                  <span className="text-muted-foreground">Vehicule repris / commentaire reprise</span>
+                  <textarea className="min-h-24 w-full rounded-md border px-3 py-2" value={form.tradeInDescription} onChange={(e) => updateField('tradeInDescription', e.target.value)} />
+                </label>
+                <label className="space-y-1 text-sm md:col-span-2">
+                  <span className="text-muted-foreground">Commentaire complementaire</span>
+                  <textarea className="min-h-24 w-full rounded-md border px-3 py-2" value={form.comment} onChange={(e) => updateField('comment', e.target.value)} />
+                </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={form.insuranceIncluded} onChange={(e) => updateField('insuranceIncluded', e.target.checked)} />
+                  Assurance incluse
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={form.warrantyIncluded} onChange={(e) => updateField('warrantyIncluded', e.target.checked)} />
+                  Garantie mecanique
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={form.assistanceIncluded} onChange={(e) => updateField('assistanceIncluded', e.target.checked)} />
+                  Assistance
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={form.maintenanceIncluded} onChange={(e) => updateField('maintenanceIncluded', e.target.checked)} />
+                  Entretien
+                </label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="space-y-4 p-5">
+              <div>
+                <h2 className="text-lg font-semibold">4. Pieces du dossier</h2>
+                <p className="text-sm text-muted-foreground">Ces pieces restent associees a votre profil client pour les prochaines demandes.</p>
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-2">
+                {docsNeeded.map((doc) => (
+                  <div key={doc} className="rounded-lg border px-3 py-2 text-sm">
+                    {doc}
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Vous pourrez ensuite rattacher ces documents a chaque demande sans les transmettre a nouveau.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="space-y-4 p-5">
+              <div>
+                <h2 className="text-lg font-semibold">5. Recapitulatif</h2>
+                <p className="text-sm text-muted-foreground">La demande sera enregistree avec les informations saisies.</p>
+              </div>
+
+              <div className="grid gap-2 text-sm md:grid-cols-2">
+                <p><span className="font-medium">Vehicule:</span> {selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : '-'}</p>
+                <p><span className="font-medium">Email compte:</span> {profile?.email ?? '-'}</p>
+                <p><span className="font-medium">Completion profil:</span> {completionPercent}%</p>
+                <p><span className="font-medium">Mode:</span> {form.acquisitionType}</p>
+                <p><span className="font-medium">Duree:</span> {form.durationMonths} mois</p>
+                <p><span className="font-medium">Kilometrage annuel:</span> {form.annualMileage} km</p>
+                <p><span className="font-medium">Apport:</span> {form.contributionAmount} EUR</p>
+                <p><span className="font-medium">Debut souhaite:</span> {form.expectedStartDate || '-'}</p>
+              </div>
+
+              <Button type="button" className="w-full md:w-auto" onClick={handleSubmit} disabled={isSubmitting || isLoadingVehicles || !form.vehicleId}>
+                {isSubmitting ? 'Envoi...' : 'Enregistrer la demande'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <aside className="space-y-6">
+          <Card>
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold">Vehicule selectionne</h2>
+                <span className="text-xs text-muted-foreground">{isLoadingVehicles ? 'Chargement...' : `${vehicles.length} vehicules`}</span>
+              </div>
+
+              {selectedVehicle ? (
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{selectedVehicle.brand}</p>
+                  <p className="text-lg font-semibold">{selectedVehicle.title}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedVehicle.energy} - {selectedVehicle.mileage.toLocaleString('fr-FR')} km
+                  </p>
+                  <p className="text-xl font-semibold">{selectedVehicle.price} EUR</p>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link to={`/vehicles/${selectedVehicle.id}`}>Voir la fiche vehicule</Link>
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Selectionnez un vehicule pour poursuivre.</p>
+              )}
+            </CardContent>
+          </Card>
+
+        </aside>
+      </div>
     </div>
   )
 }

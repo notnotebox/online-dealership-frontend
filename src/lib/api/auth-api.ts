@@ -14,6 +14,25 @@ export type RegisterRequest = {
   password: string
 }
 
+export type UpdateProfileRequest = {
+  firstName?: string
+  lastName?: string
+  dateOfBirth?: string
+  phoneNumber?: string
+  addressLine1?: string
+  addressLine2?: string
+  postalCode?: string
+  city?: string
+  country?: string
+  nationality?: string
+  familyStatus?: string
+  householdSize?: number
+  professionalStatus?: string
+  monthlyIncome?: number | string
+  monthlyCharges?: number | string
+  iban?: string
+}
+
 export type FavoriteVehicleId = string
 
 export const authApi = {
@@ -31,6 +50,12 @@ export const authApi = {
   },
   me() {
     return apiRequest<UserProfile>('/users/me')
+  },
+  updateProfile(payload: UpdateProfileRequest) {
+    return apiRequest<UserProfile>('/users/me', {
+      method: 'PATCH',
+      body: payload,
+    })
   },
   favorites() {
     return apiRequest<FavoritesResponse>('/users/me/favorites')

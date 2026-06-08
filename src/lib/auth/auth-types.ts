@@ -18,7 +18,21 @@ export type UserProfile = {
   lastName: string
   dateOfBirth: string
   role: AuthRole
+  phoneNumber?: string | null
+  addressLine1?: string | null
+  addressLine2?: string | null
+  postalCode?: string | null
+  city?: string | null
+  country?: string | null
+  nationality?: string | null
+  familyStatus?: string | null
+  householdSize?: number | null
+  professionalStatus?: string | null
+  monthlyIncome?: number | string | null
+  monthlyCharges?: number | string | null
+  iban?: string | null
   createdAt: string
+  profileCompletionPercent?: number
 }
 
 export type FavoriteVehicle = {
