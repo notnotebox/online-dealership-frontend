@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { BackofficeLayout } from '@/app/layouts/backoffice-layout'
 import { ClientLayout } from '@/app/layouts/client-layout'
 import { PublicLayout } from '@/app/layouts/public-layout'
@@ -56,6 +56,7 @@ export function AppRouter() {
 
       <Route element={<StaffRoute />}>
         <Route element={<BackofficeLayout />}>
+          <Route path="/backoffice" element={<Navigate to="/backoffice/dashboard" replace />} />
           <Route path="/backoffice/dashboard" element={<BackofficeDashboardPage />} />
           <Route path="/backoffice/vehicles" element={<BackofficeVehiclesPage />} />
           <Route path="/backoffice/vehicles/new" element={<BackofficeVehicleFormPage />} />
