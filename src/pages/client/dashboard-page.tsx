@@ -71,7 +71,7 @@ export function ClientDashboardPage() {
                 <p><span className="font-medium">Vehicule:</span> {activeApplication.vehicleBrand} {activeApplication.vehicleTitle}</p>
                 <p><span className="font-medium">Completion profil:</span> {activeApplication.profileCompletionPercent}%</p>
                 <p><span className="font-medium">Mise a jour:</span> {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(activeApplication.updatedAt))}</p>
-                <p className="text-muted-foreground">Votre profil client est repris pour vos prochaines demandes.</p>
+                <p className="text-muted-foreground">Votre profil client sert de base pour vos prochaines demandes.</p>
               </div>
             )}
             <div className="flex flex-wrap gap-2">
@@ -127,7 +127,7 @@ export function ClientDashboardPage() {
           <CardContent className="space-y-2 p-4">
             <h2 className="text-lg font-semibold">Profil et pieces</h2>
             <p className="text-sm text-muted-foreground">
-              Vos informations de base sont conservees dans le profil client.
+              Vos informations de base sont regroupées dans le profil client.
             </p>
             <Button variant="outline" className="w-full" asChild>
               <Link to="/app/profile">Completer mon profil</Link>

@@ -5,6 +5,8 @@ import { authApi } from '@/lib/api/auth-api'
 import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
 import { useAuth } from '@/lib/auth/auth-context'
 import type { ApplicationAcquisitionType } from '@/lib/application/application-types'
+import { formatDocumentTypeLabel, getRequiredDocuments } from '@/lib/documents/document-types'
+import { getMissingProfileFields, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -105,14 +107,17 @@ function randomFutureDate() {
   return date.toISOString().slice(0, 10)
 }
 
-function toFieldValue(value?: number | string | null) {
-  if (value == null) {
-    return ''
+function toOptionalNumber(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return undefined
   }
-  return String(value)
+
+  const next = Number(trimmed)
+  return Number.isFinite(next) ? next : undefined
 }
 
-function buildFormFromProfile(profile: any | null): ApplicationFormState {
+function buildFormFromProfile(profile: ReturnType<typeof useAuth>['profile']): ApplicationFormState {
   if (!profile) {
     return initialState
   }
@@ -132,8 +137,8 @@ function buildFormFromProfile(profile: any | null): ApplicationFormState {
     familyStatus: profile.familyStatus ?? '',
     householdSize: profile.householdSize != null ? String(profile.householdSize) : '',
     professionalStatus: profile.professionalStatus ?? '',
-    monthlyIncome: toFieldValue(profile.monthlyIncome),
-    monthlyCharges: toFieldValue(profile.monthlyCharges),
+    monthlyIncome: profile.monthlyIncome != null ? String(profile.monthlyIncome) : '',
+    monthlyCharges: profile.monthlyCharges != null ? String(profile.monthlyCharges) : '',
     iban: profile.iban ?? '',
   }
 }
@@ -182,19 +187,16 @@ function createFixtureContent(profile: ApplicationFormState, email: string, vehi
     `assistanceIncluded=${profile.assistanceIncluded}`,
     `maintenanceIncluded=${profile.maintenanceIncluded}`,
     `comment=${profile.comment}`,
+    `documents=${getRequiredDocuments(profile.acquisitionType).map((document) => formatDocumentTypeLabel(document.documentType)).join(', ')}`,
   ].join('\n')
 }
 
-function countCompleted(values: Array<string | number | boolean | null | undefined>) {
-  return values.filter((value) => {
-    if (typeof value === 'boolean') {
-      return true
-    }
-    if (typeof value === 'number') {
-      return Number.isFinite(value)
-    }
-    return value != null && String(value).trim().length > 0
-  }).length
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="h-2 w-full rounded-full bg-muted">
+      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    </div>
+  )
 }
 
 export function NewFilePage() {
@@ -223,7 +225,7 @@ export function NewFilePage() {
         }
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger les vehicules')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger les véhicules')
         }
       } finally {
         if (!cancelled) {
@@ -269,31 +271,47 @@ export function NewFilePage() {
     }
   }, [form.vehicleId, selectedVehicle])
 
-  const completionPercent = useMemo(() => {
-    const completed = countCompleted([
-      form.vehicleId,
-      form.acquisitionType,
-      form.firstName,
-      form.lastName,
-      form.dateOfBirth,
-      form.phoneNumber,
-      form.addressLine1,
-      form.postalCode,
-      form.city,
-      form.country,
-      form.nationality,
-      form.familyStatus,
-      form.householdSize,
-      form.professionalStatus,
-      form.monthlyIncome,
-      form.monthlyCharges,
-      form.iban,
-      form.durationMonths,
-      form.annualMileage,
-      form.contributionAmount,
-    ])
-    return Math.round((completed * 1000) / 20) / 10
+  const profileCompletionPercent = useMemo(() => {
+    return getProfileCompletionPercent({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      dateOfBirth: form.dateOfBirth,
+      phoneNumber: form.phoneNumber,
+      addressLine1: form.addressLine1,
+      postalCode: form.postalCode,
+      city: form.city,
+      country: form.country,
+      nationality: form.nationality,
+      familyStatus: form.familyStatus,
+      householdSize: form.householdSize ? Number(form.householdSize) : undefined,
+      professionalStatus: form.professionalStatus,
+      monthlyIncome: form.monthlyIncome ? Number(form.monthlyIncome) : undefined,
+      monthlyCharges: form.monthlyCharges ? Number(form.monthlyCharges) : undefined,
+      iban: form.iban,
+    })
   }, [form])
+
+  const missingProfileFields = useMemo(() => {
+    return getMissingProfileFields({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      dateOfBirth: form.dateOfBirth,
+      phoneNumber: form.phoneNumber,
+      addressLine1: form.addressLine1,
+      postalCode: form.postalCode,
+      city: form.city,
+      country: form.country,
+      nationality: form.nationality,
+      familyStatus: form.familyStatus,
+      householdSize: form.householdSize ? Number(form.householdSize) : undefined,
+      professionalStatus: form.professionalStatus,
+      monthlyIncome: form.monthlyIncome ? Number(form.monthlyIncome) : undefined,
+      monthlyCharges: form.monthlyCharges ? Number(form.monthlyCharges) : undefined,
+      iban: form.iban,
+    })
+  }, [form])
+
+  const requiredDocuments = useMemo(() => getRequiredDocuments(form.acquisitionType), [form.acquisitionType])
 
   function updateField(field: keyof ApplicationFormState, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -328,12 +346,12 @@ export function NewFilePage() {
       annualMileage: String(randomItem([10000, 12000, 15000, 18000, 20000])),
       contributionAmount: String(randomItem([0, 1500, 3000, 5000, 8000])),
       expectedStartDate: randomFutureDate(),
-      tradeInDescription: Math.random() > 0.5 ? 'Reprise a estimer' : '',
+      tradeInDescription: Math.random() > 0.5 ? 'Reprise à estimer' : '',
       insuranceIncluded: Math.random() > 0.5,
       warrantyIncluded: Math.random() > 0.5,
       assistanceIncluded: Math.random() > 0.5,
       maintenanceIncluded: Math.random() > 0.5,
-      comment: 'Generer pour test de bout en bout.',
+      comment: 'Génération de test pour le parcours complet.',
     }
 
     setForm(nextForm)
@@ -352,22 +370,22 @@ export function NewFilePage() {
 
     try {
       await authApi.updateProfile({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        dateOfBirth: form.dateOfBirth,
-        phoneNumber: form.phoneNumber,
-        addressLine1: form.addressLine1,
-        addressLine2: form.addressLine2 || undefined,
-        postalCode: form.postalCode,
-        city: form.city,
-        country: form.country,
-        nationality: form.nationality,
-        familyStatus: form.familyStatus,
-        householdSize: Number(form.householdSize),
-        professionalStatus: form.professionalStatus,
-        monthlyIncome: Number(form.monthlyIncome),
-        monthlyCharges: Number(form.monthlyCharges),
-        iban: form.iban,
+        firstName: form.firstName.trim() || undefined,
+        lastName: form.lastName.trim() || undefined,
+        dateOfBirth: form.dateOfBirth || undefined,
+        phoneNumber: form.phoneNumber.trim() || undefined,
+        addressLine1: form.addressLine1.trim() || undefined,
+        addressLine2: form.addressLine2.trim() || undefined,
+        postalCode: form.postalCode.trim() || undefined,
+        city: form.city.trim() || undefined,
+        country: form.country.trim() || undefined,
+        nationality: form.nationality.trim() || undefined,
+        familyStatus: form.familyStatus.trim() || undefined,
+        householdSize: toOptionalNumber(form.householdSize),
+        professionalStatus: form.professionalStatus.trim() || undefined,
+        monthlyIncome: toOptionalNumber(form.monthlyIncome),
+        monthlyCharges: toOptionalNumber(form.monthlyCharges),
+        iban: form.iban.trim() || undefined,
       })
 
       await refreshProfile()
@@ -375,25 +393,25 @@ export function NewFilePage() {
       const response = await applicationApi.create({
         vehicleId: form.vehicleId,
         acquisitionType: form.acquisitionType,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        dateOfBirth: form.dateOfBirth,
-        phoneNumber: form.phoneNumber,
-        addressLine1: form.addressLine1,
-        addressLine2: form.addressLine2 || undefined,
-        postalCode: form.postalCode,
-        city: form.city,
-        country: form.country,
-        nationality: form.nationality,
-        familyStatus: form.familyStatus,
-        householdSize: Number(form.householdSize),
-        professionalStatus: form.professionalStatus,
-        monthlyIncome: Number(form.monthlyIncome),
-        monthlyCharges: Number(form.monthlyCharges),
-        iban: form.iban,
-        durationMonths: Number(form.durationMonths),
-        annualMileage: Number(form.annualMileage),
-        contributionAmount: Number(form.contributionAmount),
+        firstName: form.firstName.trim() || undefined,
+        lastName: form.lastName.trim() || undefined,
+        dateOfBirth: form.dateOfBirth || undefined,
+        phoneNumber: form.phoneNumber.trim() || undefined,
+        addressLine1: form.addressLine1.trim() || undefined,
+        addressLine2: form.addressLine2.trim() || undefined,
+        postalCode: form.postalCode.trim() || undefined,
+        city: form.city.trim() || undefined,
+        country: form.country.trim() || undefined,
+        nationality: form.nationality.trim() || undefined,
+        familyStatus: form.familyStatus.trim() || undefined,
+        householdSize: toOptionalNumber(form.householdSize),
+        professionalStatus: form.professionalStatus.trim() || undefined,
+        monthlyIncome: toOptionalNumber(form.monthlyIncome),
+        monthlyCharges: toOptionalNumber(form.monthlyCharges),
+        iban: form.iban.trim() || undefined,
+        durationMonths: toOptionalNumber(form.durationMonths),
+        annualMileage: toOptionalNumber(form.annualMileage),
+        contributionAmount: toOptionalNumber(form.contributionAmount),
         expectedStartDate: form.expectedStartDate || undefined,
         tradeInDescription: form.tradeInDescription || undefined,
         insuranceIncluded: form.insuranceIncluded,
@@ -403,59 +421,60 @@ export function NewFilePage() {
         comment: form.comment || undefined,
       })
 
-      setSuccess(`Demande creee avec succes: ${response.id}`)
+      setSuccess(`Demande créée: ${response.id}`)
       navigate(`/app/files/${response.id}`, { replace: true })
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Creation impossible')
+      setError(cause instanceof Error ? cause.message : 'Création impossible')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const docsNeeded = [
-    "Piece d'identite",
-    'Permis de conduire',
-    'Justificatif de domicile',
-    'Bulletins de salaire',
-    "Avis d'imposition",
-    'Releve bancaire',
-  ]
+  const showLeaseFields = form.acquisitionType === 'LOA' || form.acquisitionType === 'LLD'
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 rounded-2xl border bg-gradient-to-br from-background to-muted/30 p-6 shadow-sm lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-3">
+      <div className="grid gap-4 rounded-2xl border bg-gradient-to-br from-background to-muted/30 p-6 shadow-sm lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Demande client</p>
-            <h1 className="text-3xl font-semibold">Completer votre profil et creer une demande</h1>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Nouvelle demande</p>
+            <h1 className="text-3xl font-semibold">Compléter le profil puis déposer la demande</h1>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Votre profil client sert de base pour vos demandes. Vous completez vos informations une fois, puis vous creez une demande liee au vehicule choisi.
+              Les informations communes restent dans le profil. La demande conserve uniquement ce qui dépend du véhicule et du mode choisi.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <Button type="button" onClick={generateRandomData}>
-              Generer les donnees aleatoires
+              Générer les données aléatoires
             </Button>
             <Button type="button" variant="outline" onClick={() => navigate('/app/profile')}>
-              Completer le profil
+              Compléter le profil
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[360px]">
+        <div className="grid gap-3">
           <Card>
-            <CardContent className="space-y-1 p-4">
-              <p className="text-xs uppercase text-muted-foreground">Profil complet</p>
-              <p className="text-2xl font-semibold">{completionPercent}%</p>
-              <p className="text-xs text-muted-foreground">Informations utiles pour vos demandes</p>
+            <CardContent className="space-y-2 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs uppercase text-muted-foreground">Complétude du profil</p>
+                <p className="text-xl font-semibold">{profileCompletionPercent}%</p>
+              </div>
+              <ProgressBar value={profileCompletionPercent} />
+              <p className="text-xs text-muted-foreground">
+                {missingProfileFields.length > 0
+                  ? `À compléter: ${missingProfileFields.slice(0, 4).join(', ')}${missingProfileFields.length > 4 ? '…' : ''}`
+                  : 'Profil prêt pour une demande complète.'}
+              </p>
             </CardContent>
           </Card>
+
           <Card>
             <CardContent className="space-y-1 p-4">
-              <p className="text-xs uppercase text-muted-foreground">Demande</p>
-              <p className="text-2xl font-semibold">{form.acquisitionType}</p>
-              <p className="text-xs text-muted-foreground">{selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : 'Aucun vehicule selectionne'}</p>
+              <p className="text-xs uppercase text-muted-foreground">Véhicule</p>
+              <p className="text-lg font-semibold">{selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : 'Aucun véhicule'}</p>
+              <p className="text-xs text-muted-foreground">{selectedVehicle ? `${selectedVehicle.energy} - ${selectedVehicle.mileage.toLocaleString('fr-FR')} km` : 'Sélectionnez un véhicule dans le catalogue'}</p>
             </CardContent>
           </Card>
         </div>
@@ -468,19 +487,14 @@ export function NewFilePage() {
         <div className="space-y-6">
           <Card>
             <CardContent className="space-y-4 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold">1. Base du compte</h2>
-                  <p className="text-sm text-muted-foreground">Les informations saisies ici alimentent votre profil client.</p>
-                </div>
-                <span className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
-                  {accountEmail || 'Compte connecte'}
-                </span>
+              <div>
+                <h2 className="text-lg font-semibold">1. Profil client</h2>
+                <p className="text-sm text-muted-foreground">Ces informations mettent à jour le compte client et servent de base à la demande.</p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Prenom</span>
+                  <span className="text-muted-foreground">Prénom</span>
                   <input className="h-10 w-full rounded-md border px-3" value={form.firstName} onChange={(e) => updateField('firstName', e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
@@ -492,7 +506,7 @@ export function NewFilePage() {
                   <input className="h-10 w-full rounded-md border px-3" type="date" value={form.dateOfBirth} onChange={(e) => updateField('dateOfBirth', e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Telephone</span>
+                  <span className="text-muted-foreground">Téléphone</span>
                   <input className="h-10 w-full rounded-md border px-3" value={form.phoneNumber} onChange={(e) => updateField('phoneNumber', e.target.value)} />
                 </label>
               </div>
@@ -502,8 +516,8 @@ export function NewFilePage() {
           <Card>
             <CardContent className="space-y-4 p-5">
               <div>
-                <h2 className="text-lg font-semibold">2. Situation personnelle et financiere</h2>
-                <p className="text-sm text-muted-foreground">Ces champs completent votre profil client.</p>
+                <h2 className="text-lg font-semibold">2. Coordonnées et situation</h2>
+                <p className="text-sm text-muted-foreground">Ces champs complètent le profil. Ils peuvent être renseignés ici ou depuis la page profil.</p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -512,7 +526,7 @@ export function NewFilePage() {
                   <input className="h-10 w-full rounded-md border px-3" value={form.addressLine1} onChange={(e) => updateField('addressLine1', e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Complement d'adresse</span>
+                  <span className="text-muted-foreground">Complément</span>
                   <input className="h-10 w-full rounded-md border px-3" value={form.addressLine2} onChange={(e) => updateField('addressLine2', e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
@@ -528,7 +542,7 @@ export function NewFilePage() {
                   <input className="h-10 w-full rounded-md border px-3" value={form.country} onChange={(e) => updateField('country', e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Nationalite</span>
+                  <span className="text-muted-foreground">Nationalité</span>
                   <input className="h-10 w-full rounded-md border px-3" value={form.nationality} onChange={(e) => updateField('nationality', e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
@@ -543,7 +557,7 @@ export function NewFilePage() {
                   <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.householdSize} onChange={(e) => updateField('householdSize', e.target.value)} />
                 </label>
                 <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Situation pro</span>
+                  <span className="text-muted-foreground">Situation professionnelle</span>
                   <select className="h-10 w-full rounded-md border px-3" value={form.professionalStatus} onChange={(e) => updateField('professionalStatus', e.target.value)}>
                     <option value="">Choisir</option>
                     {PROFESSIONAL_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
@@ -568,15 +582,15 @@ export function NewFilePage() {
           <Card>
             <CardContent className="space-y-4 p-5">
               <div>
-                <h2 className="text-lg font-semibold">3. Demande liee au vehicule</h2>
-                <p className="text-sm text-muted-foreground">La demande est rattachee au vehicule selectionne.</p>
+                <h2 className="text-lg font-semibold">3. Demande liée au véhicule</h2>
+                <p className="text-sm text-muted-foreground">Les champs ci-dessous dépendent du mode d’acquisition.</p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1 text-sm md:col-span-2">
-                  <span className="text-muted-foreground">Vehicule</span>
+                  <span className="text-muted-foreground">Véhicule</span>
                   <select className="h-10 w-full rounded-md border px-3" value={form.vehicleId} onChange={(e) => updateField('vehicleId', e.target.value)}>
-                    <option value="">Choisir un vehicule</option>
+                    <option value="">Choisir un véhicule</option>
                     {vehicles.map((vehicle) => (
                       <option key={vehicle.id} value={vehicle.id}>
                         {vehicle.brand} {vehicle.title} - {vehicle.price} EUR
@@ -585,33 +599,40 @@ export function NewFilePage() {
                   </select>
                 </label>
                 <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Mode d'acquisition</span>
+                  <span className="text-muted-foreground">Mode d’acquisition</span>
                   <select className="h-10 w-full rounded-md border px-3" value={form.acquisitionType} onChange={(e) => updateField('acquisitionType', e.target.value as ApplicationAcquisitionType)}>
                     {ACQUISITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </label>
                 <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Duree (mois)</span>
-                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.durationMonths} onChange={(e) => updateField('durationMonths', e.target.value)} />
-                </label>
-                <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Kilometrage annuel</span>
-                  <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.annualMileage} onChange={(e) => updateField('annualMileage', e.target.value)} />
-                </label>
-                <label className="space-y-1 text-sm">
                   <span className="text-muted-foreground">Apport</span>
                   <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.contributionAmount} onChange={(e) => updateField('contributionAmount', e.target.value)} />
                 </label>
-                <label className="space-y-1 text-sm">
-                  <span className="text-muted-foreground">Date de demarrage souhaitee</span>
-                  <input className="h-10 w-full rounded-md border px-3" type="date" value={form.expectedStartDate} onChange={(e) => updateField('expectedStartDate', e.target.value)} />
-                </label>
+
+                {showLeaseFields ? (
+                  <>
+                    <label className="space-y-1 text-sm">
+                      <span className="text-muted-foreground">Durée (mois)</span>
+                      <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.durationMonths} onChange={(e) => updateField('durationMonths', e.target.value)} />
+                    </label>
+                    <label className="space-y-1 text-sm">
+                      <span className="text-muted-foreground">Kilométrage annuel</span>
+                      <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.annualMileage} onChange={(e) => updateField('annualMileage', e.target.value)} />
+                    </label>
+                    <label className="space-y-1 text-sm">
+                      <span className="text-muted-foreground">Date de démarrage souhaitée</span>
+                      <input className="h-10 w-full rounded-md border px-3" type="date" value={form.expectedStartDate} onChange={(e) => updateField('expectedStartDate', e.target.value)} />
+                    </label>
+                  </>
+                ) : (
+                  <label className="space-y-1 text-sm md:col-span-2">
+                    <span className="text-muted-foreground">Information de reprise ou de règlement</span>
+                    <textarea className="min-h-24 w-full rounded-md border px-3 py-2" value={form.tradeInDescription} onChange={(e) => updateField('tradeInDescription', e.target.value)} />
+                  </label>
+                )}
+
                 <label className="space-y-1 text-sm md:col-span-2">
-                  <span className="text-muted-foreground">Vehicule repris / commentaire reprise</span>
-                  <textarea className="min-h-24 w-full rounded-md border px-3 py-2" value={form.tradeInDescription} onChange={(e) => updateField('tradeInDescription', e.target.value)} />
-                </label>
-                <label className="space-y-1 text-sm md:col-span-2">
-                  <span className="text-muted-foreground">Commentaire complementaire</span>
+                  <span className="text-muted-foreground">Commentaire</span>
                   <textarea className="min-h-24 w-full rounded-md border px-3 py-2" value={form.comment} onChange={(e) => updateField('comment', e.target.value)} />
                 </label>
               </div>
@@ -623,7 +644,7 @@ export function NewFilePage() {
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.warrantyIncluded} onChange={(e) => updateField('warrantyIncluded', e.target.checked)} />
-                  Garantie mecanique
+                  Garantie mécanique
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.assistanceIncluded} onChange={(e) => updateField('assistanceIncluded', e.target.checked)} />
@@ -640,40 +661,37 @@ export function NewFilePage() {
           <Card>
             <CardContent className="space-y-4 p-5">
               <div>
-                <h2 className="text-lg font-semibold">4. Pieces du dossier</h2>
-                <p className="text-sm text-muted-foreground">Ces pieces restent associees a votre profil client pour les prochaines demandes.</p>
+                <h2 className="text-lg font-semibold">4. Pièces attendues</h2>
+                <p className="text-sm text-muted-foreground">La liste s’adapte au mode choisi. Les pièces déposées plus tard seront rattachées à la demande.</p>
               </div>
 
               <div className="grid gap-2 md:grid-cols-2">
-                {docsNeeded.map((doc) => (
-                  <div key={doc} className="rounded-lg border px-3 py-2 text-sm">
-                    {doc}
+                {requiredDocuments.map((document) => (
+                  <div key={document.documentType} className="rounded-lg border px-3 py-2 text-sm">
+                    <p className="font-medium">{formatDocumentTypeLabel(document.documentType)}</p>
+                    {document.note && <p className="text-xs text-muted-foreground">{document.note}</p>}
                   </div>
                 ))}
               </div>
-
-              <p className="text-xs text-muted-foreground">
-                Vous pourrez ensuite rattacher ces documents a chaque demande sans les transmettre a nouveau.
-              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="space-y-4 p-5">
               <div>
-                <h2 className="text-lg font-semibold">5. Recapitulatif</h2>
-                <p className="text-sm text-muted-foreground">La demande sera enregistree avec les informations saisies.</p>
+                <h2 className="text-lg font-semibold">5. Récapitulatif</h2>
+                <p className="text-sm text-muted-foreground">La demande reprend le profil complété et les informations liées au véhicule.</p>
               </div>
 
               <div className="grid gap-2 text-sm md:grid-cols-2">
-                <p><span className="font-medium">Vehicule:</span> {selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : '-'}</p>
-                <p><span className="font-medium">Email compte:</span> {profile?.email ?? '-'}</p>
-                <p><span className="font-medium">Completion profil:</span> {completionPercent}%</p>
+                <p><span className="font-medium">Véhicule:</span> {selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : '-'}</p>
+                <p><span className="font-medium">Compte:</span> {(profile?.email ?? accountEmail) || '-'}</p>
+                <p><span className="font-medium">Complétude profil:</span> {profileCompletionPercent}%</p>
                 <p><span className="font-medium">Mode:</span> {form.acquisitionType}</p>
-                <p><span className="font-medium">Duree:</span> {form.durationMonths} mois</p>
-                <p><span className="font-medium">Kilometrage annuel:</span> {form.annualMileage} km</p>
+                <p><span className="font-medium">Durée:</span> {showLeaseFields ? `${form.durationMonths} mois` : '-'}</p>
+                <p><span className="font-medium">Kilométrage annuel:</span> {showLeaseFields ? `${form.annualMileage} km` : '-'}</p>
                 <p><span className="font-medium">Apport:</span> {form.contributionAmount} EUR</p>
-                <p><span className="font-medium">Debut souhaite:</span> {form.expectedStartDate || '-'}</p>
+                <p><span className="font-medium">Début souhaité:</span> {showLeaseFields ? form.expectedStartDate || '-' : '-'}</p>
               </div>
 
               <Button type="button" className="w-full md:w-auto" onClick={handleSubmit} disabled={isSubmitting || isLoadingVehicles || !form.vehicleId}>
@@ -687,8 +705,8 @@ export function NewFilePage() {
           <Card>
             <CardContent className="space-y-4 p-5">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold">Vehicule selectionne</h2>
-                <span className="text-xs text-muted-foreground">{isLoadingVehicles ? 'Chargement...' : `${vehicles.length} vehicules`}</span>
+                <h2 className="text-lg font-semibold">Véhicule sélectionné</h2>
+                <span className="text-xs text-muted-foreground">{isLoadingVehicles ? 'Chargement...' : `${vehicles.length} véhicules`}</span>
               </div>
 
               {selectedVehicle ? (
@@ -700,15 +718,32 @@ export function NewFilePage() {
                   </p>
                   <p className="text-xl font-semibold">{selectedVehicle.price} EUR</p>
                   <Button variant="outline" asChild className="w-full">
-                    <Link to={`/vehicles/${selectedVehicle.id}`}>Voir la fiche vehicule</Link>
+                    <Link to={`/vehicles/${selectedVehicle.id}`}>Voir la fiche véhicule</Link>
                   </Button>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Selectionnez un vehicule pour poursuivre.</p>
+                <p className="text-sm text-muted-foreground">Sélectionnez un véhicule pour poursuivre.</p>
               )}
             </CardContent>
           </Card>
 
+          <Card>
+            <CardContent className="space-y-3 p-5">
+              <h2 className="text-lg font-semibold">Profil</h2>
+              <p className="text-sm text-muted-foreground">{profileCompletionPercent}% complété</p>
+              <ProgressBar value={profileCompletionPercent} />
+              {missingProfileFields.length > 0 ? (
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <p>Champs encore ouverts:</p>
+                  <ul className="space-y-1">
+                    {missingProfileFields.slice(0, 6).map((item) => <li key={item}>• {item}</li>)}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Profil prêt à l’usage.</p>
+              )}
+            </CardContent>
+          </Card>
         </aside>
       </div>
     </div>

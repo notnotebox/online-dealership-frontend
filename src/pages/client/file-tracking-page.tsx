@@ -142,7 +142,7 @@ export function FileTrackingPage() {
           <CardContent className="space-y-3 p-4">
             <h2 className="text-lg font-semibold">Rappels utiles</h2>
             <p className="text-sm text-muted-foreground">
-              Profil complete: {application.profileCompletionPercent}%.
+              Profil complété: {application.profileCompletionPercent}%.
             </p>
             <p className="text-sm text-muted-foreground">Vehicule: {application.vehicleBrand} {application.vehicleTitle}</p>
             <p className="text-sm text-muted-foreground">Mode: {application.acquisitionType}</p>

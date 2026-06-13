@@ -1,8 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { HeaderNav } from '@/components/layout/header-nav'
-import { useAuth } from '@/lib/auth/auth-context'
-import { Button } from '@/components/ui/button'
 
 const appLinks = [
   { to: '/app/dashboard', label: 'Dashboard' },
@@ -13,8 +11,6 @@ const appLinks = [
 ]
 
 export function ClientLayout() {
-  const { profile, logout } = useAuth()
-
   return (
     <div className="min-h-screen bg-background">
       <HeaderNav />
@@ -34,15 +30,6 @@ export function ClientLayout() {
                 {link.label}
               </NavLink>
             ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Compte connecte</p>
-              <p className="text-sm font-medium">{profile?.firstName ?? 'Utilisateur'}</p>
-            </div>
-            <Button variant="outline" size="sm" onClick={logout}>
-              Deconnexion
-            </Button>
           </div>
         </div>
       </nav>

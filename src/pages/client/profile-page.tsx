@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { authApi, type UpdateProfileRequest } from '@/lib/api/auth-api'
 import { useAuth } from '@/lib/auth/auth-context'
+import { getMissingProfileFields, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -61,6 +62,14 @@ function buildProfileForm(profile: ReturnType<typeof useAuth>['profile']): Profi
   }
 }
 
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="h-2 w-full rounded-full bg-muted">
+      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    </div>
+  )
+}
+
 function toUpdatePayload(form: ProfileFormState): UpdateProfileRequest {
   return {
     firstName: form.firstName.trim() || undefined,
@@ -93,8 +102,9 @@ export function ClientProfilePage() {
     setForm(buildProfileForm(profile))
   }, [profile])
 
-  const completionPercent = profile?.profileCompletionPercent ?? 0
+  const completionPercent = profile?.profileCompletionPercent ?? getProfileCompletionPercent(profile)
   const isProfileComplete = completionPercent >= 100
+  const missingFields = getMissingProfileFields(profile)
 
   const profileSummary = useMemo(
     () => [
@@ -144,6 +154,14 @@ export function ClientProfilePage() {
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <Card>
           <CardContent className="space-y-4 p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium">Complétude du profil</p>
+                <p className="text-sm text-muted-foreground">{completionPercent}%</p>
+              </div>
+              <ProgressBar value={completionPercent} />
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2">
               {profileSummary.map((item) => (
                 <div key={item.label} className="space-y-1">
@@ -152,6 +170,13 @@ export function ClientProfilePage() {
                 </div>
               ))}
             </div>
+
+            {missingFields.length > 0 && (
+              <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                <p className="mb-1 font-medium text-foreground">À compléter</p>
+                <p>{missingFields.slice(0, 5).join(', ')}{missingFields.length > 5 ? '…' : ''}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -186,7 +211,7 @@ export function ClientProfilePage() {
 
           {!isProfileComplete && (
             <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800">
-              Votre profil peut encore etre complete.
+              Votre profil peut encore être complété.
             </p>
           )}
 

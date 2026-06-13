@@ -46,25 +46,25 @@ export type VehicleApplication = {
 export type CreateVehicleApplicationRequest = {
   vehicleId: string
   acquisitionType: ApplicationAcquisitionType
-  firstName: string
-  lastName: string
-  dateOfBirth: string
-  phoneNumber: string
-  addressLine1: string
+  firstName?: string
+  lastName?: string
+  dateOfBirth?: string
+  phoneNumber?: string
+  addressLine1?: string
   addressLine2?: string
-  postalCode: string
-  city: string
-  country: string
-  nationality: string
-  familyStatus: string
-  householdSize: number
-  professionalStatus: string
-  monthlyIncome: number | string
-  monthlyCharges: number | string
-  iban: string
-  durationMonths: number
-  annualMileage: number
-  contributionAmount: number | string
+  postalCode?: string
+  city?: string
+  country?: string
+  nationality?: string
+  familyStatus?: string
+  householdSize?: number
+  professionalStatus?: string
+  monthlyIncome?: number | string
+  monthlyCharges?: number | string
+  iban?: string
+  durationMonths?: number
+  annualMileage?: number
+  contributionAmount?: number | string
   expectedStartDate?: string
   tradeInDescription?: string
   insuranceIncluded: boolean

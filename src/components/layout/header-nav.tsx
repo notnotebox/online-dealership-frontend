@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth/auth-context'
 import { Button } from '@/components/ui/button'
 
 export function HeaderNav() {
-  const { isAuthenticated, profile, logout } = useAuth()
+  const { isAuthenticated } = useAuth()
   const favoritesPath = isAuthenticated ? '/app/favorites' : '/favorites'
   const depositPath = isAuthenticated ? '/app/files/new' : '/login'
 
@@ -24,12 +24,7 @@ export function HeaderNav() {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              <div className="hidden text-right sm:block">
-                <p className="text-xs text-muted-foreground">Connecte</p>
-                <p className="text-sm font-medium">{profile?.firstName ?? 'Utilisateur'}</p>
-              </div>
               <Button variant="ghost" asChild><Link to="/app/dashboard">Espace client</Link></Button>
-              <Button variant="outline" onClick={logout}>Deconnexion</Button>
               <Button asChild><Link to={depositPath}>Deposer un dossier</Link></Button>
             </>
           ) : (
