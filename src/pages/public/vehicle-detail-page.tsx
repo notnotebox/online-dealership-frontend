@@ -3,8 +3,10 @@ import { Link, useParams } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { FavoriteButton } from '@/components/shared/favorite-button'
 import { useAuth } from '@/lib/auth/auth-context'
 import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
+import { buildVehicleImageUrl } from '@/lib/images/vehicle-image'
 
 function formatPrice(price: VehicleResponse['price']) {
   const numericPrice = Number(price)
@@ -76,10 +78,20 @@ export function VehicleDetailPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="flex h-80 items-center justify-center rounded-lg border bg-muted text-sm text-muted-foreground">
-        Image du vehicule a brancher plus tard
+        <img
+          src={buildVehicleImageUrl(vehicle.brand, vehicle.title, vehicle.id)}
+          alt={`${vehicle.brand} ${vehicle.title}`}
+          className="h-full w-full rounded-lg object-cover"
+        />
       </div>
       <div className="space-y-4">
-        <Badge variant="secondary">Catalogue public</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">Catalogue public</Badge>
+          <Badge variant={vehicle.published ? 'default' : 'outline'}>
+            {vehicle.published ? 'Publie' : 'Brouillon'}
+          </Badge>
+          <FavoriteButton vehicleId={vehicle.id} />
+        </div>
         <h1 className="text-3xl font-semibold">
           {vehicle.brand} {vehicle.title}
         </h1>

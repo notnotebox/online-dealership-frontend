@@ -1,38 +1,132 @@
-import { useMemo, useState } from 'react'
-import { VehicleCard } from '@/components/shared/vehicle-card'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { CatalogVehicleCard } from '@/components/shared/catalog-vehicle-card'
 import { Button } from '@/components/ui/button'
-import { vehicles } from '@/lib/constants/mock-data'
-import type { VehicleMode } from '@/types/domain'
+import { vehicleApi, type VehicleEnergy, type VehicleResponse } from '@/lib/api/vehicle-api'
 
 export function VehiclesPage() {
-  const [mode, setMode] = useState<VehicleMode | 'all'>('all')
+  const [searchParams] = useSearchParams()
+  const [brand, setBrand] = useState(() => searchParams.get('brand') ?? '')
+  const [energy, setEnergy] = useState<VehicleEnergy | 'all'>(() => {
+    const value = searchParams.get('energy')
+    return value ? (value as VehicleEnergy) : 'all'
+  })
+  const [maxPrice, setMaxPrice] = useState(() => searchParams.get('maxPrice') ?? '')
+  const [vehicles, setVehicles] = useState<VehicleResponse[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filtered = useMemo(() => vehicles.filter((v) => (mode === 'all' ? true : v.mode === mode)), [mode])
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadVehicles() {
+      try {
+        setIsLoading(true)
+        const response = await vehicleApi.listPublicVehicles({
+          brand: brand.trim() || undefined,
+          energy: energy === 'all' ? undefined : energy,
+          maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        })
+
+        if (!cancelled) {
+          setVehicles(response)
+          setError(null)
+        }
+      } catch (cause) {
+        if (!cancelled) {
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le catalogue')
+          setVehicles([])
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadVehicles()
+
+    return () => {
+      cancelled = true
+    }
+  }, [brand, energy, maxPrice])
+
+  const resultLabel = useMemo(() => {
+    if (isLoading) {
+      return 'Chargement du catalogue...'
+    }
+
+    if (error) {
+      return error
+    }
+
+    return `${vehicles.length} resultat${vehicles.length > 1 ? 's' : ''}`
+  }, [error, isLoading, vehicles.length])
+
+  function resetFilters() {
+    setBrand('')
+    setEnergy('all')
+    setMaxPrice('')
+  }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <select value={mode} onChange={(e) => setMode(e.target.value as VehicleMode | 'all')} className="h-9 rounded-md border px-3 text-sm">
-            <option value="all">Tous les modes</option>
-            <option value="buy">Achat</option>
-            <option value="rent">Location</option>
+      <section className="rounded-lg border p-4">
+        <div className="grid gap-3 md:grid-cols-4">
+          <input
+            className="h-10 rounded-md border px-3 text-sm"
+            value={brand}
+            onChange={(event) => setBrand(event.target.value)}
+            placeholder="Marque"
+          />
+          <select
+            className="h-10 rounded-md border px-3 text-sm"
+            value={energy}
+            onChange={(event) => setEnergy(event.target.value as VehicleEnergy | 'all')}
+          >
+            <option value="all">Toutes les energies</option>
+            <option value="GASOLINE">Essence</option>
+            <option value="DIESEL">Diesel</option>
+            <option value="HYBRID">Hybride</option>
+            <option value="ELECTRIC">Electrique</option>
+            <option value="LPG">GPL</option>
+            <option value="OTHER">Autre</option>
           </select>
-          <input className="h-9 rounded-md border px-3 text-sm" placeholder="Marque" />
-          <input className="h-9 rounded-md border px-3 text-sm" placeholder="Modele" />
-          <Button variant="outline">Reinitialiser</Button>
+          <input
+            className="h-10 rounded-md border px-3 text-sm"
+            value={maxPrice}
+            onChange={(event) => setMaxPrice(event.target.value)}
+            placeholder="Budget max"
+            inputMode="numeric"
+          />
+          <Button variant="outline" onClick={resetFilters}>
+            Reinitialiser
+          </Button>
         </div>
+      </section>
+
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{resultLabel}</p>
       </div>
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{filtered.length} resultats</p>
-        <select className="h-9 rounded-md border px-3 text-sm">
-          <option>Pertinence</option><option>Prix croissant</option><option>Prix decroissant</option>
-        </select>
-      </div>
-      {filtered.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{filtered.map((v) => <VehicleCard key={v.id} {...v} />)}</div>
+
+      {isLoading ? (
+        <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
+          Chargement des vehicules...
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          {error}
+        </div>
+      ) : vehicles.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {vehicles.map((vehicle) => (
+            <CatalogVehicleCard key={vehicle.id} vehicle={vehicle} />
+          ))}
+        </div>
       ) : (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">Aucun vehicule trouve.</div>
+        <div className="rounded-lg border p-8 text-center text-muted-foreground">
+          Aucun vehicule trouve.
+        </div>
       )}
     </div>
   )
