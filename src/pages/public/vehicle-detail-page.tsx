@@ -4,9 +4,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FavoriteButton } from '@/components/shared/favorite-button'
+import { VehicleImage } from '@/components/shared/vehicle-image'
 import { useAuth } from '@/lib/auth/auth-context'
 import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
-import { buildVehicleImageUrl } from '@/lib/images/vehicle-image'
 
 function formatPrice(price: VehicleResponse['price']) {
   const numericPrice = Number(price)
@@ -78,8 +78,10 @@ export function VehicleDetailPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="flex h-80 items-center justify-center rounded-lg border bg-muted text-sm text-muted-foreground">
-        <img
-          src={buildVehicleImageUrl(vehicle.brand, vehicle.title, vehicle.id)}
+        <VehicleImage
+          brand={vehicle.brand}
+          model={vehicle.title}
+          seed={vehicle.id}
           alt={`${vehicle.brand} ${vehicle.title}`}
           className="h-full w-full rounded-lg object-cover"
         />

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { buildVehicleFixtureText, createVehicleFixture } from '@/lib/test-fixtures/vehicle-fixture'
 import { downloadTextFile } from '@/lib/test-fixtures/download-text-file'
 import { buildVehicleImageUrl } from '@/lib/test-fixtures/vehicle-image'
+import { VehicleImage } from '@/components/shared/vehicle-image'
 import type { VehicleEnergy } from '@/lib/api/vehicle-api'
 
 const ENERGY_OPTIONS: { value: VehicleEnergy; label: string }[] = [
@@ -210,7 +211,14 @@ export function BackofficeVehicleFormPage() {
         <div className="space-y-4 rounded-lg border p-4">
           <div className="overflow-hidden rounded-lg border bg-muted">
             {imageUrl ? (
-              <img src={imageUrl} alt={title || `${brand} ${model}`.trim() || 'Vehicule de test'} className="h-48 w-full object-cover" />
+              <VehicleImage
+                brand={brand || 'car'}
+                model={model || 'vehicle'}
+                seed={imageUrl}
+                src={imageUrl}
+                alt={title || `${brand} ${model}`.trim() || 'Vehicule de test'}
+                className="h-48 w-full object-cover"
+              />
             ) : (
               <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
                 Image de test a generer

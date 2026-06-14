@@ -8,11 +8,38 @@ function slugify(value: string) {
 }
 
 export function buildVehicleImageUrl(brand: string, model: string, seed?: string) {
-  const keywords = ['car', brand, model]
+  const query = [
+    'car',
+    'old car',
+    'rusty car',
+    'abandoned car',
+    'wrecked car',
+    'junk car',
+    'scrap car',
+    'car exterior',
+    'vintage car',
+    'classic car',
+    'epave',
+    'voiture ancienne',
+    'voiture rouille',
+    'voiture vieux',
+    'exterieur voiture',
+    'voiture abandonnee',
+    'voiture casse',
+    brand,
+    model,
+  ]
     .map(slugify)
     .filter(Boolean)
     .join(',')
 
-  const lock = seed ? slugify(seed).length + keywords.length : keywords.length + 42
-  return `https://loremflickr.com/1280/720/${keywords}?lock=${lock}`
+  const sig = seed ? slugify(seed).slice(0, 24) : slugify(`${brand}-${model}`).slice(0, 24)
+  return `https://source.unsplash.com/featured/1280x720/?${query}&sig=${sig}`
 }
+
+export const vehicleImageFallbacks = [
+  'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1200&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?q=80&w=1200&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=1200&auto=format&fit=crop',
+] as const

@@ -3,8 +3,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { FavoriteButton } from '@/components/shared/favorite-button'
+import { VehicleImage } from '@/components/shared/vehicle-image'
 import type { VehicleResponse } from '@/lib/api/vehicle-api'
-import { buildVehicleImageUrl } from '@/lib/images/vehicle-image'
 
 function formatPrice(price: VehicleResponse['price']) {
   const numericPrice = Number(price)
@@ -28,8 +28,10 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
     <Card className="flex h-full flex-col overflow-hidden py-0">
       <CardHeader className="relative p-0">
         <div className="h-44 w-full overflow-hidden bg-muted">
-          <img
-            src={buildVehicleImageUrl(vehicle.brand, vehicle.title, vehicle.id)}
+          <VehicleImage
+            brand={vehicle.brand}
+            model={vehicle.title}
+            seed={vehicle.id}
             alt={`${vehicle.brand} ${vehicle.title}`}
             className="h-full w-full object-cover"
           />
