@@ -1,4 +1,4 @@
-import { matchPath, Outlet, useLocation } from 'react-router-dom'
+import { matchPath, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { FooterBar } from '@/components/layout/footer-bar'
 import { SiteHeader } from '@/components/layout/site-header'
 import { useAuth } from '@/lib/auth/auth-context'
@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/auth-context'
 export function PublicLayout() {
   const { isAuthenticated, profile, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const contextAction = matchPath('/vehicles/:vehicleId', location.pathname)
     ? { to: '/vehicles', label: 'Retour catalogue', variant: 'outline' as const }
     : undefined
@@ -24,7 +25,7 @@ export function PublicLayout() {
           ? { to: '/app/dashboard', label: 'Mon espace', variant: 'ghost' }
           : { to: '/login', label: 'Connexion', variant: 'ghost' }}
         secondaryAction={isAuthenticated
-          ? { label: 'Deconnexion', variant: 'outline', onClick: logout }
+          ? { label: 'Deconnexion', variant: 'outline', onClick: () => { logout(); navigate('/'); } }
           : { to: '/register', label: 'Inscription', variant: 'outline' }}
         contextAction={contextAction}
       />

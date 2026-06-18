@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { authApi, type UpdateProfileRequest } from '@/lib/api/auth-api'
 import { useAuth } from '@/lib/auth/auth-context'
 import { getMissingProfileFields, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
@@ -93,6 +93,7 @@ function toUpdatePayload(form: ProfileFormState): UpdateProfileRequest {
 
 export function ClientProfilePage() {
   const { profile, session, logout, refreshProfile } = useAuth()
+  const navigate = useNavigate()
   const [form, setForm] = useState<ProfileFormState>(() => buildProfileForm(profile))
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -192,7 +193,7 @@ export function ClientProfilePage() {
             <Button asChild variant="outline" className="w-full">
               <Link to="/app/files">Voir mes demandes</Link>
             </Button>
-            <Button variant="outline" className="w-full" onClick={logout}>
+            <Button variant="outline" className="w-full" onClick={() => { logout(); navigate('/'); }}>
               Se deconnecter
             </Button>
           </CardContent>

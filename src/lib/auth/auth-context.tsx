@@ -123,6 +123,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [refreshProfile, toSession])
 
   const logout = useCallback(() => {
+    void authApi.logout().catch(() => undefined)
     clearSession()
   }, [clearSession])
 

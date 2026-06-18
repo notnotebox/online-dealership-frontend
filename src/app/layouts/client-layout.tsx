@@ -1,4 +1,4 @@
-import { matchPath, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { matchPath, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { FooterBar } from '@/components/layout/footer-bar'
 import { SiteHeader } from '@/components/layout/site-header'
 import { useAuth } from '@/lib/auth/auth-context'
@@ -14,6 +14,7 @@ const appLinks = [
 export function ClientLayout() {
   const { profile, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const contextAction =
     matchPath('/app/files/new', location.pathname) ||
     matchPath('/app/files/new/:vehicleId', location.pathname) ||
@@ -33,7 +34,7 @@ export function ClientLayout() {
         authenticated
         userName={profile?.firstName}
         primaryAction={{ to: '/app/dashboard', label: 'Espace client', variant: 'ghost' }}
-        secondaryAction={{ label: 'Deconnexion', variant: 'outline', onClick: logout }}
+        secondaryAction={{ label: 'Deconnexion', variant: 'outline', onClick: () => { logout(); navigate('/'); } }}
         contextAction={contextAction}
       />
 
