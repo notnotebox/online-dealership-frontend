@@ -1,5 +1,5 @@
 import type { VehicleEnergy } from '@/lib/api/vehicle-api'
-import { buildVehicleImageUrlFromArt } from '@/lib/images/vehicle-image'
+import { buildVehicleImageUrl } from '@/lib/images/vehicle-image'
 
 const VEHICLE_FIXTURES = [
   {
@@ -247,16 +247,6 @@ export type VehicleFixture = {
 
 export function createVehicleFixture(): VehicleFixture {
   const template = VEHICLE_FIXTURES[randomIndexFromRemaining()]
-  const imageUrl = buildVehicleImageUrlFromArt({
-    title: template.title,
-    subtitle: `${template.year} - ${template.mileage.toLocaleString('fr-FR')} km`,
-    bodyColor: template.bodyColor,
-    accentColor: template.accentColor,
-    badgeColor: template.badgeColor,
-    windowColor: template.windowColor,
-    rustColor: template.rustColor,
-    seed: `${template.brand}-${template.model}-${template.year}`,
-  })
 
   return {
     brand: template.brand,
@@ -270,7 +260,7 @@ export function createVehicleFixture(): VehicleFixture {
     doors: template.doors,
     price: template.price,
     monthlyPrice: template.monthlyPrice,
-    imageUrl,
+    imageUrl: buildVehicleImageUrl(),
     description: template.description,
     equipments: [...template.equipments],
     worksDone: [...template.worksDone],
