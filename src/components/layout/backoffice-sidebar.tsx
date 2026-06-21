@@ -4,8 +4,6 @@ const items = [
   { to: '/backoffice/dashboard', label: 'Dashboard' },
   { to: '/backoffice/vehicles', label: 'Vehicules' },
   { to: '/backoffice/files', label: 'Dossiers' },
-  { to: '/backoffice/users', label: 'Users' },
-  { to: '/backoffice/logs', label: 'Logs' },
 ]
 
 export function BackofficeSidebar() {

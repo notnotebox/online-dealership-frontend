@@ -5,6 +5,7 @@ import { downloadTextFile } from '@/lib/test-fixtures/download-text-file'
 import { buildVehicleImageUrl } from '@/lib/test-fixtures/vehicle-image'
 import { VehicleImage } from '@/components/shared/vehicle-image'
 import type { VehicleEnergy } from '@/lib/api/vehicle-api'
+import { isSupportedVehicleImageUrl } from '@/lib/images/vehicle-image'
 
 const ENERGY_OPTIONS: { value: VehicleEnergy; label: string }[] = [
   { value: 'GASOLINE', label: 'Essence' },
@@ -38,6 +39,7 @@ export function BackofficeVehicleFormPage() {
   const [price, setPrice] = useState('')
   const [monthlyPrice, setMonthlyPrice] = useState('')
   const [imageUrl, setImageUrl] = useState('')
+  const [imageUrlError, setImageUrlError] = useState<string | null>(null)
   const [description, setDescription] = useState('')
   const [equipments, setEquipments] = useState('GPS, Camera de recul, CarPlay')
   const [published, setPublished] = useState(true)
@@ -56,6 +58,7 @@ export function BackofficeVehicleFormPage() {
     setPrice(String(fixture.price))
     setMonthlyPrice(String(fixture.monthlyPrice))
     setImageUrl(fixture.imageUrl)
+    setImageUrlError(null)
     setDescription(fixture.description)
     setEquipments(fixture.equipments.join(', '))
     setPublished(fixture.published)
@@ -72,6 +75,23 @@ export function BackofficeVehicleFormPage() {
     }
 
     setImageUrl(buildVehicleImageUrl(nextBrand, nextModel))
+    setImageUrlError(null)
+  }
+
+  function updateImageUrl(nextValue: string) {
+    setImageUrl(nextValue)
+
+    if (!nextValue.trim()) {
+      setImageUrlError('Une image est requise au format PNG, JPG ou WEBP.')
+      return
+    }
+
+    if (!isSupportedVehicleImageUrl(nextValue)) {
+      setImageUrlError("L'image doit se terminer par .png, .jpg ou .webp.")
+      return
+    }
+
+    setImageUrlError(null)
   }
 
   return (
@@ -188,8 +208,11 @@ export function BackofficeVehicleFormPage() {
             className="h-10 rounded border px-3 md:col-span-2"
             placeholder="Image URL"
             value={imageUrl}
-            onChange={(event) => setImageUrl(event.target.value)}
+            onChange={(event) => updateImageUrl(event.target.value)}
           />
+          <p className={`-mt-2 text-xs md:col-span-2 ${imageUrlError ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {imageUrlError ?? 'Formats acceptes : PNG, JPG ou WEBP.'}
+          </p>
           <textarea
             className="min-h-28 rounded border px-3 py-2 md:col-span-2"
             placeholder="Description"
@@ -210,7 +233,7 @@ export function BackofficeVehicleFormPage() {
 
         <div className="space-y-4 rounded-lg border p-4">
           <div className="overflow-hidden rounded-lg border bg-muted">
-            {imageUrl ? (
+            {imageUrl && !imageUrlError ? (
               <VehicleImage
                 brand={brand || 'car'}
                 model={model || 'vehicle'}
@@ -221,7 +244,7 @@ export function BackofficeVehicleFormPage() {
               />
             ) : (
               <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-                Image de test a generer
+                {imageUrlError ?? 'Image de test a generer'}
               </div>
             )}
           </div>

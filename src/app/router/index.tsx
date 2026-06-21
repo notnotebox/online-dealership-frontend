@@ -63,8 +63,6 @@ export function AppRouter() {
           <Route path="/backoffice/vehicles/:vehicleId/edit" element={<BackofficeVehicleFormPage />} />
           <Route path="/backoffice/files" element={<BackofficeFilesPage />} />
           <Route path="/backoffice/files/:fileId" element={<BackofficeFileDetailPage />} />
-          <Route path="/backoffice/users" element={<SimpleTextPage title="Users" />} />
-          <Route path="/backoffice/logs" element={<SimpleTextPage title="Logs" />} />
         </Route>
       </Route>
     </Routes>
