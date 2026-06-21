@@ -9,13 +9,14 @@ type StatusMeta = {
 }
 
 export const applicationStatusMap: Record<ApplicationStatus, StatusMeta> = {
-  DRAFT: { label: 'Brouillon', variant: 'secondary', helper: 'Demande en preparation' },
-  SUBMITTED: { label: 'Soumise', variant: 'outline', helper: 'Demande envoyee au traitement' },
-  UNDER_REVIEW: { label: 'En etude', variant: 'default', helper: 'Analyse en cours' },
-  NEEDS_INFO: { label: 'Pieces manquantes', variant: 'destructive', helper: 'Complement demande' },
-  APPROVED: { label: 'Validee', variant: 'default', className: 'bg-emerald-600 text-white', helper: 'Demande acceptee' },
-  REJECTED: { label: 'Refusee', variant: 'destructive', helper: 'Demande non retenue' },
-  CANCELLED: { label: 'Annulee', variant: 'outline', helper: 'Demande cloturee' },
+  DRAFT: { label: 'Draft', variant: 'secondary', helper: 'Dossier commence mais pas envoye' },
+  TO_COMPLETE: { label: 'To complete', variant: 'outline', helper: 'Dossier a terminer' },
+  SUBMITTED: { label: 'Submitted', variant: 'outline', helper: 'Dossier transmis' },
+  UNDER_REVIEW: { label: 'Under review', variant: 'default', helper: 'Verification en cours' },
+  COMPLEMENT_REQUESTED: { label: 'Need info', variant: 'destructive', helper: 'Piece ou precision attendue' },
+  WAITING_CUSTOMER: { label: 'Waiting customer', variant: 'secondary', helper: 'En attente de reponse client' },
+  APPROVED: { label: 'Approved', variant: 'default', className: 'bg-emerald-600 text-white', helper: 'Dossier valide' },
+  REJECTED: { label: 'Rejected', variant: 'destructive', helper: 'Dossier refuse' },
 }
 
 export function ApplicationStatusBadge({ status }: { status: ApplicationStatus }) {

@@ -1,6 +1,8 @@
 export type ApplicationAcquisitionType = 'CASH' | 'CREDIT' | 'LOA' | 'LLD'
 
-export type ApplicationStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_INFO' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+export type ApplicationStatus = 'DRAFT' | 'TO_COMPLETE' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COMPLEMENT_REQUESTED' | 'WAITING_CUSTOMER' | 'APPROVED' | 'REJECTED'
+
+export type ApplicationBoardColumn = 'UNPROCESSED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED'
 
 export type VehicleApplication = {
   id: string
@@ -12,6 +14,7 @@ export type VehicleApplication = {
   vehicleMileage: number
   acquisitionType: ApplicationAcquisitionType
   status: ApplicationStatus
+  boardColumn: ApplicationBoardColumn
   firstName: string
   lastName: string
   dateOfBirth: string | null
@@ -38,6 +41,11 @@ export type VehicleApplication = {
   assistanceIncluded: boolean
   maintenanceIncluded: boolean
   comment: string | null
+  internalComment: string | null
+  applicantId: string
+  submittedAt: string | null
+  reviewedAt: string | null
+  reviewedBy: string | null
   createdAt: string
   updatedAt: string
   profileCompletionPercent: number
@@ -46,6 +54,7 @@ export type VehicleApplication = {
 export type CreateVehicleApplicationRequest = {
   vehicleId: string
   acquisitionType: ApplicationAcquisitionType
+  status?: ApplicationStatus
   firstName?: string
   lastName?: string
   dateOfBirth?: string
@@ -72,4 +81,11 @@ export type CreateVehicleApplicationRequest = {
   assistanceIncluded: boolean
   maintenanceIncluded: boolean
   comment?: string
+}
+
+export type UpdateVehicleApplicationRequest = Partial<CreateVehicleApplicationRequest>
+
+export type UpdateApplicationStatusRequest = {
+  status: ApplicationStatus
+  internalComment?: string
 }

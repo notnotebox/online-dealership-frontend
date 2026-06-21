@@ -31,6 +31,7 @@ export type DocumentRecord = {
   fileSizeBytes: number
   mimeType: string
   ownerId: string
+  applicationId: string | null
   createdAt: string
   downloadUrl: string
 }
@@ -38,6 +39,7 @@ export type DocumentRecord = {
 export type DocumentUploadPayload = {
   file: File
   documentType: DocumentType
+  applicationId?: string
 }
 
 export type RequiredDocument = {

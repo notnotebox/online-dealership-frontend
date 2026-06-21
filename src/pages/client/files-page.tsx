@@ -6,9 +6,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { applicationApi } from '@/lib/api/application-api'
 import type { ApplicationStatus, VehicleApplication } from '@/lib/application/application-types'
 
-const inProgressStatuses = new Set<ApplicationStatus>(['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'NEEDS_INFO'])
+const inProgressStatuses = new Set<ApplicationStatus>(['DRAFT', 'TO_COMPLETE', 'SUBMITTED', 'UNDER_REVIEW', 'COMPLEMENT_REQUESTED', 'WAITING_CUSTOMER'])
 const approvedStatuses = new Set<ApplicationStatus>(['APPROVED'])
-const rejectedStatuses = new Set<ApplicationStatus>(['REJECTED', 'CANCELLED'])
+const rejectedStatuses = new Set<ApplicationStatus>(['REJECTED'])
 
 export function ClientFilesPage() {
   const [applications, setApplications] = useState<VehicleApplication[]>([])

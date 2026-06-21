@@ -26,6 +26,7 @@ export function FileTrackingPage() {
   const { fileId } = useParams()
   const [application, setApplication] = useState<VehicleApplication | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -62,6 +63,23 @@ export function FileTrackingPage() {
       cancelled = true
     }
   }, [fileId])
+
+  async function submitApplication() {
+    if (!application) {
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const response = await applicationApi.submitMine(application.id)
+      setApplication(response)
+      setError(null)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Soumission impossible')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const timeline = useMemo(() => {
     if (!application) {
@@ -149,6 +167,11 @@ export function FileTrackingPage() {
             <Button asChild className="w-full">
               <Link to={`/app/files/${application.id}/upload`}>Voir les documents</Link>
             </Button>
+            {['DRAFT', 'TO_COMPLETE'].includes(application.status) && (
+              <Button className="w-full" onClick={() => void submitApplication()} disabled={isSubmitting}>
+                {isSubmitting ? 'Soumission...' : 'Soumettre le dossier'}
+              </Button>
+            )}
             <Button asChild variant="outline" className="w-full">
               <Link to="/app/files">Retour a la liste</Link>
             </Button>

@@ -82,10 +82,10 @@ export function UploadDocumentsPage() {
     )
   }, [documents])
 
-  async function handleUpload(payload: { file: File; documentType: DocumentType }) {
+  async function handleUpload(payload: { file: File; documentType: DocumentType; applicationId?: string }) {
     try {
       setIsUploading(true)
-      const uploaded = await documentApi.upload(payload)
+      const uploaded = await documentApi.upload({ ...payload, applicationId: payload.applicationId ?? fileId ?? undefined })
       setDocuments((current) => [uploaded, ...current])
       setError(null)
     } catch (cause) {
@@ -180,6 +180,7 @@ export function UploadDocumentsPage() {
                 : [{ value: 'OTHER', label: 'Autre pièce' }]}
               allowedFormats="PDF"
               isUploading={isUploading}
+              applicationId={fileId ?? undefined}
               onUpload={handleUpload}
             />
             <Button asChild variant="outline" className="w-full">

@@ -9,6 +9,9 @@ export const documentApi = {
     const formData = new FormData()
     formData.append('file', payload.file)
     formData.append('documentType', payload.documentType)
+    if (payload.applicationId) {
+      formData.append('applicationId', payload.applicationId)
+    }
 
     return apiRequest<DocumentRecord>('/documents', {
       method: 'POST',

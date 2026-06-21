@@ -8,10 +8,11 @@ type DocumentUploadZoneProps = {
   documentTypes: Array<{ value: DocumentType; label: string }>
   allowedFormats: string
   isUploading?: boolean
-  onUpload: (payload: { file: File; documentType: DocumentType }) => Promise<void>
+  applicationId?: string
+  onUpload: (payload: { file: File; documentType: DocumentType; applicationId?: string }) => Promise<void>
 }
 
-export function DocumentUploadZone({ documentTypes, allowedFormats, isUploading = false, onUpload }: DocumentUploadZoneProps) {
+export function DocumentUploadZone({ documentTypes, allowedFormats, isUploading = false, applicationId, onUpload }: DocumentUploadZoneProps) {
   const [file, setFile] = useState<File | null>(null)
   const [documentType, setDocumentType] = useState<DocumentType>(documentTypes[0]?.value ?? 'OTHER')
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +25,7 @@ export function DocumentUploadZone({ documentTypes, allowedFormats, isUploading 
 
     try {
       setError(null)
-      await onUpload({ file, documentType })
+      await onUpload({ file, documentType, applicationId })
       setFile(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Envoi impossible')

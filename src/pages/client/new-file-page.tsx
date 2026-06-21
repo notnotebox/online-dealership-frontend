@@ -393,6 +393,7 @@ export function NewFilePage() {
       const response = await applicationApi.create({
         vehicleId: form.vehicleId,
         acquisitionType: form.acquisitionType,
+        status: 'DRAFT',
         firstName: form.firstName.trim() || undefined,
         lastName: form.lastName.trim() || undefined,
         dateOfBirth: form.dateOfBirth || undefined,
