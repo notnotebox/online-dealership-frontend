@@ -32,36 +32,6 @@ export function BackofficeVehiclesPage() {
   useEffect(() => {
     let cancelled = false
 
-    async function loadVehicles() {
-      try {
-        setIsLoading(true)
-        const response = await vehicleApi.listAdminVehicles()
-        if (!cancelled) {
-          setVehicles(response)
-          setError(null)
-        }
-      } catch (cause) {
-        if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger les vehicules')
-          setVehicles([])
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadVehicles()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-
     async function loadFilteredVehicles() {
       try {
         setIsLoading(true)

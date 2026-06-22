@@ -57,10 +57,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const me = await authApi.me()
       setProfile(me)
 
-      try {
-        const favoriteResponse = await authApi.favorites()
-        setFavorites(favoriteResponse.favorites)
-      } catch {
+      if (me.role === 'CLIENT') {
+        try {
+          const favoriteResponse = await authApi.favorites()
+          setFavorites(favoriteResponse.favorites)
+        } catch {
+          setFavorites([])
+        }
+      } else {
         setFavorites([])
       }
 
@@ -88,10 +92,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!cancelled) {
           setProfile(me)
           setSession(storedSession)
-          try {
-            const favoriteResponse = await authApi.favorites()
-            setFavorites(favoriteResponse.favorites)
-          } catch {
+          if (me.role === 'CLIENT') {
+            try {
+              const favoriteResponse = await authApi.favorites()
+              setFavorites(favoriteResponse.favorites)
+            } catch {
+              setFavorites([])
+            }
+          } else {
             setFavorites([])
           }
         }
@@ -139,7 +147,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const refreshFavorites = useCallback(async () => {
     const currentSession = getStoredSession() ?? session
-    if (!currentSession) {
+    if (!currentSession || currentSession.user.role !== 'CLIENT') {
       setFavorites([])
       return []
     }
