@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ApplicationStatusBadge } from '@/components/shared/application-status-badge'
+import { ContentStateCard } from '@/components/shared/content-state-card'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { applicationApi } from '@/lib/api/application-api'
@@ -86,7 +87,10 @@ export function BackofficeFilesPage() {
               {isLoading ? (
                 <p className="text-sm text-muted-foreground">Chargement...</p>
               ) : group.applications.length === 0 ? (
-                <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">Aucun dossier ici.</p>
+                <ContentStateCard
+                  title="Aucun dossier dans cette colonne"
+                  description="Les nouveaux dossiers apparaîtront ici selon leur niveau d avancement."
+                />
               ) : (
                 <div className="space-y-3">
                   {group.applications.map((application) => (

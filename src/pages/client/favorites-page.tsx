@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { CatalogVehicleCard } from '@/components/shared/catalog-vehicle-card'
+import { ContentStateCard } from '@/components/shared/content-state-card'
 import { useAuth } from '@/lib/auth/auth-context'
 
 export function ClientFavoritesPage() {
@@ -21,11 +22,10 @@ export function ClientFavoritesPage() {
       </div>
 
       {favorites.length === 0 ? (
-        <Card>
-          <CardContent className="p-4 text-sm text-muted-foreground">
-            Aucun vehicule en favori pour le moment.
-          </CardContent>
-        </Card>
+        <ContentStateCard
+          title="Aucun favori pour le moment"
+          description="Les vehicules que vous enregistrez apparaissent ici pour un acces rapide."
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {favorites.map((vehicle) => (

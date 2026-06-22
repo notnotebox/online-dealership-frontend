@@ -14,6 +14,7 @@ export function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader
+        leadingAction={{ to: '/vehicles', label: 'Catalogue', variant: 'outline' }}
         navLinks={[]}
         authenticated={isAuthenticated}
         userName={profile?.firstName}

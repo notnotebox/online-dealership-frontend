@@ -14,6 +14,7 @@ export type SiteHeaderAction = {
 }
 
 type SiteHeaderProps = {
+  leadingAction?: SiteHeaderAction
   navLinks: SiteHeaderLink[]
   authenticated: boolean
   userName?: string
@@ -25,6 +26,7 @@ type SiteHeaderProps = {
 }
 
 export function SiteHeader({
+  leadingAction,
   navLinks,
   authenticated,
   userName,
@@ -38,9 +40,22 @@ export function SiteHeader({
     <header className="border-b bg-background">
       <div className="mx-auto h-16 max-w-7xl px-4">
         <div className="flex h-full items-center justify-between gap-3">
-          <Link to={brandTo} className="shrink-0 text-lg font-semibold">
-            {brandLabel}
-          </Link>
+          <div className="flex min-w-0 items-center gap-3">
+            <Link to={brandTo} className="shrink-0 text-lg font-semibold">
+              {brandLabel}
+            </Link>
+            {leadingAction && (
+              leadingAction.to ? (
+                <Button variant={leadingAction.variant ?? 'ghost'} asChild>
+                  <Link to={leadingAction.to}>{leadingAction.label}</Link>
+                </Button>
+              ) : (
+                <Button variant={leadingAction.variant ?? 'ghost'} onClick={leadingAction.onClick}>
+                  {leadingAction.label}
+                </Button>
+              )
+            )}
+          </div>
 
           {navLinks.length > 0 && (
             <nav className="hidden min-w-0 flex-1 items-center justify-center gap-6 overflow-x-auto whitespace-nowrap md:flex">

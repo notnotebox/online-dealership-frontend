@@ -26,9 +26,8 @@ export function ClientLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader
-        navLinks={[
-          { to: '/vehicles', label: 'Vehicules' },
-        ]}
+        leadingAction={{ to: '/vehicles', label: 'Catalogue', variant: 'outline' }}
+        navLinks={[]}
         authenticated
         userName={profile?.firstName}
         primaryAction={{ to: '/app/dashboard', label: 'Espace client', variant: 'ghost' }}

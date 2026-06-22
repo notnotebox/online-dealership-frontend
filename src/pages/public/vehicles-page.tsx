@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { ContentStateCard } from '@/components/shared/content-state-card'
 import { CatalogVehicleCard } from '@/components/shared/catalog-vehicle-card'
 import { Button } from '@/components/ui/button'
 import { vehicleApi, type VehicleEnergy, type VehicleResponse } from '@/lib/api/vehicle-api'
@@ -114,9 +115,12 @@ export function VehiclesPage() {
           Chargement des vehicules...
         </div>
       ) : error ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
+        <ContentStateCard
+          title="Catalogue indisponible"
+          description="Le catalogue ne repond pas pour le moment. Reessayez dans un instant ou revenez depuis la page d accueil."
+          actionLabel="Recharger"
+          onAction={() => window.location.reload()}
+        />
       ) : vehicles.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {vehicles.map((vehicle) => (
@@ -124,9 +128,10 @@ export function VehiclesPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
-          Aucun vehicule trouve.
-        </div>
+        <ContentStateCard
+          title="Aucun vehicule disponible"
+          description="Le catalogue est temporairement vide. Les nouveaux vehicules apparaîtront ici dès leur publication."
+        />
       )}
     </div>
   )

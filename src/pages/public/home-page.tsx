@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ContentStateCard } from '@/components/shared/content-state-card'
 import { CatalogVehicleCard } from '@/components/shared/catalog-vehicle-card'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -102,9 +103,19 @@ export function HomePage() {
         {isLoading ? (
           <div className="rounded-lg border p-6 text-sm text-muted-foreground">Chargement...</div>
         ) : error ? (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
+          <ContentStateCard
+            title="Vehicules momentanement indisponibles"
+            description="Le catalogue n est pas accessible pour le moment. Revenez un peu plus tard pour consulter les offres."
+            actionLabel="Voir le catalogue"
+            onAction={() => navigate('/vehicles')}
+          />
+        ) : vehicles.length === 0 ? (
+          <ContentStateCard
+            title="Aucun vehicule en avant"
+            description="Les trois derniers vehicules publiés apparaîtront ici automatiquement."
+            actionLabel="Voir le catalogue"
+            onAction={() => navigate('/vehicles')}
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {vehicles.map((vehicle) => (
