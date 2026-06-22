@@ -168,25 +168,30 @@ export function BackofficeVehicleFormPage() {
       throw new Error('Session non disponible')
     }
 
-    const response = await fetch(media.downloadUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Impossible de charger le media')
-    }
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const opened = window.open(url, '_blank', 'noopener,noreferrer')
+    const opened = window.open('', '_blank', 'noopener,noreferrer')
     if (!opened) {
-      URL.revokeObjectURL(url)
       throw new Error('Impossible douvrir le media')
     }
 
-    window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    try {
+      const response = await fetch(media.downloadUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Impossible de charger le media')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      opened.location.href = url
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    } catch (cause) {
+      opened.close()
+      throw cause
+    }
   }
 
   async function handleSubmit() {

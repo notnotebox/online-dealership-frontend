@@ -109,7 +109,4 @@ export const vehicleApi = {
   listPublicVehicleMedia(vehicleId: string) {
     return apiRequest<VehicleMediaResponse[]>(`/catalog/vehicles/${vehicleId}/media`)
   },
-  downloadPublicVehicleMedia(vehicleId: string, mediaId: string) {
-    return apiRequest<string>(`/catalog/vehicles/${vehicleId}/media/${mediaId}`)
-  },
 }
