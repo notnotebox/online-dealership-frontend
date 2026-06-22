@@ -10,6 +10,36 @@ export type VehicleResponse = {
   energy: VehicleEnergy
   mileage: number
   published: boolean
+  imageUrl: string | null
+}
+
+export type AdminVehicleResponse = {
+  id: string
+  title: string
+  brand: string
+  price: string
+  energy: VehicleEnergy
+  mileage: number
+  published: boolean
+  archived: boolean
+  createdBy: string | null
+  createdAt: string
+}
+
+export type VehicleMediaResponse = {
+  id: string
+  vehicleId: string
+  sortOrder: number
+  downloadUrl: string
+}
+
+export type CreateVehiclePayload = {
+  title: string
+  brand: string
+  price: string | number
+  energy: VehicleEnergy
+  mileage: number
+  published: boolean
 }
 
 type PublicVehicleFilters = {
@@ -44,5 +74,42 @@ export const vehicleApi = {
   },
   getPublicVehicle(vehicleId: string) {
     return apiRequest<VehicleResponse>(`/catalog/vehicles/${vehicleId}`)
+  },
+  listAdminVehicles() {
+    return apiRequest<AdminVehicleResponse[]>('/admin/vehicles')
+  },
+  getAdminVehicle(vehicleId: string) {
+    return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}`)
+  },
+  createAdminVehicle(payload: CreateVehiclePayload) {
+    return apiRequest<AdminVehicleResponse>('/admin/vehicles', {
+      method: 'POST',
+      body: payload,
+    })
+  },
+  updateAdminVehicle(vehicleId: string, payload: CreateVehiclePayload) {
+    return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}`, {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
+  uploadAdminVehicleMedia(vehicleId: string, file: File, sortOrder = 0) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('sortOrder', String(sortOrder))
+
+    return apiRequest<VehicleMediaResponse>(`/admin/vehicles/${vehicleId}/media`, {
+      method: 'POST',
+      body: formData,
+    })
+  },
+  listAdminVehicleMedia(vehicleId: string) {
+    return apiRequest<VehicleMediaResponse[]>(`/admin/vehicles/${vehicleId}/media`)
+  },
+  listPublicVehicleMedia(vehicleId: string) {
+    return apiRequest<VehicleMediaResponse[]>(`/catalog/vehicles/${vehicleId}/media`)
+  },
+  downloadPublicVehicleMedia(vehicleId: string, mediaId: string) {
+    return apiRequest<string>(`/catalog/vehicles/${vehicleId}/media/${mediaId}`)
   },
 }

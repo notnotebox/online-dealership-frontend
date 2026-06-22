@@ -82,6 +82,7 @@ export function VehicleDetailPage() {
           brand={vehicle.brand}
           model={vehicle.title}
           seed={vehicle.id}
+          src={vehicle.imageUrl ?? undefined}
           alt={`${vehicle.brand} ${vehicle.title}`}
           className="h-full w-full rounded-lg object-cover"
         />
