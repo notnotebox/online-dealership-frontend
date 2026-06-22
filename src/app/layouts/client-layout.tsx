@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth/auth-context'
 const appLinks = [
   { to: '/app/dashboard', label: 'Dashboard' },
   { to: '/app/profile', label: 'Profil' },
-  { to: '/app/favorites', label: 'Favoris' },
+  { to: '/app/favoris', label: 'Favoris' },
   { to: '/app/files', label: 'Demandes' },
   { to: '/app/settings', label: 'Parametres' },
 ]
@@ -28,8 +28,6 @@ export function ClientLayout() {
       <SiteHeader
         navLinks={[
           { to: '/vehicles', label: 'Vehicules' },
-          { to: '/app/favorites', label: 'Favoris' },
-          { to: '/app/files', label: 'Dossiers' },
         ]}
         authenticated
         userName={profile?.firstName}

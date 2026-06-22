@@ -42,18 +42,19 @@ export function SiteHeader({
             {brandLabel}
           </Link>
 
-          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-6 overflow-x-auto whitespace-nowrap md:flex">
-            {navLinks.map((link) => (
-              <NavLink key={link.to} to={link.to} className="text-sm text-muted-foreground hover:text-foreground">
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
+          {navLinks.length > 0 && (
+            <nav className="hidden min-w-0 flex-1 items-center justify-center gap-6 overflow-x-auto whitespace-nowrap md:flex">
+              {navLinks.map((link) => (
+                <NavLink key={link.to} to={link.to} className="text-sm text-muted-foreground hover:text-foreground">
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
 
           <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
             {authenticated && (
               <div className="hidden max-w-[160px] text-right sm:block">
-                <p className="truncate text-xs text-muted-foreground">Connecte</p>
                 <p className="truncate text-sm font-medium">{userName ?? 'Utilisateur'}</p>
               </div>
             )}

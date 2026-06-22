@@ -14,11 +14,7 @@ export function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader
-        navLinks={[
-          { to: '/vehicles', label: 'Vehicules' },
-          { to: isAuthenticated ? '/app/favorites' : '/favorites', label: 'Favoris' },
-          { to: '/contact', label: 'Contact' },
-        ]}
+        navLinks={[]}
         authenticated={isAuthenticated}
         userName={profile?.firstName}
         primaryAction={isAuthenticated
