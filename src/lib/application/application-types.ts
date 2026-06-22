@@ -54,7 +54,6 @@ export type VehicleApplication = {
 export type CreateVehicleApplicationRequest = {
   vehicleId: string
   acquisitionType: ApplicationAcquisitionType
-  status?: ApplicationStatus
   firstName?: string
   lastName?: string
   dateOfBirth?: string

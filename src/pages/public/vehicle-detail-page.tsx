@@ -103,6 +103,10 @@ export function VehicleDetailPage() {
           <CardContent className="space-y-2 p-4">
             <p className="text-sm text-muted-foreground">Kilometrage: {vehicle.mileage.toLocaleString('fr-FR')} km</p>
             <p className="text-sm text-muted-foreground">Energie: {vehicle.energy}</p>
+            <p className="text-sm text-muted-foreground">Places: {vehicle.seatCount}</p>
+            <p className="text-sm text-muted-foreground">Portes: {vehicle.doorCount}</p>
+            <p className="text-sm text-muted-foreground">Couleur: {vehicle.color}</p>
+            <p className="text-sm text-muted-foreground">Mis a jour le: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}</p>
             <p className="text-sm text-muted-foreground">{vehicle.published ? 'Vehicule publie' : 'Vehicule non publie'}</p>
           </CardContent>
         </Card>

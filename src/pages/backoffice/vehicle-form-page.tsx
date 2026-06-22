@@ -24,6 +24,9 @@ type FormState = {
   brand: string
   price: string
   mileage: string
+  seatCount: string
+  doorCount: string
+  color: string
   energy: VehicleEnergy
   published: boolean
 }
@@ -33,6 +36,9 @@ const DEFAULT_STATE: FormState = {
   brand: '',
   price: '',
   mileage: '',
+  seatCount: '5',
+  doorCount: '5',
+  color: 'Noir',
   energy: 'GASOLINE',
   published: true,
 }
@@ -115,6 +121,9 @@ export function BackofficeVehicleFormPage() {
           brand: vehicle.brand,
           price: String(vehicle.price),
           mileage: String(vehicle.mileage),
+          seatCount: String(vehicle.seatCount),
+          doorCount: String(vehicle.doorCount),
+          color: vehicle.color,
           energy: vehicle.energy,
           published: vehicle.published,
         })
@@ -202,6 +211,8 @@ export function BackofficeVehicleFormPage() {
 
     const price = Number(form.price)
     const mileage = Number(form.mileage)
+    const seatCount = Number(form.seatCount)
+    const doorCount = Number(form.doorCount)
 
     if (!Number.isFinite(price) || price < 0) {
       setError('Le prix doit etre un nombre positif.')
@@ -210,6 +221,21 @@ export function BackofficeVehicleFormPage() {
 
     if (!Number.isFinite(mileage) || mileage < 0) {
       setError('Le kilometrage doit etre un nombre positif.')
+      return
+    }
+
+    if (!Number.isFinite(seatCount) || seatCount < 1) {
+      setError('Le nombre de places doit etre au moins egal a 1.')
+      return
+    }
+
+    if (!Number.isFinite(doorCount) || doorCount < 1) {
+      setError('Le nombre de portes doit etre au moins egal a 1.')
+      return
+    }
+
+    if (!form.color.trim()) {
+      setError('La couleur est requise.')
       return
     }
 
@@ -223,6 +249,9 @@ export function BackofficeVehicleFormPage() {
         price,
         energy: form.energy,
         mileage: Math.trunc(mileage),
+        seatCount: Math.trunc(seatCount),
+        doorCount: Math.trunc(doorCount),
+        color: form.color.trim(),
         published: form.published,
       }
 
@@ -330,6 +359,40 @@ export function BackofficeVehicleFormPage() {
                 value={form.mileage}
                 onChange={(event) => setForm((current) => ({ ...current, mileage: event.target.value }))}
                 placeholder="18400"
+              />
+            </label>
+
+            <label className="space-y-1 text-sm">
+              <span className="text-muted-foreground">Places: {form.seatCount}</span>
+              <input
+                className="w-full"
+                type="range"
+                min="1"
+                max="9"
+                value={form.seatCount}
+                onChange={(event) => setForm((current) => ({ ...current, seatCount: event.target.value }))}
+              />
+            </label>
+
+            <label className="space-y-1 text-sm">
+              <span className="text-muted-foreground">Portes: {form.doorCount}</span>
+              <input
+                className="w-full"
+                type="range"
+                min="2"
+                max="6"
+                value={form.doorCount}
+                onChange={(event) => setForm((current) => ({ ...current, doorCount: event.target.value }))}
+              />
+            </label>
+
+            <label className="space-y-1 text-sm md:col-span-2">
+              <span className="text-muted-foreground">Couleur</span>
+              <input
+                className="h-10 w-full rounded-md border px-3"
+                value={form.color}
+                onChange={(event) => setForm((current) => ({ ...current, color: event.target.value }))}
+                placeholder="Noir, blanc, gris..."
               />
             </label>
 

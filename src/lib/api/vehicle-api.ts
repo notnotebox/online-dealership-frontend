@@ -9,7 +9,11 @@ export type VehicleResponse = {
   price: string
   energy: VehicleEnergy
   mileage: number
+  seatCount: number
+  doorCount: number
+  color: string
   published: boolean
+  updatedAt: string
   imageUrl: string | null
 }
 
@@ -20,8 +24,13 @@ export type AdminVehicleResponse = {
   price: string
   energy: VehicleEnergy
   mileage: number
+  seatCount: number
+  doorCount: number
+  color: string
   published: boolean
   archived: boolean
+  updatedAt: string
+  imageUrl: string | null
   createdBy: string | null
   createdAt: string
 }
@@ -39,6 +48,9 @@ export type CreateVehiclePayload = {
   price: string | number
   energy: VehicleEnergy
   mileage: number
+  seatCount: number
+  doorCount: number
+  color: string
   published: boolean
 }
 
@@ -46,6 +58,12 @@ type PublicVehicleFilters = {
   brand?: string
   energy?: VehicleEnergy
   maxPrice?: number
+}
+
+type AdminVehicleFilters = {
+  query?: string
+  status?: 'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED'
+  energy?: VehicleEnergy
 }
 
 function buildQueryString(filters?: PublicVehicleFilters) {
@@ -68,6 +86,26 @@ function buildQueryString(filters?: PublicVehicleFilters) {
   return query ? `?${query}` : ''
 }
 
+function buildAdminQueryString(filters?: AdminVehicleFilters) {
+  if (!filters) {
+    return ''
+  }
+
+  const params = new URLSearchParams()
+  if (filters.query) {
+    params.set('query', filters.query)
+  }
+  if (filters.status && filters.status !== 'ALL') {
+    params.set('status', filters.status)
+  }
+  if (filters.energy) {
+    params.set('energy', filters.energy)
+  }
+
+  const query = params.toString()
+  return query ? `?${query}` : ''
+}
+
 export const vehicleApi = {
   listPublicVehicles(filters?: PublicVehicleFilters) {
     return apiRequest<VehicleResponse[]>(`/catalog/vehicles${buildQueryString(filters)}`)
@@ -75,8 +113,8 @@ export const vehicleApi = {
   getPublicVehicle(vehicleId: string) {
     return apiRequest<VehicleResponse>(`/catalog/vehicles/${vehicleId}`)
   },
-  listAdminVehicles() {
-    return apiRequest<AdminVehicleResponse[]>('/admin/vehicles')
+  listAdminVehicles(filters?: AdminVehicleFilters) {
+    return apiRequest<AdminVehicleResponse[]>(`/admin/vehicles${buildAdminQueryString(filters)}`)
   },
   getAdminVehicle(vehicleId: string) {
     return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}`)
@@ -91,6 +129,31 @@ export const vehicleApi = {
     return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}`, {
       method: 'PATCH',
       body: payload,
+    })
+  },
+  deleteAdminVehicle(vehicleId: string) {
+    return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}`, {
+      method: 'DELETE',
+    })
+  },
+  publishAdminVehicle(vehicleId: string) {
+    return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}/publish`, {
+      method: 'PATCH',
+    })
+  },
+  unpublishAdminVehicle(vehicleId: string) {
+    return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}/unpublish`, {
+      method: 'PATCH',
+    })
+  },
+  archiveAdminVehicle(vehicleId: string) {
+    return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}/archive`, {
+      method: 'PATCH',
+    })
+  },
+  unarchiveAdminVehicle(vehicleId: string) {
+    return apiRequest<AdminVehicleResponse>(`/admin/vehicles/${vehicleId}/unarchive`, {
+      method: 'PATCH',
     })
   },
   uploadAdminVehicleMedia(vehicleId: string, file: File, sortOrder = 0) {

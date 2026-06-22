@@ -42,7 +42,11 @@ export type FavoriteVehicle = {
   price: string | number | null
   energy: string
   mileage: number | null
+  seatCount?: number
+  doorCount?: number
+  color?: string
   published: boolean
+  imageUrl?: string | null
 }
 
 export type FavoritesResponse = {

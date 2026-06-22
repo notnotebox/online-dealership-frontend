@@ -4,12 +4,24 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { FavoriteButton } from '@/components/shared/favorite-button'
 import { VehicleImage } from '@/components/shared/vehicle-image'
-import type { VehicleResponse } from '@/lib/api/vehicle-api'
+type CatalogVehicle = {
+  id: string
+  title: string
+  brand: string
+  price: string | number | null
+  energy: string
+  mileage: number | null
+  seatCount?: number
+  doorCount?: number
+  color?: string
+  published: boolean
+  imageUrl?: string | null
+}
 
-function formatPrice(price: VehicleResponse['price']) {
+function formatPrice(price: CatalogVehicle['price']) {
   const numericPrice = Number(price)
   if (Number.isNaN(numericPrice)) {
-    return `${price} EUR`
+    return price == null ? 'Sur demande' : `${price} EUR`
   }
 
   return new Intl.NumberFormat('fr-FR', {
@@ -20,7 +32,7 @@ function formatPrice(price: VehicleResponse['price']) {
 }
 
 type CatalogVehicleCardProps = {
-  vehicle: VehicleResponse
+  vehicle: CatalogVehicle
 }
 
 export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
@@ -52,12 +64,17 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
         <div className="space-y-1">
           <h3 className="text-lg font-semibold leading-tight">{vehicle.title}</h3>
           <p className="text-sm text-muted-foreground">{vehicle.energy}</p>
+          {vehicle.seatCount != null && vehicle.doorCount != null && vehicle.color && (
+            <p className="text-xs text-muted-foreground">
+              {vehicle.seatCount} places - {vehicle.doorCount} portes - {vehicle.color}
+            </p>
+          )}
         </div>
 
         <div className="flex items-end justify-between gap-2">
           <p className="text-lg font-semibold">{formatPrice(vehicle.price)}</p>
           <p className="text-sm text-muted-foreground">
-            {vehicle.mileage.toLocaleString('fr-FR')} km
+            {vehicle.mileage == null ? 'Kilometrage non renseigne' : `${vehicle.mileage.toLocaleString('fr-FR')} km`}
           </p>
         </div>
       </CardContent>

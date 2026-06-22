@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { vehicleApi, type AdminVehicleResponse } from '@/lib/api/vehicle-api'
+import { Card, CardContent } from '@/components/ui/card'
+import { vehicleApi, type AdminVehicleResponse, type VehicleEnergy } from '@/lib/api/vehicle-api'
+
+type VehicleStatusFilter = 'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED'
 
 function formatPrice(price: AdminVehicleResponse['price']) {
   const numericPrice = Number(price)
@@ -21,6 +24,10 @@ export function BackofficeVehiclesPage() {
   const [vehicles, setVehicles] = useState<AdminVehicleResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<VehicleStatusFilter>('ALL')
+  const [energyFilter, setEnergyFilter] = useState<VehicleEnergy | 'ALL'>('ALL')
+  const [isActionLoading, setIsActionLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -52,17 +59,113 @@ export function BackofficeVehiclesPage() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadFilteredVehicles() {
+      try {
+        setIsLoading(true)
+        const response = await vehicleApi.listAdminVehicles({
+          query: search.trim() || undefined,
+          status: statusFilter,
+          energy: energyFilter === 'ALL' ? undefined : energyFilter,
+        })
+
+        if (!cancelled) {
+          setVehicles(response)
+          setError(null)
+        }
+      } catch (cause) {
+        if (!cancelled) {
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger les vehicules')
+          setVehicles([])
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadFilteredVehicles()
+
+    return () => {
+      cancelled = true
+    }
+  }, [energyFilter, search, statusFilter])
+
+  async function refreshVehicles() {
+    const response = await vehicleApi.listAdminVehicles({
+      query: search.trim() || undefined,
+      status: statusFilter,
+      energy: energyFilter === 'ALL' ? undefined : energyFilter,
+    })
+    setVehicles(response)
+  }
+
+  async function handleAction(action: () => Promise<AdminVehicleResponse>, confirmationMessage: string) {
+    if (!window.confirm(confirmationMessage)) {
+      return
+    }
+
+    try {
+      setIsActionLoading(true)
+      await action()
+      await refreshVehicles()
+      setError(null)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Action impossible')
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Vehicules</h1>
-          <p className="text-sm text-muted-foreground">Pilotage du catalogue et des medias associes.</p>
+          <p className="text-sm text-muted-foreground">Pilotage du catalogue, des statuts et des apercus internes.</p>
         </div>
         <Button asChild>
           <Link to="/backoffice/vehicles/new">Ajouter un vehicule</Link>
         </Button>
       </div>
+
+      <Card>
+        <CardContent className="grid gap-3 p-4 md:grid-cols-3">
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Recherche</span>
+            <input
+              className="h-10 w-full rounded-md border px-3"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Marque ou modele"
+            />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Statut</span>
+            <select className="h-10 w-full rounded-md border px-3" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as VehicleStatusFilter)}>
+              <option value="ALL">Tous</option>
+              <option value="PUBLISHED">Publies</option>
+              <option value="DRAFT">Brouillons</option>
+              <option value="ARCHIVED">Archives</option>
+            </select>
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Energie</span>
+            <select className="h-10 w-full rounded-md border px-3" value={energyFilter} onChange={(event) => setEnergyFilter(event.target.value as VehicleEnergy | 'ALL')}>
+              <option value="ALL">Toutes</option>
+              <option value="GASOLINE">GASOLINE</option>
+              <option value="DIESEL">DIESEL</option>
+              <option value="HYBRID">HYBRID</option>
+              <option value="ELECTRIC">ELECTRIC</option>
+              <option value="LPG">LPG</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+          </label>
+        </CardContent>
+      </Card>
 
       {isLoading && <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement...</div>}
 
@@ -73,7 +176,7 @@ export function BackofficeVehiclesPage() {
       )}
 
       {!isLoading && !error && vehicles.length === 0 && (
-        <div className="rounded-lg border p-4 text-sm text-muted-foreground">Aucun vehicule enregistre.</div>
+        <div className="rounded-lg border p-4 text-sm text-muted-foreground">Aucun vehicule ne correspond aux filtres.</div>
       )}
 
       {!isLoading && !error && vehicles.length > 0 && (
@@ -82,10 +185,9 @@ export function BackofficeVehiclesPage() {
             <thead className="bg-muted/50 text-left">
               <tr>
                 <th className="p-3">Vehicule</th>
-                <th>Prix</th>
-                <th>Statut</th>
-                <th>Archive</th>
-                <th>Actions</th>
+                <th className="p-3">Prix</th>
+                <th className="p-3">Etat</th>
+                <th className="p-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -96,22 +198,77 @@ export function BackofficeVehiclesPage() {
                     <div className="text-xs text-muted-foreground">
                       {vehicle.energy} - {vehicle.mileage.toLocaleString('fr-FR')} km
                     </div>
+                    <div className="text-xs text-muted-foreground">
+                      {vehicle.seatCount} places - {vehicle.doorCount} portes - {vehicle.color}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Badge variant="secondary">{vehicle.imageUrl ? 'Media disponible' : 'Sans media'}</Badge>
+                      <Badge variant={vehicle.archived ? 'secondary' : 'outline'}>
+                        {vehicle.archived ? 'Archive' : 'Actif'}
+                      </Badge>
+                    </div>
                   </td>
-                  <td>{formatPrice(vehicle.price)}</td>
-                  <td>
-                    <Badge variant={vehicle.published ? 'default' : 'outline'}>
-                      {vehicle.published ? 'Publie' : 'Brouillon'}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge variant={vehicle.archived ? 'secondary' : 'outline'}>
-                      {vehicle.archived ? 'Archive' : 'Actif'}
-                    </Badge>
+                  <td className="p-3">{formatPrice(vehicle.price)}</td>
+                  <td className="p-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={vehicle.published && !vehicle.archived ? 'default' : 'outline'}>
+                        {vehicle.published && !vehicle.archived ? 'Publie' : 'Masque'}
+                      </Badge>
+                      <Badge variant={vehicle.archived ? 'secondary' : 'outline'}>
+                        {vehicle.archived ? 'Archive' : 'Visible'}
+                      </Badge>
+                    </div>
                   </td>
                   <td className="p-3">
-                    <Link className="font-medium underline" to={`/backoffice/vehicles/${vehicle.id}/edit`}>
-                      Modifier
-                    </Link>
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/backoffice/vehicles/${vehicle.id}/preview`}>Apercu</Link>
+                      </Button>
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/backoffice/vehicles/${vehicle.id}/edit`}>Modifier</Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isActionLoading}
+                        onClick={() => void handleAction(
+                          () => (vehicle.published && !vehicle.archived
+                            ? vehicleApi.unpublishAdminVehicle(vehicle.id)
+                            : vehicleApi.publishAdminVehicle(vehicle.id)),
+                          vehicle.published && !vehicle.archived
+                            ? 'Masquer ce vehicule du catalogue public ?'
+                            : 'Publier ce vehicule dans le catalogue public ?',
+                        )}
+                      >
+                        {vehicle.published && !vehicle.archived ? 'Masquer' : 'Publier'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isActionLoading}
+                        onClick={() => void handleAction(
+                          () => (vehicle.archived
+                            ? vehicleApi.unarchiveAdminVehicle(vehicle.id)
+                            : vehicleApi.archiveAdminVehicle(vehicle.id)),
+                          vehicle.archived
+                            ? 'Restaurer ce vehicule ?'
+                            : 'Archiver ce vehicule ?',
+                        )}
+                      >
+                        {vehicle.archived ? 'Restaurer' : 'Archiver'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={isActionLoading}
+                        onClick={() => void handleAction(
+                          () => vehicleApi.deleteAdminVehicle(vehicle.id),
+                          'Supprimer ce vehicule ? Cette action le masque du public et l archive.',
+                        )}
+                      >
+                        Supprimer
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
