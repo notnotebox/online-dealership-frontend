@@ -56,8 +56,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     try {
       const me = await authApi.me()
       setProfile(me)
-      const favoriteResponse = await authApi.favorites()
-      setFavorites(favoriteResponse.favorites)
+
+      try {
+        const favoriteResponse = await authApi.favorites()
+        setFavorites(favoriteResponse.favorites)
+      } catch {
+        setFavorites([])
+      }
+
       return me
     } catch {
       clearSession()
@@ -82,8 +88,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!cancelled) {
           setProfile(me)
           setSession(storedSession)
-          const favoriteResponse = await authApi.favorites()
-          setFavorites(favoriteResponse.favorites)
+          try {
+            const favoriteResponse = await authApi.favorites()
+            setFavorites(favoriteResponse.favorites)
+          } catch {
+            setFavorites([])
+          }
         }
       } catch {
         if (!cancelled) {
