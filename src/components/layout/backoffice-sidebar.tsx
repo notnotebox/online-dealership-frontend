@@ -1,4 +1,5 @@
-import { Link, NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+import { AppLogo } from '@/components/layout/app-logo'
 
 const items = [
   { to: '/backoffice/dashboard', label: 'Dashboard' },
@@ -9,7 +10,7 @@ const items = [
 export function BackofficeSidebar() {
   return (
     <aside className="w-64 border-r bg-muted/30 p-4">
-      <Link to="/backoffice/dashboard" className="mb-6 block text-lg font-semibold">Backoffice</Link>
+      <AppLogo to="/backoffice/dashboard" label="Backoffice" className="mb-6" />
       <nav className="space-y-1">
         {items.map((item) => (
           <NavLink key={item.to} to={item.to} className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">

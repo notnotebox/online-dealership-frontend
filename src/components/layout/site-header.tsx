@@ -1,4 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
+import { AppLogo } from '@/components/layout/app-logo'
 import { Button } from '@/components/ui/button'
 
 export type SiteHeaderLink = {
@@ -41,9 +42,7 @@ export function SiteHeader({
       <div className="mx-auto h-16 max-w-7xl px-4">
         <div className="flex h-full items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Link to={brandTo} className="shrink-0 text-lg font-semibold">
-              {brandLabel}
-            </Link>
+            <AppLogo to={brandTo} label={brandLabel} className="shrink-0" />
             {leadingAction && (
               leadingAction.to ? (
                 <Button variant={leadingAction.variant ?? 'ghost'} asChild>
