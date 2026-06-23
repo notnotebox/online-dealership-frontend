@@ -62,7 +62,7 @@ type PublicVehicleFilters = {
 
 type AdminVehicleFilters = {
   query?: string
-  status?: 'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED'
+  status?: 'ALL' | 'VISIBLE' | 'HIDDEN' | 'ARCHIVED'
   energy?: VehicleEnergy
 }
 

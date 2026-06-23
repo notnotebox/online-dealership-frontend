@@ -19,6 +19,14 @@ function formatPrice(price: AdminVehicleResponse['price']) {
   }).format(numericPrice)
 }
 
+function getVisibilityLabel(vehicle: AdminVehicleResponse) {
+  if (vehicle.archived) {
+    return 'Archivé'
+  }
+
+  return vehicle.published ? 'Visible' : 'Masqué'
+}
+
 export function BackofficeVehiclePreviewPage() {
   const navigate = useNavigate()
   const { vehicleId } = useParams()
@@ -150,8 +158,9 @@ export function BackofficeVehiclePreviewPage() {
             <CardContent className="space-y-3 p-4">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{vehicle.brand}</Badge>
-                <Badge variant={vehicle.published ? 'default' : 'outline'}>{vehicle.published ? 'Publie' : 'Masque'}</Badge>
-                <Badge variant={vehicle.archived ? 'secondary' : 'outline'}>{vehicle.archived ? 'Archive' : 'Actif'}</Badge>
+                <Badge variant={vehicle.archived ? 'secondary' : vehicle.published ? 'default' : 'outline'}>
+                  {getVisibilityLabel(vehicle)}
+                </Badge>
               </div>
               <p className="text-lg font-semibold">{formatPrice(vehicle.price)}</p>
               <p className="text-sm text-muted-foreground">{vehicle.energy} - {vehicle.mileage.toLocaleString('fr-FR')} km</p>

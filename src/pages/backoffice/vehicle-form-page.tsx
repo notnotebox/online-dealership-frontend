@@ -295,9 +295,9 @@ export function BackofficeVehicleFormPage() {
               <Upload className="h-4 w-4" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">Zone test</p>
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">Zone de test</p>
               <p className="text-sm text-amber-900/80 dark:text-amber-100/80">
-                Cette ecran sert aussi aux tests formateurs. Les images sont chargees via drag and drop, sans champ URL.
+                Cet écran sert aussi aux tests formateurs. Les images sont chargées via glisser-déposer, sans champ URL.
               </p>
             </div>
           </div>
@@ -417,7 +417,7 @@ export function BackofficeVehicleFormPage() {
                 checked={form.published}
                 onChange={(event) => setForm((current) => ({ ...current, published: event.target.checked }))}
               />
-              Vehicule publie
+              Vehicule visible
             </label>
           </CardContent>
         </Card>

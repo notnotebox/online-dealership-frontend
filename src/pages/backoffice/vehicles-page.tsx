@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { vehicleApi, type AdminVehicleResponse, type VehicleEnergy } from '@/lib/api/vehicle-api'
 
-type VehicleStatusFilter = 'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED'
+type VehicleStatusFilter = 'ALL' | 'VISIBLE' | 'HIDDEN' | 'ARCHIVED'
+
+function getVehicleStatusLabel(vehicle: AdminVehicleResponse) {
+  if (vehicle.archived) {
+    return 'Archivé'
+  }
+
+  return vehicle.published ? 'Visible' : 'Masqué'
+}
 
 function formatPrice(price: AdminVehicleResponse['price']) {
   const numericPrice = Number(price)
@@ -94,8 +102,8 @@ export function BackofficeVehiclesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Vehicules</h1>
-          <p className="text-sm text-muted-foreground">Pilotage du catalogue, des statuts et des apercus internes.</p>
+          <h1 className="text-2xl font-semibold">Véhicules</h1>
+          <p className="text-sm text-muted-foreground">Pilotage du catalogue, des statuts et des aperçus internes.</p>
         </div>
         <Button asChild>
           <Link to="/backoffice/vehicles/new">Ajouter un vehicule</Link>
@@ -117,9 +125,9 @@ export function BackofficeVehiclesPage() {
             <span className="text-muted-foreground">Statut</span>
             <select className="h-10 w-full rounded-md border px-3" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as VehicleStatusFilter)}>
               <option value="ALL">Tous</option>
-              <option value="PUBLISHED">Publies</option>
-              <option value="DRAFT">Brouillons</option>
-              <option value="ARCHIVED">Archives</option>
+              <option value="VISIBLE">Visibles</option>
+              <option value="HIDDEN">Masqués</option>
+              <option value="ARCHIVED">Archivés</option>
             </select>
           </label>
           <label className="space-y-1 text-sm">
@@ -173,19 +181,13 @@ export function BackofficeVehiclesPage() {
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <Badge variant="secondary">{vehicle.imageUrl ? 'Media disponible' : 'Sans media'}</Badge>
-                      <Badge variant={vehicle.archived ? 'secondary' : 'outline'}>
-                        {vehicle.archived ? 'Archive' : 'Actif'}
-                      </Badge>
                     </div>
                   </td>
                   <td className="p-3">{formatPrice(vehicle.price)}</td>
                   <td className="p-3">
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant={vehicle.published && !vehicle.archived ? 'default' : 'outline'}>
-                        {vehicle.published && !vehicle.archived ? 'Publie' : 'Masque'}
-                      </Badge>
-                      <Badge variant={vehicle.archived ? 'secondary' : 'outline'}>
-                        {vehicle.archived ? 'Archive' : 'Visible'}
+                      <Badge variant={vehicle.archived ? 'secondary' : vehicle.published ? 'default' : 'outline'}>
+                        {getVehicleStatusLabel(vehicle)}
                       </Badge>
                     </div>
                   </td>
@@ -206,11 +208,11 @@ export function BackofficeVehiclesPage() {
                             ? vehicleApi.unpublishAdminVehicle(vehicle.id)
                             : vehicleApi.publishAdminVehicle(vehicle.id)),
                           vehicle.published && !vehicle.archived
-                            ? 'Masquer ce vehicule du catalogue public ?'
-                            : 'Publier ce vehicule dans le catalogue public ?',
+                            ? 'Masquer ce vehicule ?'
+                            : 'Rendre ce vehicule visible ?',
                         )}
                       >
-                        {vehicle.published && !vehicle.archived ? 'Masquer' : 'Publier'}
+                        {vehicle.published && !vehicle.archived ? 'Masquer' : 'Afficher'}
                       </Button>
                       <Button
                         size="sm"
