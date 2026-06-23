@@ -8,7 +8,6 @@ const appLinks = [
   { to: '/app/profile', label: 'Profil' },
   { to: '/app/favoris', label: 'Favoris' },
   { to: '/app/files', label: 'Demandes' },
-  { to: '/app/settings', label: 'Parametres' },
 ]
 
 export function ClientLayout() {

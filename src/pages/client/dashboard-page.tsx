@@ -36,7 +36,7 @@ export function ClientDashboardPage() {
 
   const stats = useMemo(() => {
     const total = applications.length
-    const inProgress = applications.filter((app) => ['DRAFT', 'TO_COMPLETE', 'SUBMITTED', 'UNDER_REVIEW', 'COMPLEMENT_REQUESTED', 'WAITING_CUSTOMER'].includes(app.status)).length
+    const inProgress = applications.filter((app) => ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'COMPLEMENT_REQUESTED', 'WAITING_CUSTOMER'].includes(app.status)).length
     const approved = applications.filter((app) => app.status === 'APPROVED').length
     const needInfo = applications.filter((app) => app.status === 'COMPLEMENT_REQUESTED').length
     return { total, inProgress, approved, needInfo }

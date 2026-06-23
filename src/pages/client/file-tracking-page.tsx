@@ -167,7 +167,7 @@ export function FileTrackingPage() {
             <Button asChild className="w-full">
               <Link to={`/app/files/${application.id}/upload`}>Voir les documents</Link>
             </Button>
-            {['DRAFT', 'TO_COMPLETE'].includes(application.status) && (
+            {application.status === 'DRAFT' && (
               <Button className="w-full" onClick={() => void submitApplication()} disabled={isSubmitting}>
                 {isSubmitting ? 'Soumission...' : 'Soumettre le dossier'}
               </Button>

@@ -1,6 +1,6 @@
 export type ApplicationAcquisitionType = 'CASH' | 'CREDIT' | 'LOA' | 'LLD'
 
-export type ApplicationStatus = 'DRAFT' | 'TO_COMPLETE' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COMPLEMENT_REQUESTED' | 'WAITING_CUSTOMER' | 'APPROVED' | 'REJECTED'
+export type ApplicationStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COMPLEMENT_REQUESTED' | 'WAITING_CUSTOMER' | 'APPROVED' | 'REJECTED'
 
 export type ApplicationBoardColumn = 'UNPROCESSED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED'
 

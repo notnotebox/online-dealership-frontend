@@ -22,7 +22,6 @@ import { ContactPage } from '@/pages/public/contact-page'
 import { LoginPage } from '@/pages/public/login-page'
 import { RegisterPage } from '@/pages/public/register-page'
 import { PrivacyPage } from '@/pages/public/privacy-page'
-import { SimpleTextPage } from '@/pages/public/simple-text-page'
 import { VehicleDetailPage } from '@/pages/public/vehicle-detail-page'
 import { VehiclesPage } from '@/pages/public/vehicles-page'
 
@@ -55,7 +54,6 @@ export function AppRouter() {
           <Route path="/app/files/new/:vehicleId" element={<NewFilePage />} />
           <Route path="/app/files/:fileId" element={<FileTrackingPage />} />
           <Route path="/app/files/:fileId/upload" element={<UploadDocumentsPage />} />
-          <Route path="/app/settings" element={<SimpleTextPage title="Parametres" />} />
         </Route>
       </Route>
 
