@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authApi, type UpdateProfileRequest } from '@/lib/api/auth-api'
 import { useAuth } from '@/lib/auth/auth-context'
-import { getMissingProfileFields, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
+import { getMissingProfileFields, getMissingProfileFieldKeys, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
+import { CompletionField, completionInputClassName } from '@/components/shared/completion-field'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -70,6 +71,7 @@ function ProgressBar({ value }: { value: number }) {
   )
 }
 
+
 function toUpdatePayload(form: ProfileFormState): UpdateProfileRequest {
   return {
     firstName: form.firstName.trim() || undefined,
@@ -106,6 +108,7 @@ export function ClientProfilePage() {
   const completionPercent = profile?.profileCompletionPercent ?? getProfileCompletionPercent(profile)
   const isProfileComplete = completionPercent >= 100
   const missingFields = getMissingProfileFields(profile)
+  const missingFieldKeys = new Set(getMissingProfileFieldKeys(profile))
 
   const profileSummary = useMemo(
     () => [
@@ -217,70 +220,54 @@ export function ClientProfilePage() {
           )}
 
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Prenom</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.firstName} onChange={(event) => updateField('firstName', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Nom</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.lastName} onChange={(event) => updateField('lastName', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Date de naissance</span>
-              <input className="h-10 w-full rounded-md border px-3" type="date" value={form.dateOfBirth} onChange={(event) => updateField('dateOfBirth', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Telephone</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.phoneNumber} onChange={(event) => updateField('phoneNumber', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Adresse</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.addressLine1} onChange={(event) => updateField('addressLine1', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Complement d'adresse</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.addressLine2} onChange={(event) => updateField('addressLine2', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Code postal</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.postalCode} onChange={(event) => updateField('postalCode', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Ville</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.city} onChange={(event) => updateField('city', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Pays</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.country} onChange={(event) => updateField('country', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Nationalite</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.nationality} onChange={(event) => updateField('nationality', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Situation familiale</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.familyStatus} onChange={(event) => updateField('familyStatus', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Nombre de personnes au foyer</span>
-              <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.householdSize} onChange={(event) => updateField('householdSize', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Situation professionnelle</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.professionalStatus} onChange={(event) => updateField('professionalStatus', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Revenus mensuels nets</span>
-              <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.monthlyIncome} onChange={(event) => updateField('monthlyIncome', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Charges mensuelles</span>
-              <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.monthlyCharges} onChange={(event) => updateField('monthlyCharges', event.target.value)} />
-            </label>
-            <label className="space-y-1 text-sm md:col-span-2">
-              <span className="text-muted-foreground">IBAN</span>
-              <input className="h-10 w-full rounded-md border px-3" value={form.iban} onChange={(event) => updateField('iban', event.target.value)} />
-            </label>
+            <CompletionField label="Prenom" missing={missingFieldKeys.has('firstName')}>
+              <input className={completionInputClassName(missingFieldKeys.has('firstName'))} value={form.firstName} onChange={(event) => updateField('firstName', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Nom" missing={missingFieldKeys.has('lastName')}>
+              <input className={completionInputClassName(missingFieldKeys.has('lastName'))} value={form.lastName} onChange={(event) => updateField('lastName', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Date de naissance" missing={missingFieldKeys.has('dateOfBirth')}>
+              <input className={completionInputClassName(missingFieldKeys.has('dateOfBirth'))} type="date" value={form.dateOfBirth} onChange={(event) => updateField('dateOfBirth', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Telephone" missing={missingFieldKeys.has('phoneNumber')}>
+              <input className={completionInputClassName(missingFieldKeys.has('phoneNumber'))} value={form.phoneNumber} onChange={(event) => updateField('phoneNumber', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Adresse" missing={missingFieldKeys.has('addressLine1')} className="md:col-span-2">
+              <input className={completionInputClassName(missingFieldKeys.has('addressLine1'))} value={form.addressLine1} onChange={(event) => updateField('addressLine1', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Complement d'adresse" missing={false}>
+              <input className={completionInputClassName(false)} value={form.addressLine2} onChange={(event) => updateField('addressLine2', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Code postal" missing={missingFieldKeys.has('postalCode')}>
+              <input className={completionInputClassName(missingFieldKeys.has('postalCode'))} value={form.postalCode} onChange={(event) => updateField('postalCode', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Ville" missing={missingFieldKeys.has('city')}>
+              <input className={completionInputClassName(missingFieldKeys.has('city'))} value={form.city} onChange={(event) => updateField('city', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Pays" missing={missingFieldKeys.has('country')}>
+              <input className={completionInputClassName(missingFieldKeys.has('country'))} value={form.country} onChange={(event) => updateField('country', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Nationalite" missing={missingFieldKeys.has('nationality')}>
+              <input className={completionInputClassName(missingFieldKeys.has('nationality'))} value={form.nationality} onChange={(event) => updateField('nationality', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Situation familiale" missing={missingFieldKeys.has('familyStatus')}>
+              <input className={completionInputClassName(missingFieldKeys.has('familyStatus'))} value={form.familyStatus} onChange={(event) => updateField('familyStatus', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Nombre de personnes au foyer" missing={missingFieldKeys.has('householdSize')}>
+              <input className={completionInputClassName(missingFieldKeys.has('householdSize'))} type="number" min="0" value={form.householdSize} onChange={(event) => updateField('householdSize', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Situation professionnelle" missing={missingFieldKeys.has('professionalStatus')}>
+              <input className={completionInputClassName(missingFieldKeys.has('professionalStatus'))} value={form.professionalStatus} onChange={(event) => updateField('professionalStatus', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Revenus mensuels nets" missing={missingFieldKeys.has('monthlyIncome')}>
+              <input className={completionInputClassName(missingFieldKeys.has('monthlyIncome'))} type="number" min="0" value={form.monthlyIncome} onChange={(event) => updateField('monthlyIncome', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="Charges mensuelles" missing={missingFieldKeys.has('monthlyCharges')}>
+              <input className={completionInputClassName(missingFieldKeys.has('monthlyCharges'))} type="number" min="0" value={form.monthlyCharges} onChange={(event) => updateField('monthlyCharges', event.target.value)} />
+            </CompletionField>
+            <CompletionField label="IBAN" missing={missingFieldKeys.has('iban')} className="md:col-span-2">
+              <input className={completionInputClassName(missingFieldKeys.has('iban'))} value={form.iban} onChange={(event) => updateField('iban', event.target.value)} />
+            </CompletionField>
           </div>
 
           <div className="flex flex-wrap gap-2">

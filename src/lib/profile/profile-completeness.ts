@@ -17,7 +17,7 @@ export type ProfileFieldKey =
   | 'monthlyCharges'
   | 'iban'
 
-type ProfileFieldDescriptor = {
+export type ProfileFieldDescriptor = {
   key: ProfileFieldKey
   label: string
 }
@@ -39,6 +39,12 @@ export const PROFILE_FIELDS: ProfileFieldDescriptor[] = [
   { key: 'monthlyCharges', label: 'Charges mensuelles' },
   { key: 'iban', label: 'IBAN' },
 ]
+
+export const PROFILE_FIELD_KEYS = PROFILE_FIELDS.map((field) => field.key)
+export const PROFILE_FIELD_LABEL_BY_KEY: Record<ProfileFieldKey, string> = PROFILE_FIELDS.reduce(
+  (accumulator, field) => ({ ...accumulator, [field.key]: field.label }),
+  {} as Record<ProfileFieldKey, string>,
+)
 
 function hasValue(value: unknown) {
   if (value == null) {
@@ -65,10 +71,18 @@ export function getProfileCompletionPercent(profile: Partial<UserProfile> | null
   return Math.round((completed * 1000) / PROFILE_FIELDS.length) / 10
 }
 
-export function getMissingProfileFields(profile: Partial<UserProfile> | null | undefined) {
+export function getMissingProfileFieldKeys(profile: Partial<UserProfile> | null | undefined) {
   if (!profile) {
-    return PROFILE_FIELDS.map((field) => field.label)
+    return [...PROFILE_FIELD_KEYS]
   }
 
-  return PROFILE_FIELDS.filter((field) => !hasValue(profile[field.key])).map((field) => field.label)
+  return PROFILE_FIELDS.filter((field) => !hasValue(profile[field.key])).map((field) => field.key)
+}
+
+export function getMissingProfileFields(profile: Partial<UserProfile> | null | undefined) {
+  return getMissingProfileFieldKeys(profile).map((key) => PROFILE_FIELD_LABEL_BY_KEY[key])
+}
+
+export function isProfileFieldMissing(profile: Partial<UserProfile> | null | undefined, field: ProfileFieldKey) {
+  return getMissingProfileFieldKeys(profile).includes(field)
 }
