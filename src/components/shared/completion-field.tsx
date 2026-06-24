@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type CompletionFieldProps = {
@@ -30,17 +30,14 @@ export function completionTextareaClassName(missing: boolean) {
 export function CompletionField({ label, missing, className, children }: CompletionFieldProps) {
   return (
     <label className={cn('space-y-1 text-sm', className)}>
-      <span className={cn('flex items-center gap-2 font-medium', missing ? 'text-amber-700' : 'text-muted-foreground')}>
-        {missing ? <AlertCircle className="h-4 w-4 shrink-0" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />}
+      <span className="flex items-center gap-2 font-medium text-muted-foreground">
         <span>{label}</span>
-        <span
-          className={cn(
-            'ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em]',
-            missing ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-700',
-          )}
-        >
-          {missing ? 'À compléter' : 'OK'}
-        </span>
+        {missing ? (
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold tracking-[0.12em] text-amber-800">
+            <AlertCircle className="h-3 w-3 shrink-0" />
+            À compléter
+          </span>
+        ) : null}
       </span>
       {children}
     </label>
