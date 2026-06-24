@@ -70,9 +70,4 @@ export const authApi = {
       method: 'DELETE',
     })
   },
-  logout() {
-    return apiRequest<void>('/auth/logout', {
-      method: 'POST',
-    })
-  },
 }
