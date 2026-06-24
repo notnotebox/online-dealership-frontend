@@ -13,6 +13,7 @@ const rejectedStatuses = new Set<ApplicationStatus>(['REJECTED'])
 export function ClientFilesPage() {
   const [applications, setApplications] = useState<VehicleApplication[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmittingId, setIsSubmittingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -43,6 +44,21 @@ export function ClientFilesPage() {
       cancelled = true
     }
   }, [])
+
+  async function submitApplication(applicationId: string) {
+    try {
+      setIsSubmittingId(applicationId)
+      const response = await applicationApi.submitMine(applicationId)
+      setApplications((current) => current.map((application) => (
+        application.id === applicationId ? response : application
+      )))
+      setError(null)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Soumission impossible')
+    } finally {
+      setIsSubmittingId(null)
+    }
+  }
 
   const groups = useMemo(() => {
     return [
@@ -131,6 +147,14 @@ export function ClientFilesPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <ApplicationStatusBadge status={application.status} />
+                  {application.status === 'DRAFT' && (
+                    <Button
+                      onClick={() => void submitApplication(application.id)}
+                      disabled={isSubmittingId === application.id}
+                    >
+                      {isSubmittingId === application.id ? 'Soumission...' : 'Soumettre'}
+                    </Button>
+                  )}
                   <Button asChild variant="outline">
                     <Link to={`/app/files/${application.id}`}>Voir le detail</Link>
                   </Button>

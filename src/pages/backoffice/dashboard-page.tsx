@@ -17,7 +17,7 @@ export function BackofficeDashboardPage() {
         setIsLoading(true)
         const response = await applicationApi.listAdmin()
         if (!cancelled) {
-          setApplications(response)
+          setApplications(response.filter((application) => application.status !== 'DRAFT'))
         }
       } finally {
         if (!cancelled) {
@@ -47,8 +47,8 @@ export function BackofficeDashboardPage() {
       <h1 className="text-2xl font-semibold">Dashboard gestionnaire</h1>
       <div className="flex flex-wrap gap-2">
         <Button asChild><Link to="/backoffice/files">Ouvrir les dossiers</Link></Button>
-        <Button asChild variant="outline"><Link to="/backoffice/vehicles">Gerer les vehicules</Link></Button>
-        <Button asChild variant="outline"><Link to="/backoffice/vehicles/new">Ajouter un vehicule</Link></Button>
+        <Button asChild variant="outline"><Link to="/backoffice/vehicles">Gérer les véhicules</Link></Button>
+        <Button asChild variant="outline"><Link to="/backoffice/vehicles/new">Ajouter un véhicule</Link></Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

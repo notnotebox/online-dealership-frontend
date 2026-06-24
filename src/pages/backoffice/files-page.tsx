@@ -8,10 +8,10 @@ import { applicationApi } from '@/lib/api/application-api'
 import type { ApplicationBoardColumn, VehicleApplication } from '@/lib/application/application-types'
 
 const COLUMNS: Array<{ key: ApplicationBoardColumn; label: string; description: string }> = [
-  { key: 'UNPROCESSED', label: 'Non traites', description: 'Dossiers recu, a trier ou a demarrer.' },
-  { key: 'IN_REVIEW', label: 'En verification', description: 'Pieces et dossier en cours de controle.' },
-  { key: 'APPROVED', label: 'Valides', description: 'Dossiers acceptes.' },
-  { key: 'REJECTED', label: 'Refuses', description: 'Dossiers fermes ou refuses.' },
+  { key: 'UNPROCESSED', label: 'Non traités', description: 'Dossiers soumis à ouvrir ou à prendre en charge.' },
+  { key: 'IN_REVIEW', label: 'En vérification', description: 'Contrôle du dossier et des pièces.' },
+  { key: 'APPROVED', label: 'Validés', description: 'Dossiers acceptés.' },
+  { key: 'REJECTED', label: 'Refusés', description: 'Dossiers clôturés ou refusés.' },
 ]
 
 export function BackofficeFilesPage() {
@@ -27,7 +27,7 @@ export function BackofficeFilesPage() {
         setIsLoading(true)
         const response = await applicationApi.listAdmin()
         if (!cancelled) {
-          setApplications(response)
+          setApplications(response.filter((application) => application.status !== 'DRAFT'))
           setError(null)
         }
       } catch (cause) {
@@ -61,16 +61,16 @@ export function BackofficeFilesPage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold">Dossiers clients</h1>
           <p className="text-sm text-muted-foreground">
-            Vue de traitement par colonnes. Un dossier peut etre consulte sans etre modifie.
+            Vue métier par colonnes. Les brouillons ne sont pas affichés dans le back-office.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline"><Link to="/backoffice/dashboard">Retour dashboard</Link></Button>
-          <Button asChild><Link to="/backoffice/vehicles">Vehicules</Link></Button>
+          <Button asChild><Link to="/backoffice/vehicles">Véhicules</Link></Button>
         </div>
       </div>
 
-      {error && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>}
+      {error ? <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p> : null}
 
       <div className="grid gap-4 xl:grid-cols-4">
         {grouped.map((group) => (
@@ -85,11 +85,11 @@ export function BackofficeFilesPage() {
               </div>
 
               {isLoading ? (
-                <p className="text-sm text-muted-foreground">Chargement...</p>
+                <p className="text-sm text-muted-foreground">Chargement…</p>
               ) : group.applications.length === 0 ? (
                 <ContentStateCard
                   title="Aucun dossier dans cette colonne"
-                  description="Les nouveaux dossiers apparaîtront ici selon leur niveau d avancement."
+                  description="Les dossiers apparaîtront ici selon leur état d’avancement."
                 />
               ) : (
                 <div className="space-y-3">
@@ -108,19 +108,14 @@ export function BackofficeFilesPage() {
                       </div>
 
                       <div className="space-y-1 text-xs text-muted-foreground">
-                        <p>Mode: {application.acquisitionType}</p>
-                        <p>Mise a jour: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(application.updatedAt))}</p>
-                        <p>Profil: {application.profileCompletionPercent}%</p>
+                        <p>Mode : {application.acquisitionType}</p>
+                        <p>Mise à jour : {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(application.updatedAt))}</p>
+                        <p>Profil : {application.profileCompletionPercent}%</p>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Button asChild size="sm" variant="outline">
-                          <Link to={`/backoffice/files/${application.id}`}>Ouvrir</Link>
-                        </Button>
-                        <Button asChild size="sm" variant="ghost">
-                          <Link to={`/app/files/${application.id}`}>Vue client</Link>
-                        </Button>
-                      </div>
+                      <Button asChild size="sm" variant="outline">
+                        <Link to={`/backoffice/files/${application.id}`}>Ouvrir</Link>
+                      </Button>
                     </article>
                   ))}
                 </div>
