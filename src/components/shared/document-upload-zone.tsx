@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -8,24 +8,29 @@ type DocumentUploadZoneProps = {
   documentTypes: Array<{ value: DocumentType; label: string }>
   allowedFormats: string
   isUploading?: boolean
-  applicationId?: string
-  onUpload: (payload: { file: File; documentType: DocumentType; applicationId?: string }) => Promise<void>
+  onUpload: (payload: { file: File; documentType: DocumentType }) => Promise<void>
 }
 
-export function DocumentUploadZone({ documentTypes, allowedFormats, isUploading = false, applicationId, onUpload }: DocumentUploadZoneProps) {
+export function DocumentUploadZone({ documentTypes, allowedFormats, isUploading = false, onUpload }: DocumentUploadZoneProps) {
   const [file, setFile] = useState<File | null>(null)
   const [documentType, setDocumentType] = useState<DocumentType>(documentTypes[0]?.value ?? 'OTHER')
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (documentTypes.length > 0 && !documentTypes.some((item) => item.value === documentType)) {
+      setDocumentType(documentTypes[0].value)
+    }
+  }, [documentType, documentTypes])
+
   async function handleSubmit() {
     if (!file) {
-      setError("Choisir un fichier avant l'envoi.")
+      setError("Choisissez un fichier avant l'envoi.")
       return
     }
 
     try {
       setError(null)
-      await onUpload({ file, documentType, applicationId })
+      await onUpload({ file, documentType })
       setFile(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Envoi impossible')
@@ -42,7 +47,7 @@ export function DocumentUploadZone({ documentTypes, allowedFormats, isUploading 
                 <Upload className="h-5 w-5 text-muted-foreground" />
                 <p className="font-medium">Déposer un document</p>
               </div>
-              <p className="text-sm text-muted-foreground">Formats acceptés: {allowedFormats}</p>
+              <p className="text-sm text-muted-foreground">Format accepté : {allowedFormats}</p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
@@ -76,13 +81,11 @@ export function DocumentUploadZone({ documentTypes, allowedFormats, isUploading 
               </div>
             </div>
 
-            {file && (
-              <p className="text-xs text-muted-foreground">
-                Fichier sélectionné: {file.name}
-              </p>
-            )}
+            {file ? (
+              <p className="text-xs text-muted-foreground">Fichier sélectionné : {file.name}</p>
+            ) : null}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </div>
         </div>
       </CardContent>

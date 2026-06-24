@@ -18,20 +18,20 @@ export type DocumentType =
   | 'SIGNED_LEASE_CONTRACT'
   | 'OTHER'
 
-export type DocumentFileFormat = 'PDF' | 'PNG' | 'JPG' | 'JPEG'
+export type DocumentFileFormat = 'PDF'
 
 export type DocumentStatus = 'UPLOADED' | 'ARCHIVED'
 
 export type DocumentRecord = {
   id: string
   documentType: DocumentType
-  fileFormat: DocumentFileFormat
+  fileFormat?: DocumentFileFormat
   status: DocumentStatus
   originalFileName: string
   fileSizeBytes: number
   mimeType: string
   ownerId: string
-  applicationId: string | null
+  applicationId?: string | null
   createdAt: string
   downloadUrl: string
 }
@@ -39,7 +39,6 @@ export type DocumentRecord = {
 export type DocumentUploadPayload = {
   file: File
   documentType: DocumentType
-  applicationId?: string
 }
 
 export type RequiredDocument = {

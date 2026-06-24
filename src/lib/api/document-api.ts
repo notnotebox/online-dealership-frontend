@@ -5,13 +5,13 @@ export const documentApi = {
   listMine() {
     return apiRequest<DocumentRecord[]>('/documents')
   },
+  listAdminForApplication(applicationId: string) {
+    return apiRequest<DocumentRecord[]>(`/documents/admin/applications/${applicationId}`)
+  },
   upload(payload: DocumentUploadPayload) {
     const formData = new FormData()
     formData.append('file', payload.file)
     formData.append('documentType', payload.documentType)
-    if (payload.applicationId) {
-      formData.append('applicationId', payload.applicationId)
-    }
 
     return apiRequest<DocumentRecord>('/documents', {
       method: 'POST',
