@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { VehicleGallery } from '@/components/shared/vehicle-gallery'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { getStoredToken } from '@/lib/auth/auth-storage'
+import { useVehicleGalleryItems } from '@/hooks/use-vehicle-gallery-items'
 import { vehicleApi, type AdminVehicleResponse, type VehicleMediaResponse } from '@/lib/api/vehicle-api'
 
 function formatPrice(price: AdminVehicleResponse['price']) {
@@ -21,10 +22,10 @@ function formatPrice(price: AdminVehicleResponse['price']) {
 
 function getVisibilityLabel(vehicle: AdminVehicleResponse) {
   if (vehicle.archived) {
-    return 'Archivé'
+    return 'Archive'
   }
 
-  return vehicle.published ? 'Visible' : 'Masqué'
+  return vehicle.published ? 'Visible' : 'Masque'
 }
 
 export function BackofficeVehiclePreviewPage() {
@@ -32,13 +33,16 @@ export function BackofficeVehiclePreviewPage() {
   const { vehicleId } = useParams()
   const [vehicle, setVehicle] = useState<AdminVehicleResponse | null>(null)
   const [media, setMedia] = useState<VehicleMediaResponse[]>([])
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { items: galleryItems, error: galleryError } = useVehicleGalleryItems(media, {
+    requiresAuth: true,
+    altPrefix: 'Apercu interne',
+    labelPrefix: 'Vue',
+  })
 
   useEffect(() => {
     let cancelled = false
-    let currentBlobUrl: string | null = null
 
     async function loadPreview() {
       if (!vehicleId) {
@@ -59,39 +63,12 @@ export function BackofficeVehiclePreviewPage() {
 
         setVehicle(vehicleResponse)
         setMedia(mediaResponse)
-
-        const firstMedia = mediaResponse[0]
-        if (!firstMedia) {
-          setPreviewUrl(null)
-          setError(null)
-          return
-        }
-
-        const token = getStoredToken()
-        if (!token) {
-          throw new Error('Session non disponible')
-        }
-
-        const response = await fetch(firstMedia.downloadUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error('Impossible de charger le média')
-        }
-
-        const blob = await response.blob()
-        currentBlobUrl = window.URL.createObjectURL(blob)
-        setPreviewUrl(currentBlobUrl)
         setError(null)
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger le véhicule')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le vehicule')
           setVehicle(null)
           setMedia([])
-          setPreviewUrl(null)
         }
       } finally {
         if (!cancelled) {
@@ -104,14 +81,17 @@ export function BackofficeVehiclePreviewPage() {
 
     return () => {
       cancelled = true
-      if (currentBlobUrl) {
-        window.URL.revokeObjectURL(currentBlobUrl)
-      }
     }
   }, [vehicleId])
 
+  useEffect(() => {
+    if (galleryError) {
+      setError(galleryError)
+    }
+  }, [galleryError])
+
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement de l&apos;aperçu...</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement de l&apos;apercu...</div>
   }
 
   if (error) {
@@ -119,18 +99,18 @@ export function BackofficeVehiclePreviewPage() {
   }
 
   if (!vehicle) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Véhicule introuvable.</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Vehicule introuvable.</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Aperçu interne</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Apercu interne</p>
           <h1 className="text-3xl font-semibold">
             {vehicle.brand} {vehicle.title}
           </h1>
-          <p className="text-sm text-muted-foreground">Prévisualisation back-office du véhicule avant publication.</p>
+          <p className="text-sm text-muted-foreground">Previsualisation back-office du vehicule avant publication.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => navigate(-1)}>Retour</Button>
@@ -142,14 +122,16 @@ export function BackofficeVehiclePreviewPage() {
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="aspect-[16/9] w-full bg-muted">
-              {previewUrl ? (
-                <img src={previewUrl} alt={`${vehicle.brand} ${vehicle.title}`} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Aucun média principal</div>
-              )}
-            </div>
+          <CardContent className="p-4">
+            <VehicleGallery
+              items={galleryItems}
+              imageClassName="min-h-[22rem]"
+              emptyContent={
+                <div className="flex min-h-[22rem] items-center justify-center px-6 text-sm text-muted-foreground">
+                  Aucun media principal
+                </div>
+              }
+            />
           </CardContent>
         </Card>
 
@@ -167,21 +149,21 @@ export function BackofficeVehiclePreviewPage() {
               <p className="text-sm text-muted-foreground">Places: {vehicle.seatCount} | Portes: {vehicle.doorCount}</p>
               <p className="text-sm text-muted-foreground">Couleur: {vehicle.color}</p>
               <p className="text-sm text-muted-foreground">
-                Mise à jour: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}
+                Mise a jour: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="space-y-2 p-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Médias</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Galerie</h2>
               {media.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun média chargé.</p>
+                <p className="text-sm text-muted-foreground">Aucun media charge.</p>
               ) : (
                 <div className="space-y-2 text-xs">
                   {media.map((item) => (
                     <div key={item.id} className="rounded-md border px-3 py-2">
-                      <p className="font-medium">Média #{item.sortOrder + 1}</p>
+                      <p className="font-medium">Image #{item.sortOrder + 1}</p>
                       <p className="break-all text-muted-foreground">{item.downloadUrl}</p>
                     </div>
                   ))}

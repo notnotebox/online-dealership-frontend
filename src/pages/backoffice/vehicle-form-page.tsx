@@ -1,136 +1,140 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ImagePlus, Loader2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ImagePlus, Loader2, X } from 'lucide-react'
+import { VehicleGallery, type VehicleGalleryItem } from '@/components/shared/vehicle-gallery'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useVehicleGalleryItems } from '@/hooks/use-vehicle-gallery-items'
 import {
   vehicleApi,
   type AdminVehicleResponse,
   type VehicleEnergy,
   type VehicleMediaResponse,
-} from "@/lib/api/vehicle-api";
-import { getStoredToken } from "@/lib/auth/auth-storage";
+} from '@/lib/api/vehicle-api'
 
 const ENERGY_OPTIONS: { value: VehicleEnergy; label: string }[] = [
-  { value: "GASOLINE", label: "Essence" },
-  { value: "DIESEL", label: "Diesel" },
-  { value: "HYBRID", label: "Hybride" },
-  { value: "ELECTRIC", label: "Électrique" },
-  { value: "LPG", label: "GPL" },
-  { value: "OTHER", label: "Autre" },
-];
+  { value: 'GASOLINE', label: 'Essence' },
+  { value: 'DIESEL', label: 'Diesel' },
+  { value: 'HYBRID', label: 'Hybride' },
+  { value: 'ELECTRIC', label: 'Electrique' },
+  { value: 'LPG', label: 'GPL' },
+  { value: 'OTHER', label: 'Autre' },
+]
 
-const ACCEPTED_IMAGE_LABEL = "PNG, JPG ou WEBP";
-const ACCEPTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+const ACCEPTED_IMAGE_LABEL = 'PNG, JPG ou WEBP'
+const ACCEPTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 
 type FormState = {
-  title: string;
-  brand: string;
-  price: string;
-  mileage: string;
-  seatCount: string;
-  doorCount: string;
-  color: string;
-  energy: VehicleEnergy;
-  published: boolean;
-};
+  title: string
+  brand: string
+  price: string
+  mileage: string
+  seatCount: string
+  doorCount: string
+  color: string
+  energy: VehicleEnergy
+  published: boolean
+}
 
 const DEFAULT_STATE: FormState = {
-  title: "",
-  brand: "",
-  price: "",
-  mileage: "",
-  seatCount: "5",
-  doorCount: "5",
-  color: "Noir",
-  energy: "GASOLINE",
+  title: '',
+  brand: '',
+  price: '',
+  mileage: '',
+  seatCount: '5',
+  doorCount: '5',
+  color: 'Noir',
+  energy: 'GASOLINE',
   published: true,
-};
+}
 
 function isAcceptedImage(file: File) {
   if (ACCEPTED_IMAGE_TYPES.has(file.type)) {
-    return true;
+    return true
   }
 
-  const extension = file.name.split(".").pop()?.toLowerCase();
-  return (
-    extension === "png" ||
-    extension === "jpg" ||
-    extension === "jpeg" ||
-    extension === "webp"
-  );
+  const extension = file.name.split('.').pop()?.toLowerCase()
+  return extension === 'png' || extension === 'jpg' || extension === 'jpeg' || extension === 'webp'
 }
 
 function uniqueFiles(existing: File[], incoming: File[]) {
   const seen = new Set(
     existing.map((file) => `${file.name}:${file.size}:${file.lastModified}`),
-  );
-  const output = [...existing];
+  )
+  const output = [...existing]
 
   incoming.forEach((file) => {
-    const key = `${file.name}:${file.size}:${file.lastModified}`;
+    const key = `${file.name}:${file.size}:${file.lastModified}`
     if (!seen.has(key)) {
-      seen.add(key);
-      output.push(file);
+      seen.add(key)
+      output.push(file)
     }
-  });
+  })
 
-  return output;
+  return output
 }
 
 export function BackofficeVehicleFormPage() {
-  const { vehicleId } = useParams();
-  const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { vehicleId } = useParams()
+  const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const [form, setForm] = useState<FormState>(DEFAULT_STATE);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [existingMedia, setExistingMedia] = useState<VehicleMediaResponse[]>(
-    [],
-  );
-  const [isLoading, setIsLoading] = useState(Boolean(vehicleId));
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [loadedVehicle, setLoadedVehicle] =
-    useState<AdminVehicleResponse | null>(null);
+  const [form, setForm] = useState<FormState>(DEFAULT_STATE)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [existingMedia, setExistingMedia] = useState<VehicleMediaResponse[]>([])
+  const [isLoading, setIsLoading] = useState(Boolean(vehicleId))
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [loadedVehicle, setLoadedVehicle] = useState<AdminVehicleResponse | null>(null)
+  const [localGalleryItems, setLocalGalleryItems] = useState<VehicleGalleryItem[]>([])
 
   const previewLabel = useMemo(() => {
     if (selectedFiles.length === 0) {
-      return "Glissez une ou plusieurs images ou cliquez pour les sélectionner.";
+      return 'Glissez une ou plusieurs images ou cliquez pour les selectionner.'
     }
 
     if (selectedFiles.length === 1) {
-      return selectedFiles[0].name;
+      return selectedFiles[0].name
     }
 
-    return `${selectedFiles.length} fichiers sélectionnés`;
-  }, [selectedFiles]);
+    return `${selectedFiles.length} fichiers selectionnes`
+  }, [selectedFiles])
+
+  const { items: existingGalleryItems, error: existingGalleryError } = useVehicleGalleryItems(existingMedia, {
+    requiresAuth: true,
+    altPrefix: 'Visuel enregistre',
+    labelPrefix: 'Enregistree',
+  })
+
+  const galleryItems = useMemo(
+    () => [...existingGalleryItems, ...localGalleryItems],
+    [existingGalleryItems, localGalleryItems],
+  )
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
     async function loadVehicle() {
       if (!vehicleId) {
-        setIsLoading(false);
-        return;
+        setIsLoading(false)
+        return
       }
 
       try {
-        setIsLoading(true);
+        setIsLoading(true)
         const [vehicle, media] = await Promise.all([
           vehicleApi.getAdminVehicle(vehicleId),
           vehicleApi.listAdminVehicleMedia(vehicleId),
-        ]);
+        ])
 
         if (cancelled) {
-          return;
+          return
         }
 
-        setLoadedVehicle(vehicle);
-        setExistingMedia(media);
+        setLoadedVehicle(vehicle)
+        setExistingMedia(media)
         setForm({
           title: vehicle.title,
           brand: vehicle.brand,
@@ -141,126 +145,106 @@ export function BackofficeVehicleFormPage() {
           color: vehicle.color,
           energy: vehicle.energy,
           published: vehicle.published,
-        });
-        setError(null);
+        })
+        setError(null)
       } catch (cause) {
         if (!cancelled) {
           setError(
-            cause instanceof Error
-              ? cause.message
-              : "Impossible de charger le véhicule",
-          );
+            cause instanceof Error ? cause.message : 'Impossible de charger le vehicule',
+          )
         }
       } finally {
         if (!cancelled) {
-          setIsLoading(false);
+          setIsLoading(false)
         }
       }
     }
 
-    void loadVehicle();
+    void loadVehicle()
 
     return () => {
-      cancelled = true;
-    };
-  }, [vehicleId]);
+      cancelled = true
+    }
+  }, [vehicleId])
 
   useEffect(() => {
-    if (selectedFiles.length === 0) {
-      setPreviewUrl(null);
-      return;
-    }
+    const objectUrls: string[] = []
 
-    const preview = URL.createObjectURL(selectedFiles[0]);
-    setPreviewUrl(preview);
+    const nextItems = selectedFiles.map((file, index) => {
+      const src = window.URL.createObjectURL(file)
+      objectUrls.push(src)
+
+      return {
+        id: `local-${file.name}-${file.lastModified}-${index}`,
+        src,
+        alt: `Image ajoutee ${index + 1}`,
+        label: `Ajoutee ${index + 1}`,
+      } satisfies VehicleGalleryItem
+    })
+
+    setLocalGalleryItems(nextItems)
 
     return () => {
-      URL.revokeObjectURL(preview);
-    };
-  }, [selectedFiles]);
+      objectUrls.forEach((url) => window.URL.revokeObjectURL(url))
+    }
+  }, [selectedFiles])
+
+  useEffect(() => {
+    if (existingGalleryError) {
+      setError(existingGalleryError)
+    }
+  }, [existingGalleryError])
 
   function addFiles(files: FileList | File[]) {
-    const incoming = Array.from(files).filter(isAcceptedImage);
+    const incoming = Array.from(files).filter(isAcceptedImage)
     if (incoming.length === 0) {
-      setError(`Seuls les fichiers ${ACCEPTED_IMAGE_LABEL} sont acceptés.`);
-      return;
+      setError(`Seuls les fichiers ${ACCEPTED_IMAGE_LABEL} sont acceptes.`)
+      return
     }
 
-    setError(null);
-    setSelectedFiles((current) => uniqueFiles(current, incoming));
-  }
-
-  async function openMedia(media: VehicleMediaResponse) {
-    const token = getStoredToken();
-    if (!token) {
-      throw new Error("Session non disponible");
-    }
-
-    const opened = window.open("", "_blank", "noopener,noreferrer");
-    if (!opened) {
-      throw new Error("Impossible d'ouvrir le média");
-    }
-
-    try {
-      const response = await fetch(media.downloadUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Impossible de charger le média");
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      opened.location.href = url;
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
-    } catch (cause) {
-      opened.close();
-      throw cause;
-    }
+    setError(null)
+    setSelectedFiles((current) => uniqueFiles(current, incoming))
   }
 
   async function handleSubmit() {
     if (!form.title.trim() || !form.brand.trim()) {
-      setError("Le titre et la marque sont requis.");
-      return;
+      setError('Le titre et la marque sont requis.')
+      return
     }
 
-    const price = Number(form.price);
-    const mileage = Number(form.mileage);
-    const seatCount = Number(form.seatCount);
-    const doorCount = Number(form.doorCount);
+    const price = Number(form.price)
+    const mileage = Number(form.mileage)
+    const seatCount = Number(form.seatCount)
+    const doorCount = Number(form.doorCount)
 
     if (!Number.isFinite(price) || price < 0) {
-      setError("Le prix doit être un nombre positif.");
-      return;
+      setError('Le prix doit etre un nombre positif.')
+      return
     }
 
     if (!Number.isFinite(mileage) || mileage < 0) {
-      setError("Le kilométrage doit être un nombre positif.");
-      return;
+      setError('Le kilometrage doit etre un nombre positif.')
+      return
     }
 
     if (!Number.isFinite(seatCount) || seatCount < 1) {
-      setError("Le nombre de places doit être au moins égal à 1.");
-      return;
+      setError('Le nombre de places doit etre au moins egal a 1.')
+      return
     }
 
     if (!Number.isFinite(doorCount) || doorCount < 1) {
-      setError("Le nombre de portes doit être au moins égal à 1.");
-      return;
+      setError('Le nombre de portes doit etre au moins egal a 1.')
+      return
     }
 
     if (!form.color.trim()) {
-      setError("La couleur est requise.");
-      return;
+      setError('La couleur est requise.')
+      return
     }
 
     try {
-      setIsSaving(true);
-      setError(null);
+      setIsSaving(true)
+      setError(null)
 
       const payload = {
         title: form.title.trim(),
@@ -272,29 +256,27 @@ export function BackofficeVehicleFormPage() {
         doorCount: Math.trunc(doorCount),
         color: form.color.trim(),
         published: form.published,
-      };
+      }
 
       const savedVehicle = vehicleId
         ? await vehicleApi.updateAdminVehicle(vehicleId, payload)
-        : await vehicleApi.createAdminVehicle(payload);
+        : await vehicleApi.createAdminVehicle(payload)
 
       for (let index = 0; index < selectedFiles.length; index += 1) {
         await vehicleApi.uploadAdminVehicleMedia(
           savedVehicle.id,
           selectedFiles[index],
           existingMedia.length + index,
-        );
+        )
       }
 
-      navigate("/backoffice/vehicles");
+      navigate('/backoffice/vehicles')
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : "Impossible de sauvegarder le véhicule",
-      );
+        cause instanceof Error ? cause.message : 'Impossible de sauvegarder le vehicule',
+      )
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
   }
 
@@ -303,19 +285,19 @@ export function BackofficeVehicleFormPage() {
       <div className="rounded-lg border p-4 text-sm text-muted-foreground">
         Chargement...
       </div>
-    );
+    )
   }
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">
-          {vehicleId ? "Modifier un véhicule" : "Ajouter un véhicule"}
+          {vehicleId ? 'Modifier un vehicule' : 'Ajouter un vehicule'}
         </h1>
         <p className="text-sm text-muted-foreground">
           {vehicleId
-            ? "Mettre à jour les informations et les médias du véhicule."
-            : "Créer une nouvelle fiche véhicule et joindre ses images par glisser-déposer."}
+            ? 'Mettre a jour les informations et les medias du vehicule.'
+            : 'Creer une nouvelle fiche vehicule et joindre ses images par glisser-deposer.'}
         </p>
       </div>
 
@@ -328,7 +310,7 @@ export function BackofficeVehicleFormPage() {
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Informations véhicule</CardTitle>
+            <CardTitle>Informations vehicule</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm">
@@ -347,7 +329,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Modèle / titre</span>
+              <span className="text-muted-foreground">Modele / titre</span>
               <input
                 className="h-10 w-full rounded-md border px-3"
                 value={form.title}
@@ -380,7 +362,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Kilométrage</span>
+              <span className="text-muted-foreground">Kilometrage</span>
               <input
                 className="h-10 w-full rounded-md border px-3"
                 type="number"
@@ -398,9 +380,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">
-                Places: {form.seatCount}
-              </span>
+              <span className="text-muted-foreground">Places: {form.seatCount}</span>
               <input
                 className="w-full"
                 type="range"
@@ -417,9 +397,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">
-                Portes: {form.doorCount}
-              </span>
+              <span className="text-muted-foreground">Portes: {form.doorCount}</span>
               <input
                 className="w-full"
                 type="range"
@@ -451,7 +429,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Énergie</span>
+              <span className="text-muted-foreground">Energie</span>
               <select
                 className="h-10 w-full rounded-md border px-3"
                 value={form.energy}
@@ -481,7 +459,7 @@ export function BackofficeVehicleFormPage() {
                   }))
                 }
               />
-              Véhicule visible
+              Vehicule visible
             </label>
           </CardContent>
         </Card>
@@ -493,27 +471,25 @@ export function BackofficeVehicleFormPage() {
           <CardContent className="space-y-4">
             <div
               className={[
-                "rounded-xl border-2 border-dashed p-5 transition",
-                isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/30",
-              ].join(" ")}
+                'rounded-xl border-2 border-dashed p-5 transition',
+                isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30',
+              ].join(' ')}
               onDragEnter={(event) => {
-                event.preventDefault();
-                setIsDragging(true);
+                event.preventDefault()
+                setIsDragging(true)
               }}
               onDragOver={(event) => {
-                event.preventDefault();
-                setIsDragging(true);
+                event.preventDefault()
+                setIsDragging(true)
               }}
               onDragLeave={(event) => {
-                event.preventDefault();
-                setIsDragging(false);
+                event.preventDefault()
+                setIsDragging(false)
               }}
               onDrop={(event) => {
-                event.preventDefault();
-                setIsDragging(false);
-                addFiles(event.dataTransfer.files);
+                event.preventDefault()
+                setIsDragging(false)
+                addFiles(event.dataTransfer.files)
               }}
               onClick={() => fileInputRef.current?.click()}
               role="button"
@@ -524,11 +500,9 @@ export function BackofficeVehicleFormPage() {
                   <ImagePlus className="h-5 w-5" />
                 </div>
                 <div className="space-y-1">
-                  <p className="font-medium">
-                    Glisser-déposer les images du véhicule
-                  </p>
+                  <p className="font-medium">Glisser deposer les images du vehicule</p>
                   <p className="text-sm text-muted-foreground">
-                    Formats acceptés: {ACCEPTED_IMAGE_LABEL}
+                    Formats acceptes: {ACCEPTED_IMAGE_LABEL}
                   </p>
                 </div>
                 <Button type="button" variant="outline">
@@ -543,21 +517,15 @@ export function BackofficeVehicleFormPage() {
                 multiple
                 onChange={(event) => {
                   if (event.target.files) {
-                    addFiles(event.target.files);
-                    event.target.value = "";
+                    addFiles(event.target.files)
+                    event.target.value = ''
                   }
                 }}
               />
             </div>
 
-            {previewUrl ? (
-              <div className="overflow-hidden rounded-lg border">
-                <img
-                  src={previewUrl}
-                  alt="Aperçu du véhicule"
-                  className="h-52 w-full object-cover"
-                />
-              </div>
+            {galleryItems.length > 0 ? (
+              <VehicleGallery items={galleryItems} imageClassName="min-h-[14rem]" />
             ) : (
               <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
                 {previewLabel}
@@ -573,7 +541,7 @@ export function BackofficeVehicleFormPage() {
                   <div>
                     <p className="font-medium">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {file.type || "Type inconnu"}
+                      {file.type || 'Type inconnu'}
                     </p>
                   </div>
                   <Button
@@ -582,9 +550,7 @@ export function BackofficeVehicleFormPage() {
                     size="icon"
                     onClick={() =>
                       setSelectedFiles((current) =>
-                        current.filter(
-                          (_, currentIndex) => currentIndex !== index,
-                        ),
+                        current.filter((_, currentIndex) => currentIndex !== index),
                       )
                     }
                   >
@@ -596,36 +562,17 @@ export function BackofficeVehicleFormPage() {
 
             {existingMedia.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Médias déjà enregistrés</p>
+                <p className="text-sm font-medium">Medias deja enregistres</p>
                 {existingMedia.map((media) => (
                   <div
                     key={media.id}
                     className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
                   >
                     <div className="space-y-0.5">
-                      <p className="font-medium">
-                        Média #{media.sortOrder + 1}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {media.downloadUrl}
-                      </p>
+                      <p className="font-medium">Image #{media.sortOrder + 1}</p>
+                      <p className="text-xs text-muted-foreground">{media.downloadUrl}</p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        void openMedia(media).catch((cause) => {
-                          setError(
-                            cause instanceof Error
-                              ? cause.message
-                              : "Impossible d'ouvrir le média",
-                          );
-                        });
-                      }}
-                    >
-                      Ouvrir
-                    </Button>
+                    <Badge variant="secondary">Visible dans la galerie</Badge>
                   </div>
                 ))}
               </div>
@@ -642,22 +589,22 @@ export function BackofficeVehicleFormPage() {
               Enregistrement...
             </>
           ) : (
-            "Enregistrer"
+            'Enregistrer'
           )}
         </Button>
         <Button
           type="button"
           variant="outline"
-          onClick={() => navigate("/backoffice/vehicles")}
+          onClick={() => navigate('/backoffice/vehicles')}
         >
           Retour
         </Button>
         {loadedVehicle && (
           <Badge variant="outline">
-            Véhicule chargé: {loadedVehicle.brand} {loadedVehicle.title}
+            Vehicule charge: {loadedVehicle.brand} {loadedVehicle.title}
           </Badge>
         )}
       </div>
     </div>
-  );
+  )
 }

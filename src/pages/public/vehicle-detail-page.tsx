@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CalendarClock, CarFront, DoorOpen, Fuel, Gauge, Palette, Sofa } from 'lucide-react'
+import { FavoriteButton } from '@/components/shared/favorite-button'
+import { VehicleGallery } from '@/components/shared/vehicle-gallery'
+import { VehicleImage } from '@/components/shared/vehicle-image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { FavoriteButton } from '@/components/shared/favorite-button'
-import { VehicleImage } from '@/components/shared/vehicle-image'
+import { useVehicleGalleryItems } from '@/hooks/use-vehicle-gallery-items'
 import { useAuth } from '@/lib/auth/auth-context'
-import { vehicleApi, type VehicleEnergy, type VehicleResponse } from '@/lib/api/vehicle-api'
+import { vehicleApi, type VehicleEnergy, type VehicleMediaResponse, type VehicleResponse } from '@/lib/api/vehicle-api'
 
 function formatPrice(price: VehicleResponse['price']) {
   const numericPrice = Number(price)
@@ -31,7 +33,7 @@ function getEnergyLabel(energy: VehicleEnergy) {
     case 'HYBRID':
       return 'Hybride'
     case 'ELECTRIC':
-      return 'Électrique'
+      return 'Electrique'
     case 'LPG':
       return 'GPL'
     default:
@@ -43,8 +45,13 @@ export function VehicleDetailPage() {
   const { vehicleId } = useParams()
   const { isAuthenticated } = useAuth()
   const [vehicle, setVehicle] = useState<VehicleResponse | null>(null)
+  const [media, setMedia] = useState<VehicleMediaResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { items: galleryItems, error: galleryError } = useVehicleGalleryItems(media, {
+    altPrefix: 'Photo vehicule',
+    labelPrefix: 'Photo',
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -57,15 +64,21 @@ export function VehicleDetailPage() {
 
       try {
         setIsLoading(true)
-        const response = await vehicleApi.getPublicVehicle(vehicleId)
+        const [vehicleResponse, mediaResponse] = await Promise.all([
+          vehicleApi.getPublicVehicle(vehicleId),
+          vehicleApi.listPublicVehicleMedia(vehicleId),
+        ])
+
         if (!cancelled) {
-          setVehicle(response)
+          setVehicle(vehicleResponse)
+          setMedia(mediaResponse)
           setError(null)
         }
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger le véhicule')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le vehicule')
           setVehicle(null)
+          setMedia([])
         }
       } finally {
         if (!cancelled) {
@@ -81,8 +94,14 @@ export function VehicleDetailPage() {
     }
   }, [vehicleId])
 
+  useEffect(() => {
+    if (galleryError) {
+      setError(galleryError)
+    }
+  }, [galleryError])
+
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du véhicule...</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du vehicule...</div>
   }
 
   if (error) {
@@ -90,17 +109,17 @@ export function VehicleDetailPage() {
   }
 
   if (!vehicle) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Véhicule introuvable.</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Vehicule introuvable.</div>
   }
 
   const specifications = [
     {
-      label: 'Kilométrage',
+      label: 'Kilometrage',
       value: `${vehicle.mileage.toLocaleString('fr-FR')} km`,
       icon: Gauge,
     },
     {
-      label: 'Énergie',
+      label: 'Energie',
       value: getEnergyLabel(vehicle.energy),
       icon: Fuel,
     },
@@ -120,7 +139,7 @@ export function VehicleDetailPage() {
       icon: Palette,
     },
     {
-      label: 'Mis à jour',
+      label: 'Mis a jour',
       value: new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt)),
       icon: CalendarClock,
     },
@@ -129,14 +148,20 @@ export function VehicleDetailPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <div className="overflow-hidden rounded-2xl border bg-muted/30 shadow-sm">
-        <VehicleImage
-          brand={vehicle.brand}
-          model={vehicle.title}
-          seed={vehicle.id}
-          src={vehicle.imageUrl ?? undefined}
-          alt={`${vehicle.brand} ${vehicle.title}`}
-          className="h-full min-h-[24rem] w-full object-cover"
-        />
+        {galleryItems.length > 0 ? (
+          <div className="p-4">
+            <VehicleGallery items={galleryItems} imageClassName="min-h-[24rem]" />
+          </div>
+        ) : (
+          <VehicleImage
+            brand={vehicle.brand}
+            model={vehicle.title}
+            seed={vehicle.id}
+            src={vehicle.imageUrl ?? undefined}
+            alt={`${vehicle.brand} ${vehicle.title}`}
+            className="h-full min-h-[24rem] w-full object-cover"
+          />
+        )}
       </div>
 
       <div className="space-y-5">
@@ -148,7 +173,7 @@ export function VehicleDetailPage() {
                 Catalogue
               </Badge>
               <Badge variant={vehicle.published ? 'default' : 'outline'}>
-                {vehicle.published ? 'Publié' : 'Brouillon'}
+                {vehicle.published ? 'Publie' : 'Brouillon'}
               </Badge>
             </div>
             <FavoriteButton vehicleId={vehicle.id} />
@@ -159,7 +184,7 @@ export function VehicleDetailPage() {
             <h1 className="text-3xl font-semibold tracking-tight">{vehicle.title}</h1>
             <p className="text-2xl font-semibold">{formatPrice(vehicle.price)}</p>
             <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-              Fiche véhicule claire et prête pour une demande de financement ou d&apos;achat.
+              Fiche vehicule claire et prete pour une demande de financement ou d&apos;achat.
             </p>
           </div>
         </div>
@@ -168,11 +193,11 @@ export function VehicleDetailPage() {
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold">Détails du véhicule</h2>
-                <p className="text-sm text-muted-foreground">Informations essentielles présentées de manière lisible.</p>
+                <h2 className="text-base font-semibold">Details du vehicule</h2>
+                <p className="text-sm text-muted-foreground">Informations essentielles presentees de maniere lisible.</p>
               </div>
               <Badge variant="outline">
-                {vehicle.published ? 'Véhicule publié' : 'Véhicule non publié'}
+                {vehicle.published ? 'Vehicule publie' : 'Vehicule non publie'}
               </Badge>
             </div>
 
@@ -200,7 +225,7 @@ export function VehicleDetailPage() {
 
         <div className="flex flex-wrap gap-2">
           <Button asChild>
-            <Link to={isAuthenticated ? `/app/files/new/${vehicle.id}` : '/login'}>Créer ma demande</Link>
+            <Link to={isAuthenticated ? `/app/files/new/${vehicle.id}` : '/login'}>Creer ma demande</Link>
           </Button>
           <Button variant="secondary" asChild>
             <Link to="/vehicles">Retour au catalogue</Link>
