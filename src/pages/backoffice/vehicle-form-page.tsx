@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ImagePlus, Loader2, Upload, X } from "lucide-react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ const ENERGY_OPTIONS: { value: VehicleEnergy; label: string }[] = [
   { value: "GASOLINE", label: "Essence" },
   { value: "DIESEL", label: "Diesel" },
   { value: "HYBRID", label: "Hybride" },
-  { value: "ELECTRIC", label: "Electrique" },
+  { value: "ELECTRIC", label: "Électrique" },
   { value: "LPG", label: "GPL" },
   { value: "OTHER", label: "Autre" },
 ];
@@ -99,14 +99,14 @@ export function BackofficeVehicleFormPage() {
 
   const previewLabel = useMemo(() => {
     if (selectedFiles.length === 0) {
-      return "Glissez une ou plusieurs images ou cliquez pour les selectionner.";
+      return "Glissez une ou plusieurs images ou cliquez pour les sélectionner.";
     }
 
     if (selectedFiles.length === 1) {
       return selectedFiles[0].name;
     }
 
-    return `${selectedFiles.length} fichiers selectionnes`;
+    return `${selectedFiles.length} fichiers sélectionnés`;
   }, [selectedFiles]);
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export function BackofficeVehicleFormPage() {
           setError(
             cause instanceof Error
               ? cause.message
-              : "Impossible de charger le vehicule",
+              : "Impossible de charger le véhicule",
           );
         }
       } finally {
@@ -182,7 +182,7 @@ export function BackofficeVehicleFormPage() {
   function addFiles(files: FileList | File[]) {
     const incoming = Array.from(files).filter(isAcceptedImage);
     if (incoming.length === 0) {
-      setError(`Seuls les fichiers ${ACCEPTED_IMAGE_LABEL} sont acceptes.`);
+      setError(`Seuls les fichiers ${ACCEPTED_IMAGE_LABEL} sont acceptés.`);
       return;
     }
 
@@ -198,7 +198,7 @@ export function BackofficeVehicleFormPage() {
 
     const opened = window.open("", "_blank", "noopener,noreferrer");
     if (!opened) {
-      throw new Error("Impossible douvrir le media");
+      throw new Error("Impossible d'ouvrir le média");
     }
 
     try {
@@ -209,7 +209,7 @@ export function BackofficeVehicleFormPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Impossible de charger le media");
+        throw new Error("Impossible de charger le média");
       }
 
       const blob = await response.blob();
@@ -234,22 +234,22 @@ export function BackofficeVehicleFormPage() {
     const doorCount = Number(form.doorCount);
 
     if (!Number.isFinite(price) || price < 0) {
-      setError("Le prix doit etre un nombre positif.");
+      setError("Le prix doit être un nombre positif.");
       return;
     }
 
     if (!Number.isFinite(mileage) || mileage < 0) {
-      setError("Le kilometrage doit etre un nombre positif.");
+      setError("Le kilométrage doit être un nombre positif.");
       return;
     }
 
     if (!Number.isFinite(seatCount) || seatCount < 1) {
-      setError("Le nombre de places doit etre au moins egal a 1.");
+      setError("Le nombre de places doit être au moins égal à 1.");
       return;
     }
 
     if (!Number.isFinite(doorCount) || doorCount < 1) {
-      setError("Le nombre de portes doit etre au moins egal a 1.");
+      setError("Le nombre de portes doit être au moins égal à 1.");
       return;
     }
 
@@ -291,7 +291,7 @@ export function BackofficeVehicleFormPage() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Impossible de sauvegarder le vehicule",
+          : "Impossible de sauvegarder le véhicule",
       );
     } finally {
       setIsSaving(false);
@@ -310,12 +310,12 @@ export function BackofficeVehicleFormPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">
-          {vehicleId ? "Modifier un vehicule" : "Ajouter un vehicule"}
+          {vehicleId ? "Modifier un véhicule" : "Ajouter un véhicule"}
         </h1>
         <p className="text-sm text-muted-foreground">
           {vehicleId
-            ? "Mettre a jour les informations et les medias du vehicule."
-            : "Creer une nouvelle fiche vehicule et joindre ses images par glisser-deposer."}
+            ? "Mettre à jour les informations et les médias du véhicule."
+            : "Créer une nouvelle fiche véhicule et joindre ses images par glisser-déposer."}
         </p>
       </div>
 
@@ -328,7 +328,7 @@ export function BackofficeVehicleFormPage() {
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Informations vehicule</CardTitle>
+            <CardTitle>Informations véhicule</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm">
@@ -347,7 +347,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Modele / titre</span>
+              <span className="text-muted-foreground">Modèle / titre</span>
               <input
                 className="h-10 w-full rounded-md border px-3"
                 value={form.title}
@@ -380,7 +380,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Kilometrage</span>
+              <span className="text-muted-foreground">Kilométrage</span>
               <input
                 className="h-10 w-full rounded-md border px-3"
                 type="number"
@@ -451,7 +451,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Energie</span>
+              <span className="text-muted-foreground">Énergie</span>
               <select
                 className="h-10 w-full rounded-md border px-3"
                 value={form.energy}
@@ -481,7 +481,7 @@ export function BackofficeVehicleFormPage() {
                   }))
                 }
               />
-              Vehicule visible
+              Véhicule visible
             </label>
           </CardContent>
         </Card>
@@ -525,10 +525,10 @@ export function BackofficeVehicleFormPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="font-medium">
-                    Glisser deposer les images du vehicule
+                    Glisser-déposer les images du véhicule
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Formats acceptes: {ACCEPTED_IMAGE_LABEL}
+                    Formats acceptés: {ACCEPTED_IMAGE_LABEL}
                   </p>
                 </div>
                 <Button type="button" variant="outline">
@@ -554,7 +554,7 @@ export function BackofficeVehicleFormPage() {
               <div className="overflow-hidden rounded-lg border">
                 <img
                   src={previewUrl}
-                  alt="Apercu du vehicule"
+                  alt="Aperçu du véhicule"
                   className="h-52 w-full object-cover"
                 />
               </div>
@@ -596,7 +596,7 @@ export function BackofficeVehicleFormPage() {
 
             {existingMedia.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Medias deja enregistres</p>
+                <p className="text-sm font-medium">Médias déjà enregistrés</p>
                 {existingMedia.map((media) => (
                   <div
                     key={media.id}
@@ -604,7 +604,7 @@ export function BackofficeVehicleFormPage() {
                   >
                     <div className="space-y-0.5">
                       <p className="font-medium">
-                        Media #{media.sortOrder + 1}
+                        Média #{media.sortOrder + 1}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {media.downloadUrl}
@@ -619,7 +619,7 @@ export function BackofficeVehicleFormPage() {
                           setError(
                             cause instanceof Error
                               ? cause.message
-                              : "Impossible douvrir le media",
+                              : "Impossible d'ouvrir le média",
                           );
                         });
                       }}
@@ -654,7 +654,7 @@ export function BackofficeVehicleFormPage() {
         </Button>
         {loadedVehicle && (
           <Badge variant="outline">
-            Vehicule charge: {loadedVehicle.brand} {loadedVehicle.title}
+            Véhicule chargé: {loadedVehicle.brand} {loadedVehicle.title}
           </Badge>
         )}
       </div>

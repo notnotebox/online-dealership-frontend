@@ -79,7 +79,7 @@ export function BackofficeVehiclePreviewPage() {
         })
 
         if (!response.ok) {
-          throw new Error('Impossible de charger le media')
+          throw new Error('Impossible de charger le média')
         }
 
         const blob = await response.blob()
@@ -88,7 +88,7 @@ export function BackofficeVehiclePreviewPage() {
         setError(null)
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger le vehicule')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le véhicule')
           setVehicle(null)
           setMedia([])
           setPreviewUrl(null)
@@ -111,7 +111,7 @@ export function BackofficeVehiclePreviewPage() {
   }, [vehicleId])
 
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement de l'aperçu...</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement de l&apos;aperçu...</div>
   }
 
   if (error) {
@@ -119,7 +119,7 @@ export function BackofficeVehiclePreviewPage() {
   }
 
   if (!vehicle) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Vehicule introuvable.</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Véhicule introuvable.</div>
   }
 
   return (
@@ -147,7 +147,7 @@ export function BackofficeVehiclePreviewPage() {
               {previewUrl ? (
                 <img src={previewUrl} alt={`${vehicle.brand} ${vehicle.title}`} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Aucun media principal</div>
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Aucun média principal</div>
               )}
             </div>
           </CardContent>
@@ -167,21 +167,21 @@ export function BackofficeVehiclePreviewPage() {
               <p className="text-sm text-muted-foreground">Places: {vehicle.seatCount} | Portes: {vehicle.doorCount}</p>
               <p className="text-sm text-muted-foreground">Couleur: {vehicle.color}</p>
               <p className="text-sm text-muted-foreground">
-                Mise a jour: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}
+                Mise à jour: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="space-y-2 p-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Medias</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Médias</h2>
               {media.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun media charge.</p>
+                <p className="text-sm text-muted-foreground">Aucun média chargé.</p>
               ) : (
                 <div className="space-y-2 text-xs">
                   {media.map((item) => (
                     <div key={item.id} className="rounded-md border px-3 py-2">
-                      <p className="font-medium">Media #{item.sortOrder + 1}</p>
+                      <p className="font-medium">Média #{item.sortOrder + 1}</p>
                       <p className="break-all text-muted-foreground">{item.downloadUrl}</p>
                     </div>
                   ))}

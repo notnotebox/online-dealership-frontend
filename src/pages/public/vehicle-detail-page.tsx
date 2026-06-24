@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { CalendarClock, CarFront, DoorOpen, Fuel, Gauge, Palette, Sofa } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FavoriteButton } from '@/components/shared/favorite-button'
 import { VehicleImage } from '@/components/shared/vehicle-image'
 import { useAuth } from '@/lib/auth/auth-context'
-import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
+import { vehicleApi, type VehicleEnergy, type VehicleResponse } from '@/lib/api/vehicle-api'
 
 function formatPrice(price: VehicleResponse['price']) {
   const numericPrice = Number(price)
@@ -19,6 +20,23 @@ function formatPrice(price: VehicleResponse['price']) {
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(numericPrice)
+}
+
+function getEnergyLabel(energy: VehicleEnergy) {
+  switch (energy) {
+    case 'GASOLINE':
+      return 'Essence'
+    case 'DIESEL':
+      return 'Diesel'
+    case 'HYBRID':
+      return 'Hybride'
+    case 'ELECTRIC':
+      return 'Électrique'
+    case 'LPG':
+      return 'GPL'
+    default:
+      return 'Autre'
+  }
 }
 
 export function VehicleDetailPage() {
@@ -46,7 +64,7 @@ export function VehicleDetailPage() {
         }
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger le vehicule')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le véhicule')
           setVehicle(null)
         }
       } finally {
@@ -64,7 +82,7 @@ export function VehicleDetailPage() {
   }, [vehicleId])
 
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du vehicule...</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du véhicule...</div>
   }
 
   if (error) {
@@ -72,47 +90,117 @@ export function VehicleDetailPage() {
   }
 
   if (!vehicle) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Vehicule introuvable.</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Véhicule introuvable.</div>
   }
 
+  const specifications = [
+    {
+      label: 'Kilométrage',
+      value: `${vehicle.mileage.toLocaleString('fr-FR')} km`,
+      icon: Gauge,
+    },
+    {
+      label: 'Énergie',
+      value: getEnergyLabel(vehicle.energy),
+      icon: Fuel,
+    },
+    {
+      label: 'Places',
+      value: `${vehicle.seatCount}`,
+      icon: Sofa,
+    },
+    {
+      label: 'Portes',
+      value: `${vehicle.doorCount}`,
+      icon: DoorOpen,
+    },
+    {
+      label: 'Couleur',
+      value: vehicle.color,
+      icon: Palette,
+    },
+    {
+      label: 'Mis à jour',
+      value: new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt)),
+      icon: CalendarClock,
+    },
+  ]
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="flex h-80 items-center justify-center rounded-lg border bg-muted text-sm text-muted-foreground">
+    <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="overflow-hidden rounded-2xl border bg-muted/30 shadow-sm">
         <VehicleImage
           brand={vehicle.brand}
           model={vehicle.title}
           seed={vehicle.id}
           src={vehicle.imageUrl ?? undefined}
           alt={`${vehicle.brand} ${vehicle.title}`}
-          className="h-full w-full rounded-lg object-cover"
+          className="h-full min-h-[24rem] w-full object-cover"
         />
       </div>
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">Catalogue public</Badge>
-          <Badge variant={vehicle.published ? 'default' : 'outline'}>
-            {vehicle.published ? 'Publie' : 'Brouillon'}
-          </Badge>
-          <FavoriteButton vehicleId={vehicle.id} />
+
+      <div className="space-y-5">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="gap-1">
+                <CarFront className="h-3.5 w-3.5" />
+                Catalogue
+              </Badge>
+              <Badge variant={vehicle.published ? 'default' : 'outline'}>
+                {vehicle.published ? 'Publié' : 'Brouillon'}
+              </Badge>
+            </div>
+            <FavoriteButton vehicleId={vehicle.id} />
+          </div>
+
+          <div className="mt-5 space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{vehicle.brand}</p>
+            <h1 className="text-3xl font-semibold tracking-tight">{vehicle.title}</h1>
+            <p className="text-2xl font-semibold">{formatPrice(vehicle.price)}</p>
+            <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+              Fiche véhicule claire et prête pour une demande de financement ou d&apos;achat.
+            </p>
+          </div>
         </div>
-        <h1 className="text-3xl font-semibold">
-          {vehicle.brand} {vehicle.title}
-        </h1>
-        <p className="text-xl font-semibold">{formatPrice(vehicle.price)}</p>
-        <Card>
-          <CardContent className="space-y-2 p-4">
-            <p className="text-sm text-muted-foreground">Kilometrage: {vehicle.mileage.toLocaleString('fr-FR')} km</p>
-            <p className="text-sm text-muted-foreground">Energie: {vehicle.energy}</p>
-            <p className="text-sm text-muted-foreground">Places: {vehicle.seatCount}</p>
-            <p className="text-sm text-muted-foreground">Portes: {vehicle.doorCount}</p>
-            <p className="text-sm text-muted-foreground">Couleur: {vehicle.color}</p>
-            <p className="text-sm text-muted-foreground">Mis a jour le: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}</p>
-            <p className="text-sm text-muted-foreground">{vehicle.published ? 'Vehicule publie' : 'Vehicule non publie'}</p>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold">Détails du véhicule</h2>
+                <p className="text-sm text-muted-foreground">Informations essentielles présentées de manière lisible.</p>
+              </div>
+              <Badge variant="outline">
+                {vehicle.published ? 'Véhicule publié' : 'Véhicule non publié'}
+              </Badge>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {specifications.map((item) => {
+                const Icon = item.icon
+
+                return (
+                  <div key={item.label} className="flex items-start gap-3 rounded-xl border bg-muted/20 p-4">
+                    <div className="rounded-full bg-primary/10 p-2 text-primary">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {item.label}
+                      </p>
+                      <p className="text-sm font-medium text-foreground">{item.value}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
+
         <div className="flex flex-wrap gap-2">
           <Button asChild>
-            <Link to={isAuthenticated ? `/app/files/new/${vehicle.id}` : '/login'}>Creer ma demande</Link>
+            <Link to={isAuthenticated ? `/app/files/new/${vehicle.id}` : '/login'}>Créer ma demande</Link>
           </Button>
           <Button variant="secondary" asChild>
             <Link to="/vehicles">Retour au catalogue</Link>
