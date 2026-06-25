@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ProfileDocumentsPanel } from '@/components/shared/profile-documents-panel'
 import { CompletionField, completionInputClassName } from '@/components/shared/completion-field'
+import { ProfileDocumentsPanel } from '@/components/shared/profile-documents-panel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { documentApi } from '@/lib/api/document-api'
@@ -208,7 +208,7 @@ export function ClientProfilePage() {
     try {
       setIsUploading(true)
       const uploaded = await documentApi.upload(payload)
-      setDocuments((current) => [uploaded, ...current])
+      setDocuments((current) => [uploaded, ...current.filter((document) => document.documentType !== uploaded.documentType)])
       setDocumentError(null)
     } catch (cause) {
       setDocumentError(cause instanceof Error ? cause.message : "Impossible d'envoyer le document")
@@ -346,12 +346,14 @@ export function ClientProfilePage() {
 
       {documentError ? <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{documentError}</p> : null}
       {isLoadingDocuments ? (
-        <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement des documents…</div>
+        <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement des documents...</div>
       ) : (
         <ProfileDocumentsPanel
           documents={documents}
           isUploading={isUploading}
           onUpload={handleUploadDocument}
+          title="Pièces du profil"
+          description="Déposez ou remplacez ici vos PDF communs à toutes les demandes."
         />
       )}
     </div>

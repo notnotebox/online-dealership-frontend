@@ -54,7 +54,7 @@ export function UploadDocumentsPage() {
     try {
       setIsUploading(true)
       const uploaded = await documentApi.upload(payload)
-      setDocuments((current) => [uploaded, ...current])
+      setDocuments((current) => [uploaded, ...current.filter((document) => document.documentType !== uploaded.documentType)])
       setError(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Impossible d'envoyer le document")
@@ -64,7 +64,7 @@ export function UploadDocumentsPage() {
   }
 
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement des documents…</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement des documents...</div>
   }
 
   return (
