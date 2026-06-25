@@ -9,6 +9,8 @@ import { authApi, type UpdateProfileRequest } from '@/lib/api/auth-api'
 import { useAuth } from '@/lib/auth/auth-context'
 import type { DocumentRecord, DocumentType } from '@/lib/documents/document-types'
 import { getMissingProfileFields, getMissingProfileFieldKeys, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
+import { downloadTextFile } from '@/lib/test-fixtures/download-text-file'
+import { buildProfileFixtureText, createProfileFixture } from '@/lib/test-fixtures/profile-application-fixture'
 
 type ProfileFormState = {
   firstName: string
@@ -188,6 +190,20 @@ export function ClientProfilePage() {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
+  function fillProfileAutomatically() {
+    const fixture = createProfileFixture()
+    setForm((current) => ({
+      ...current,
+      ...fixture,
+    }))
+    setMessage(null)
+    setError(null)
+    downloadTextFile(
+      `profil-test-${fixture.firstName.toLowerCase()}-${fixture.lastName.toLowerCase()}.txt`,
+      buildProfileFixtureText(fixture),
+    )
+  }
+
   async function handleSave() {
     setError(null)
     setMessage(null)
@@ -258,6 +274,9 @@ export function ClientProfilePage() {
             <h2 className="text-lg font-semibold">Actions</h2>
             <Button asChild className="w-full">
               <a href="#profile-form">{isProfileComplete ? 'Modifier le profil' : 'Compléter le profil'}</a>
+            </Button>
+            <Button type="button" variant="outline" className="w-full" onClick={fillProfileAutomatically}>
+              Compléter automatiquement
             </Button>
             <Button asChild variant="outline" className="w-full">
               <Link to="/app/files/new">Nouvelle demande</Link>
