@@ -17,6 +17,7 @@ export function ClientLayout() {
   const contextAction =
     matchPath('/app/files/new', location.pathname) ||
     matchPath('/app/files/new/:vehicleId', location.pathname) ||
+    matchPath('/app/files/:fileId/edit', location.pathname) ||
     matchPath('/app/files/:fileId', location.pathname) ||
     matchPath('/app/files/:fileId/upload', location.pathname)
       ? { to: '/vehicles', label: 'Retour catalogue', variant: 'outline' as const }

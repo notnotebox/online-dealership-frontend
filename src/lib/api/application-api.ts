@@ -1,5 +1,11 @@
 import { apiRequest } from './client'
-import type { CreateVehicleApplicationRequest, UpdateApplicationStatusRequest, UpdateVehicleApplicationRequest, VehicleApplication } from '@/lib/application/application-types'
+import type {
+  ApplicationStatusHistoryEntry,
+  CreateVehicleApplicationRequest,
+  UpdateApplicationStatusRequest,
+  UpdateVehicleApplicationRequest,
+  VehicleApplication,
+} from '@/lib/application/application-types'
 
 export const applicationApi = {
   create(payload: CreateVehicleApplicationRequest) {
@@ -13,6 +19,9 @@ export const applicationApi = {
   },
   getMine(applicationId: string) {
     return apiRequest<VehicleApplication>(`/applications/${applicationId}`)
+  },
+  listHistoryMine(applicationId: string) {
+    return apiRequest<ApplicationStatusHistoryEntry[]>(`/applications/${applicationId}/history`)
   },
   updateMine(applicationId: string, payload: UpdateVehicleApplicationRequest) {
     return apiRequest<VehicleApplication>(`/applications/${applicationId}`, {
@@ -30,6 +39,9 @@ export const applicationApi = {
   },
   getAdmin(applicationId: string) {
     return apiRequest<VehicleApplication>(`/applications/admin/${applicationId}`)
+  },
+  listHistoryAdmin(applicationId: string) {
+    return apiRequest<ApplicationStatusHistoryEntry[]>(`/applications/admin/${applicationId}/history`)
   },
   updateStatusAdmin(applicationId: string, payload: UpdateApplicationStatusRequest) {
     return apiRequest<VehicleApplication>(`/applications/admin/${applicationId}/status`, {

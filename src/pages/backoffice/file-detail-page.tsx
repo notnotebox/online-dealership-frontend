@@ -7,14 +7,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { applicationApi } from '@/lib/api/application-api'
 import { documentApi } from '@/lib/api/document-api'
-import type { ApplicationStatus, VehicleApplication } from '@/lib/application/application-types'
+import type { ApplicationStatus, ApplicationStatusHistoryEntry, VehicleApplication } from '@/lib/application/application-types'
 import type { DocumentRecord } from '@/lib/documents/document-types'
 
 const MANAGER_STATUSES: ApplicationStatus[] = ['UNDER_REVIEW', 'COMPLEMENT_REQUESTED', 'WAITING_CUSTOMER', 'APPROVED', 'REJECTED']
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return 'Non renseigné'
+    return 'Non renseigne'
   }
 
   return new Intl.DateTimeFormat('fr-FR', {
@@ -27,6 +27,7 @@ export function BackofficeFileDetailPage() {
   const { fileId } = useParams()
   const [application, setApplication] = useState<VehicleApplication | null>(null)
   const [documents, setDocuments] = useState<DocumentRecord[]>([])
+  const [history, setHistory] = useState<ApplicationStatusHistoryEntry[]>([])
   const [comment, setComment] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -43,14 +44,16 @@ export function BackofficeFileDetailPage() {
 
       try {
         setIsLoading(true)
-        const [applicationResponse, documentResponse] = await Promise.all([
+        const [applicationResponse, documentResponse, historyResponse] = await Promise.all([
           applicationApi.getAdmin(fileId),
           documentApi.listAdminForApplication(fileId),
+          applicationApi.listHistoryAdmin(fileId),
         ])
 
         if (!cancelled) {
           setApplication(applicationResponse)
           setDocuments(documentResponse)
+          setHistory(historyResponse)
           setComment(applicationResponse.internalComment ?? '')
           setError(null)
         }
@@ -73,34 +76,13 @@ export function BackofficeFileDetailPage() {
   }, [fileId])
 
   const timeline = useMemo(() => {
-    if (!application) {
-      return []
-    }
-
-    const items = [
-      { key: 'created', label: 'Création', date: application.createdAt, detail: 'Dossier enregistré.' },
-    ]
-
-    if (application.submittedAt) {
-      items.push({
-        key: 'submitted',
-        label: 'Soumission',
-        date: application.submittedAt,
-        detail: 'Dossier transmis par le client.',
-      })
-    }
-
-    if (application.reviewedAt) {
-      items.push({
-        key: 'reviewed',
-        label: applicationStatusMap[application.status].label,
-        date: application.reviewedAt,
-        detail: application.internalComment?.trim() || applicationStatusMap[application.status].helper,
-      })
-    }
-
-    return items
-  }, [application])
+    return history.map((item) => ({
+      key: item.id,
+      label: applicationStatusMap[item.status].label,
+      date: item.createdAt,
+      detail: item.comment?.trim() || applicationStatusMap[item.status].helper,
+    }))
+  }, [history])
 
   async function changeStatus(status: ApplicationStatus) {
     if (!application) {
@@ -108,7 +90,7 @@ export function BackofficeFileDetailPage() {
     }
 
     if (status === 'COMPLEMENT_REQUESTED' && !comment.trim()) {
-      setError('Un commentaire interne est requis pour demander un complément.')
+      setError('Un commentaire est requis pour demander un complement.')
       return
     }
 
@@ -118,11 +100,13 @@ export function BackofficeFileDetailPage() {
         status,
         internalComment: comment.trim() || undefined,
       })
+      const historyResponse = await applicationApi.listHistoryAdmin(application.id)
       setApplication(response)
+      setHistory(historyResponse)
       setComment(response.internalComment ?? '')
       setError(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Mise à jour impossible')
+      setError(cause instanceof Error ? cause.message : 'Mise a jour impossible')
     } finally {
       setIsSaving(false)
     }
@@ -149,7 +133,7 @@ export function BackofficeFileDetailPage() {
     return (
       <Card>
         <CardContent className="space-y-3 p-4">
-          <p className="text-sm text-muted-foreground">Aucun dossier sélectionné.</p>
+          <p className="text-sm text-muted-foreground">Aucun dossier selectionne.</p>
           <Button asChild>
             <Link to="/backoffice/files">Voir les dossiers</Link>
           </Button>
@@ -180,14 +164,14 @@ export function BackofficeFileDetailPage() {
             <CardContent className="space-y-4 p-4">
               <div className="grid gap-3 md:grid-cols-2">
                 <div><p className="text-xs text-muted-foreground">Client</p><p className="font-medium">{application.firstName} {application.lastName}</p></div>
-                <div><p className="text-xs text-muted-foreground">Mode d’acquisition</p><p className="font-medium">{application.acquisitionType}</p></div>
-                <div><p className="text-xs text-muted-foreground">Complétude du profil</p><p className="font-medium">{application.profileCompletionPercent}%</p></div>
-                <div><p className="text-xs text-muted-foreground">Dernière mise à jour</p><p className="font-medium">{formatDate(application.updatedAt)}</p></div>
+                <div><p className="text-xs text-muted-foreground">Mode d'acquisition</p><p className="font-medium">{application.acquisitionType}</p></div>
+                <div><p className="text-xs text-muted-foreground">Completude du profil</p><p className="font-medium">{application.profileCompletionPercent}%</p></div>
+                <div><p className="text-xs text-muted-foreground">Derniere mise a jour</p><p className="font-medium">{formatDate(application.updatedAt)}</p></div>
               </div>
 
               <div className="space-y-2">
                 <h2 className="font-medium">Chronologie</h2>
-                {timeline.map((item) => (
+                {timeline.length > 0 ? timeline.map((item) => (
                   <div key={item.key} className="rounded-lg border px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">{item.label}</p>
@@ -195,19 +179,23 @@ export function BackofficeFileDetailPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">{item.detail}</p>
                   </div>
-                ))}
+                )) : (
+                  <div className="rounded-lg border px-3 py-4 text-sm text-muted-foreground">
+                    Aucun evenement enregistre pour le moment.
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
                 <h2 className="font-medium">Profil client</h2>
                 <div className="grid gap-2 text-sm md:grid-cols-2">
-                  <p><span className="font-medium">Téléphone :</span> {application.phoneNumber ?? '-'}</p>
+                  <p><span className="font-medium">Telephone :</span> {application.phoneNumber ?? '-'}</p>
                   <p><span className="font-medium">Date de naissance :</span> {application.dateOfBirth ?? '-'}</p>
                   <p><span className="font-medium">Adresse :</span> {application.addressLine1 ?? '-'}</p>
                   <p><span className="font-medium">Ville :</span> {application.city ?? '-'}</p>
                   <p><span className="font-medium">Code postal :</span> {application.postalCode ?? '-'}</p>
                   <p><span className="font-medium">Pays :</span> {application.country ?? '-'}</p>
-                  <p><span className="font-medium">Nationalité :</span> {application.nationality ?? '-'}</p>
+                  <p><span className="font-medium">Nationalite :</span> {application.nationality ?? '-'}</p>
                   <p><span className="font-medium">Situation familiale :</span> {application.familyStatus ?? '-'}</p>
                   <p><span className="font-medium">Foyer :</span> {application.householdSize ?? '-'}</p>
                   <p><span className="font-medium">Situation professionnelle :</span> {application.professionalStatus ?? '-'}</p>
@@ -218,12 +206,12 @@ export function BackofficeFileDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <h2 className="font-medium">Paramètres du dossier</h2>
+                <h2 className="font-medium">Parametres du dossier</h2>
                 <div className="grid gap-2 text-sm md:grid-cols-2">
                   <p><span className="font-medium">Apport :</span> {application.contributionAmount ?? '-'}</p>
-                  <p><span className="font-medium">Durée :</span> {application.durationMonths ? `${application.durationMonths} mois` : '-'}</p>
-                  <p><span className="font-medium">Kilométrage annuel :</span> {application.annualMileage ? `${application.annualMileage} km` : '-'}</p>
-                  <p><span className="font-medium">Début souhaité :</span> {application.expectedStartDate ?? '-'}</p>
+                  <p><span className="font-medium">Duree :</span> {application.durationMonths ? `${application.durationMonths} mois` : '-'}</p>
+                  <p><span className="font-medium">Kilometrage annuel :</span> {application.annualMileage ? `${application.annualMileage} km` : '-'}</p>
+                  <p><span className="font-medium">Debut souhaite :</span> {application.expectedStartDate ?? '-'}</p>
                   <p><span className="font-medium">Reprise / remarque :</span> {application.tradeInDescription ?? '-'}</p>
                   <p><span className="font-medium">Commentaire client :</span> {application.comment ?? '-'}</p>
                 </div>
@@ -234,16 +222,16 @@ export function BackofficeFileDetailPage() {
           <Card>
             <CardContent className="space-y-4 p-4">
               <div>
-                <h2 className="text-lg font-semibold">Pièces du profil</h2>
+                <h2 className="text-lg font-semibold">Pieces du profil</h2>
                 <p className="text-sm text-muted-foreground">
-                  Ces PDF sont déposés une seule fois par le client et réutilisés pour toutes ses demandes.
+                  Ces PDF sont deposes une seule fois par le client et reutilises pour toutes ses demandes.
                 </p>
               </div>
 
               <DocumentRecordList
                 documents={documents}
                 emptyTitle="Aucun document disponible"
-                emptyDescription="Le client n’a encore déposé aucune pièce PDF dans son profil."
+                emptyDescription="Le client n'a encore depose aucune piece PDF dans son profil."
               />
             </CardContent>
           </Card>
@@ -254,14 +242,14 @@ export function BackofficeFileDetailPage() {
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Traitement</h2>
               <p className="text-sm text-muted-foreground">
-                Le gestionnaire peut faire avancer le dossier sans modifier les données du client.
+                Le gestionnaire peut faire avancer le dossier sans modifier les donnees du client.
               </p>
             </div>
 
             <Textarea
               value={comment}
               onChange={(event) => setComment(event.target.value)}
-              placeholder="Commentaire interne"
+              placeholder="Commentaire a transmettre"
               className="min-h-24"
             />
 
@@ -280,7 +268,7 @@ export function BackofficeFileDetailPage() {
             </div>
 
             <Button asChild variant="outline" className="w-full">
-              <Link to="/backoffice/files">Retour à la liste</Link>
+              <Link to="/backoffice/files">Retour a la liste</Link>
             </Button>
           </CardContent>
         </Card>

@@ -52,6 +52,7 @@ export function AppRouter() {
           <Route path="/app/files" element={<ClientFilesPage />} />
           <Route path="/app/files/new" element={<NewFilePage />} />
           <Route path="/app/files/new/:vehicleId" element={<NewFilePage />} />
+          <Route path="/app/files/:fileId/edit" element={<NewFilePage />} />
           <Route path="/app/files/:fileId" element={<FileTrackingPage />} />
           <Route path="/app/files/:fileId/upload" element={<UploadDocumentsPage />} />
         </Route>

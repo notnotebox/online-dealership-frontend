@@ -8,18 +8,20 @@ import { Card, CardContent } from '@/components/ui/card'
 import { applicationApi } from '@/lib/api/application-api'
 import { authApi } from '@/lib/api/auth-api'
 import { documentApi } from '@/lib/api/document-api'
-import { useAuth } from '@/lib/auth/auth-context'
-import type { ApplicationAcquisitionType } from '@/lib/application/application-types'
-import type { DocumentRecord, DocumentType } from '@/lib/documents/document-types'
-import { formatDocumentTypeLabel, getRequiredDocuments } from '@/lib/documents/document-types'
-import { getMissingProfileFieldKeys, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
 import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
+import { useAuth } from '@/lib/auth/auth-context'
+import type { ApplicationAcquisitionType, CreateVehicleApplicationRequest } from '@/lib/application/application-types'
+import type { DocumentRecord, DocumentType } from '@/lib/documents/document-types'
+import { getRequiredDocuments } from '@/lib/documents/document-types'
+import { getMissingProfileFieldKeys, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
+import { downloadTextFile } from '@/lib/test-fixtures/download-text-file'
+import { buildApplicationFixtureText, createApplicationFixture } from '@/lib/test-fixtures/profile-application-fixture'
 
-const PROFESSIONAL_STATUSES = ['CDI', 'CDD', 'Indépendant', 'Fonctionnaire', 'Retraité', 'Étudiant']
-const FAMILY_STATUSES = ['Célibataire', 'Marié', 'Pacsé', 'En union', 'Divorcé']
+const PROFESSIONAL_STATUSES = ['CDI', 'CDD', 'Independant', 'Fonctionnaire', 'Retraite', 'Etudiant']
+const FAMILY_STATUSES = ['Celibataire', 'Marie', 'Pacse', 'En union', 'Divorce']
 const ACQUISITIONS: Array<{ value: ApplicationAcquisitionType; label: string }> = [
   { value: 'CASH', label: 'Achat comptant' },
-  { value: 'CREDIT', label: 'Crédit auto' },
+  { value: 'CREDIT', label: 'Credit auto' },
   { value: 'LOA', label: 'LOA' },
   { value: 'LLD', label: 'LLD' },
 ]
@@ -67,7 +69,7 @@ const initialState: ApplicationFormState = {
   postalCode: '',
   city: '',
   country: 'France',
-  nationality: 'Française',
+  nationality: 'Francaise',
   familyStatus: '',
   householdSize: '',
   professionalStatus: '',
@@ -110,13 +112,46 @@ function buildFormFromProfile(profile: ReturnType<typeof useAuth>['profile']): A
     postalCode: profile.postalCode ?? '',
     city: profile.city ?? '',
     country: profile.country ?? 'France',
-    nationality: profile.nationality ?? 'Française',
+    nationality: profile.nationality ?? 'Francaise',
     familyStatus: profile.familyStatus ?? '',
     householdSize: profile.householdSize != null ? String(profile.householdSize) : '',
     professionalStatus: profile.professionalStatus ?? '',
     monthlyIncome: profile.monthlyIncome != null ? String(profile.monthlyIncome) : '',
     monthlyCharges: profile.monthlyCharges != null ? String(profile.monthlyCharges) : '',
     iban: profile.iban ?? '',
+  }
+}
+
+function buildFormFromApplication(application: Awaited<ReturnType<typeof applicationApi.getMine>>): ApplicationFormState {
+  return {
+    vehicleId: application.vehicleId,
+    acquisitionType: application.acquisitionType,
+    firstName: application.firstName ?? '',
+    lastName: application.lastName ?? '',
+    dateOfBirth: application.dateOfBirth ?? '',
+    phoneNumber: application.phoneNumber ?? '',
+    addressLine1: application.addressLine1 ?? '',
+    addressLine2: application.addressLine2 ?? '',
+    postalCode: application.postalCode ?? '',
+    city: application.city ?? '',
+    country: application.country ?? 'France',
+    nationality: application.nationality ?? 'Francaise',
+    familyStatus: application.familyStatus ?? '',
+    householdSize: application.householdSize != null ? String(application.householdSize) : '',
+    professionalStatus: application.professionalStatus ?? '',
+    monthlyIncome: application.monthlyIncome != null ? String(application.monthlyIncome) : '',
+    monthlyCharges: application.monthlyCharges != null ? String(application.monthlyCharges) : '',
+    iban: application.iban ?? '',
+    durationMonths: application.durationMonths != null ? String(application.durationMonths) : '',
+    annualMileage: application.annualMileage != null ? String(application.annualMileage) : '',
+    contributionAmount: application.contributionAmount != null ? String(application.contributionAmount) : '',
+    expectedStartDate: application.expectedStartDate ?? '',
+    tradeInDescription: application.tradeInDescription ?? '',
+    insuranceIncluded: application.insuranceIncluded,
+    warrantyIncluded: application.warrantyIncluded,
+    assistanceIncluded: application.assistanceIncluded,
+    maintenanceIncluded: application.maintenanceIncluded,
+    comment: application.comment ?? '',
   }
 }
 
@@ -143,15 +178,49 @@ function formatPrice(price: string) {
   }).format(value)
 }
 
+function buildPayload(form: ApplicationFormState, showLeaseFields: boolean): CreateVehicleApplicationRequest {
+  return {
+    vehicleId: form.vehicleId,
+    acquisitionType: form.acquisitionType,
+    firstName: form.firstName.trim() || undefined,
+    lastName: form.lastName.trim() || undefined,
+    dateOfBirth: form.dateOfBirth || undefined,
+    phoneNumber: form.phoneNumber.trim() || undefined,
+    addressLine1: form.addressLine1.trim() || undefined,
+    addressLine2: form.addressLine2.trim() || undefined,
+    postalCode: form.postalCode.trim() || undefined,
+    city: form.city.trim() || undefined,
+    country: form.country.trim() || undefined,
+    nationality: form.nationality.trim() || undefined,
+    familyStatus: form.familyStatus.trim() || undefined,
+    householdSize: toOptionalNumber(form.householdSize),
+    professionalStatus: form.professionalStatus.trim() || undefined,
+    monthlyIncome: toOptionalNumber(form.monthlyIncome),
+    monthlyCharges: toOptionalNumber(form.monthlyCharges),
+    iban: form.iban.trim() || undefined,
+    durationMonths: showLeaseFields ? toOptionalNumber(form.durationMonths) : undefined,
+    annualMileage: showLeaseFields ? toOptionalNumber(form.annualMileage) : undefined,
+    contributionAmount: toOptionalNumber(form.contributionAmount),
+    expectedStartDate: showLeaseFields ? form.expectedStartDate || undefined : undefined,
+    tradeInDescription: form.tradeInDescription.trim() || undefined,
+    insuranceIncluded: form.insuranceIncluded,
+    warrantyIncluded: form.warrantyIncluded,
+    assistanceIncluded: form.assistanceIncluded,
+    maintenanceIncluded: form.maintenanceIncluded,
+    comment: form.comment.trim() || undefined,
+  }
+}
+
 export function NewFilePage() {
   const navigate = useNavigate()
-  const { vehicleId } = useParams()
+  const { vehicleId, fileId } = useParams()
   const { profile, refreshProfile } = useAuth()
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([])
   const [documents, setDocuments] = useState<DocumentRecord[]>([])
   const [form, setForm] = useState<ApplicationFormState>(initialState)
   const [isLoadingVehicles, setIsLoadingVehicles] = useState(true)
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true)
+  const [isLoadingApplication, setIsLoadingApplication] = useState(false)
   const [isUploadingDocument, setIsUploadingDocument] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -179,7 +248,7 @@ export function NewFilePage() {
         }
       } catch (cause) {
         if (!cancelled) {
-          const message = cause instanceof Error ? cause.message : 'Impossible de charger les données'
+          const message = cause instanceof Error ? cause.message : 'Impossible de charger les donnees'
           setError(message)
           setDocumentError(message)
         }
@@ -199,7 +268,42 @@ export function NewFilePage() {
   }, [])
 
   useEffect(() => {
-    if (!profile || profileHydratedRef.current) {
+    let cancelled = false
+
+    async function loadApplication() {
+      if (!fileId) {
+        return
+      }
+
+      try {
+        setIsLoadingApplication(true)
+        const application = await applicationApi.getMine(fileId)
+
+        if (!cancelled) {
+          setForm(buildFormFromApplication(application))
+          setError(null)
+          profileHydratedRef.current = true
+        }
+      } catch (cause) {
+        if (!cancelled) {
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le dossier')
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingApplication(false)
+        }
+      }
+    }
+
+    void loadApplication()
+
+    return () => {
+      cancelled = true
+    }
+  }, [fileId])
+
+  useEffect(() => {
+    if (!profile || profileHydratedRef.current || fileId) {
       return
     }
 
@@ -208,15 +312,15 @@ export function NewFilePage() {
       ...buildFormFromProfile(profile),
     }))
     profileHydratedRef.current = true
-  }, [profile])
+  }, [fileId, profile])
 
   useEffect(() => {
-    if (!vehicleId) {
+    if (!vehicleId || fileId) {
       return
     }
 
     setForm((current) => (current.vehicleId === vehicleId ? current : { ...current, vehicleId }))
-  }, [vehicleId])
+  }, [fileId, vehicleId])
 
   const selectedVehicle = useMemo(() => {
     return vehicles.find((vehicle) => vehicle.id === form.vehicleId)
@@ -253,9 +357,30 @@ export function NewFilePage() {
   const missingProfileFieldKeys = useMemo(() => new Set(getMissingProfileFieldKeys(profileDraft)), [profileDraft])
   const requiredDocuments = useMemo(() => getRequiredDocuments(form.acquisitionType), [form.acquisitionType])
   const showLeaseFields = form.acquisitionType === 'LOA' || form.acquisitionType === 'LLD'
+  const pageTitle = fileId ? 'Completer le dossier' : 'Preparer la demande vehicule'
 
   function updateField(field: keyof ApplicationFormState, value: string | boolean) {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function fillApplicationAutomatically() {
+    const fixture = createApplicationFixture()
+    const targetVehicle = vehicles.length > 0
+      ? vehicles[Math.floor(Math.random() * vehicles.length)]
+      : selectedVehicle
+
+    setForm((current) => ({
+      ...current,
+      ...fixture,
+      vehicleId: targetVehicle?.id ?? current.vehicleId,
+    }))
+    setError(null)
+    setDocumentError(null)
+
+    downloadTextFile(
+      `dossier-test-${fixture.firstName.toLowerCase()}-${fixture.lastName.toLowerCase()}.txt`,
+      buildApplicationFixtureText(fixture, targetVehicle),
+    )
   }
 
   async function handleUploadDocument(payload: { file: File; documentType: DocumentType }) {
@@ -265,7 +390,7 @@ export function NewFilePage() {
       setDocuments((current) => [uploaded, ...current.filter((document) => document.documentType !== uploaded.documentType)])
       setDocumentError(null)
     } catch (cause) {
-      setDocumentError(cause instanceof Error ? cause.message : 'Impossible de déposer le document')
+      setDocumentError(cause instanceof Error ? cause.message : 'Impossible de deposer le document')
     } finally {
       setIsUploadingDocument(false)
     }
@@ -297,36 +422,10 @@ export function NewFilePage() {
 
       await refreshProfile()
 
-      const response = await applicationApi.create({
-        vehicleId: form.vehicleId,
-        acquisitionType: form.acquisitionType,
-        firstName: form.firstName.trim() || undefined,
-        lastName: form.lastName.trim() || undefined,
-        dateOfBirth: form.dateOfBirth || undefined,
-        phoneNumber: form.phoneNumber.trim() || undefined,
-        addressLine1: form.addressLine1.trim() || undefined,
-        addressLine2: form.addressLine2.trim() || undefined,
-        postalCode: form.postalCode.trim() || undefined,
-        city: form.city.trim() || undefined,
-        country: form.country.trim() || undefined,
-        nationality: form.nationality.trim() || undefined,
-        familyStatus: form.familyStatus.trim() || undefined,
-        householdSize: toOptionalNumber(form.householdSize),
-        professionalStatus: form.professionalStatus.trim() || undefined,
-        monthlyIncome: toOptionalNumber(form.monthlyIncome),
-        monthlyCharges: toOptionalNumber(form.monthlyCharges),
-        iban: form.iban.trim() || undefined,
-        durationMonths: showLeaseFields ? toOptionalNumber(form.durationMonths) : undefined,
-        annualMileage: showLeaseFields ? toOptionalNumber(form.annualMileage) : undefined,
-        contributionAmount: toOptionalNumber(form.contributionAmount),
-        expectedStartDate: showLeaseFields ? form.expectedStartDate || undefined : undefined,
-        tradeInDescription: form.tradeInDescription.trim() || undefined,
-        insuranceIncluded: form.insuranceIncluded,
-        warrantyIncluded: form.warrantyIncluded,
-        assistanceIncluded: form.assistanceIncluded,
-        maintenanceIncluded: form.maintenanceIncluded,
-        comment: form.comment.trim() || undefined,
-      })
+      const payload = buildPayload(form, showLeaseFields)
+      const response = fileId
+        ? await applicationApi.updateMine(fileId, payload)
+        : await applicationApi.create(payload)
 
       navigate(`/app/files/${response.id}`, { replace: true })
     } catch (cause) {
@@ -340,27 +439,36 @@ export function NewFilePage() {
     <div className="space-y-8">
       <div className="grid gap-4 rounded-2xl border bg-gradient-to-br from-background to-muted/20 p-6 shadow-sm lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Nouveau dossier</p>
-          <h1 className="text-3xl font-semibold">Préparer la demande véhicule</h1>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Dossier vehicule</p>
+          <h1 className="text-3xl font-semibold">{pageTitle}</h1>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            Le profil et les pièces communes sont réutilisés. Cette page enregistre un brouillon.
+            Le profil et les pieces communes sont reutilises. Cette page enregistre un brouillon.
             La soumission se fait ensuite depuis le suivi du dossier.
           </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={fillApplicationAutomatically}>
+              Completer automatiquement
+            </Button>
+          </div>
         </div>
 
         <Card>
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs uppercase text-muted-foreground">Complétude du profil</p>
+              <p className="text-xs uppercase text-muted-foreground">Completude du profil</p>
               <p className="text-xl font-semibold">{profileCompletionPercent}%</p>
             </div>
             <ProgressBar value={profileCompletionPercent} />
             <p className="text-xs text-muted-foreground">
-              La soumission sera disponible une fois le profil et les pièces complétés.
+              La soumission sera disponible une fois le profil et les pieces completes.
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {isLoadingApplication ? (
+        <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du dossier...</div>
+      ) : null}
 
       {error ? (
         <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
@@ -371,21 +479,21 @@ export function NewFilePage() {
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Véhicule sélectionné</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Vehicule selectionne</p>
                 <h2 className="text-2xl font-semibold">
-                  {selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : 'Aucun véhicule sélectionné'}
+                  {selectedVehicle ? `${selectedVehicle.brand} ${selectedVehicle.title}` : 'Aucun vehicule selectionne'}
                 </h2>
                 {selectedVehicle ? (
                   <p className="text-sm text-muted-foreground">
                     {formatPrice(selectedVehicle.price)} · {selectedVehicle.mileage.toLocaleString('fr-FR')} km · {selectedVehicle.energy}
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Choisissez un véhicule pour poursuivre.</p>
+                  <p className="text-sm text-muted-foreground">Choisissez un vehicule pour poursuivre.</p>
                 )}
               </div>
 
               <Button type="button" variant="outline" asChild>
-                <Link to="/vehicles">Changer le véhicule</Link>
+                <Link to="/vehicles">Changer le vehicule</Link>
               </Button>
             </div>
 
@@ -422,11 +530,11 @@ export function NewFilePage() {
           <CardContent className="space-y-4 p-5">
             <div>
               <h2 className="text-lg font-semibold">1. Profil client</h2>
-              <p className="text-sm text-muted-foreground">Ces informations sont enregistrées dans le compte et réutilisées pour les prochaines demandes.</p>
+              <p className="text-sm text-muted-foreground">Ces informations sont enregistrees dans le compte et reutilisees pour les prochaines demandes.</p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <CompletionField label="Prénom" missing={missingProfileFieldKeys.has('firstName')}>
+              <CompletionField label="Prenom" missing={missingProfileFieldKeys.has('firstName')}>
                 <input className={completionInputClassName(missingProfileFieldKeys.has('firstName'))} value={form.firstName} onChange={(event) => updateField('firstName', event.target.value)} />
               </CompletionField>
               <CompletionField label="Nom" missing={missingProfileFieldKeys.has('lastName')}>
@@ -435,13 +543,13 @@ export function NewFilePage() {
               <CompletionField label="Date de naissance" missing={missingProfileFieldKeys.has('dateOfBirth')}>
                 <input className={completionInputClassName(missingProfileFieldKeys.has('dateOfBirth'))} type="date" value={form.dateOfBirth} onChange={(event) => updateField('dateOfBirth', event.target.value)} />
               </CompletionField>
-              <CompletionField label="Téléphone" missing={missingProfileFieldKeys.has('phoneNumber')}>
+              <CompletionField label="Telephone" missing={missingProfileFieldKeys.has('phoneNumber')}>
                 <input className={completionInputClassName(missingProfileFieldKeys.has('phoneNumber'))} value={form.phoneNumber} onChange={(event) => updateField('phoneNumber', event.target.value)} />
               </CompletionField>
               <CompletionField label="Adresse" missing={missingProfileFieldKeys.has('addressLine1')} className="md:col-span-2">
                 <input className={completionInputClassName(missingProfileFieldKeys.has('addressLine1'))} value={form.addressLine1} onChange={(event) => updateField('addressLine1', event.target.value)} />
               </CompletionField>
-              <CompletionField label="Complément d’adresse" missing={false}>
+              <CompletionField label="Complement d'adresse" missing={false}>
                 <input className={completionInputClassName(false)} value={form.addressLine2} onChange={(event) => updateField('addressLine2', event.target.value)} />
               </CompletionField>
               <CompletionField label="Code postal" missing={missingProfileFieldKeys.has('postalCode')}>
@@ -453,7 +561,7 @@ export function NewFilePage() {
               <CompletionField label="Pays" missing={missingProfileFieldKeys.has('country')}>
                 <input className={completionInputClassName(missingProfileFieldKeys.has('country'))} value={form.country} onChange={(event) => updateField('country', event.target.value)} />
               </CompletionField>
-              <CompletionField label="Nationalité" missing={missingProfileFieldKeys.has('nationality')}>
+              <CompletionField label="Nationalite" missing={missingProfileFieldKeys.has('nationality')}>
                 <input className={completionInputClassName(missingProfileFieldKeys.has('nationality'))} value={form.nationality} onChange={(event) => updateField('nationality', event.target.value)} />
               </CompletionField>
               <CompletionField label="Situation familiale" missing={missingProfileFieldKeys.has('familyStatus')}>
@@ -489,22 +597,22 @@ export function NewFilePage() {
         ) : null}
 
         {isLoadingDocuments ? (
-          <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement des pièces du profil...</div>
+          <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement des pieces du profil...</div>
         ) : (
           <ProfileDocumentsPanel
             documents={documents}
             isUploading={isUploadingDocument}
             onUpload={handleUploadDocument}
-            title="2. Pièces du profil"
-            description="Déposez ou remplacez ici les PDF utilisés sur toutes vos demandes."
+            title="2. Pieces du profil"
+            description="Deposez ou remplacez ici les PDF utilises sur toutes vos demandes."
           />
         )}
 
         <Card>
           <CardContent className="space-y-4 p-5">
             <div>
-              <h2 className="text-lg font-semibold">3. Pièces attendues</h2>
-              <p className="text-sm text-muted-foreground">Cette liste dépend du mode choisi. Les pièces sont centralisées dans le profil client.</p>
+              <h2 className="text-lg font-semibold">3. Pieces attendues</h2>
+              <p className="text-sm text-muted-foreground">Cette liste depend du mode choisi. Les pieces sont centralisees dans le profil client.</p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
@@ -512,7 +620,7 @@ export function NewFilePage() {
                 <div key={document.documentType} className="rounded-xl border p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-medium">{formatDocumentTypeLabel(document.documentType)}</p>
+                      <p className="font-medium">{document.label}</p>
                       {document.note ? <p className="text-xs text-muted-foreground">{document.note}</p> : null}
                     </div>
                     <Button type="button" variant="outline" size="sm" onClick={() => navigate('/app/profile')}>
@@ -528,15 +636,15 @@ export function NewFilePage() {
         <Card>
           <CardContent className="space-y-4 p-5">
             <div>
-              <h2 className="text-lg font-semibold">4. Demande liée au véhicule</h2>
-              <p className="text-sm text-muted-foreground">Ces informations sont spécifiques au véhicule et au mode d’acquisition choisi.</p>
+              <h2 className="text-lg font-semibold">4. Demande liee au vehicule</h2>
+              <p className="text-sm text-muted-foreground">Ces informations sont specifiques au vehicule et au mode d'acquisition choisi.</p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <label className="space-y-1 text-sm md:col-span-2">
-                <span className="font-medium text-muted-foreground">Véhicule</span>
+                <span className="font-medium text-muted-foreground">Vehicule</span>
                 <select className="h-10 w-full rounded-md border px-3" value={form.vehicleId} onChange={(event) => updateField('vehicleId', event.target.value)}>
-                  <option value="">Choisir un véhicule</option>
+                  <option value="">Choisir un vehicule</option>
                   {vehicles.map((vehicle) => (
                     <option key={vehicle.id} value={vehicle.id}>
                       {vehicle.brand} {vehicle.title} - {formatPrice(vehicle.price)}
@@ -546,7 +654,7 @@ export function NewFilePage() {
               </label>
 
               <label className="space-y-1 text-sm">
-                <span className="font-medium text-muted-foreground">Mode d’acquisition</span>
+                <span className="font-medium text-muted-foreground">Mode d'acquisition</span>
                 <select className="h-10 w-full rounded-md border px-3" value={form.acquisitionType} onChange={(event) => updateField('acquisitionType', event.target.value as ApplicationAcquisitionType)}>
                   {ACQUISITIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
@@ -560,21 +668,21 @@ export function NewFilePage() {
               {showLeaseFields ? (
                 <>
                   <label className="space-y-1 text-sm">
-                    <span className="font-medium text-muted-foreground">Durée (mois)</span>
+                    <span className="font-medium text-muted-foreground">Duree (mois)</span>
                     <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.durationMonths} onChange={(event) => updateField('durationMonths', event.target.value)} />
                   </label>
                   <label className="space-y-1 text-sm">
-                    <span className="font-medium text-muted-foreground">Kilométrage annuel</span>
+                    <span className="font-medium text-muted-foreground">Kilometrage annuel</span>
                     <input className="h-10 w-full rounded-md border px-3" type="number" min="0" value={form.annualMileage} onChange={(event) => updateField('annualMileage', event.target.value)} />
                   </label>
                   <label className="space-y-1 text-sm md:col-span-2">
-                    <span className="font-medium text-muted-foreground">Date de démarrage souhaitée</span>
+                    <span className="font-medium text-muted-foreground">Date de demarrage souhaitee</span>
                     <input className="h-10 w-full rounded-md border px-3" type="date" value={form.expectedStartDate} onChange={(event) => updateField('expectedStartDate', event.target.value)} />
                   </label>
                 </>
               ) : null}
 
-              <CompletionField label="Reprise ou précision de financement" missing={false} className="md:col-span-2">
+              <CompletionField label="Reprise ou precision de financement" missing={false} className="md:col-span-2">
                 <textarea className={completionTextareaClassName(false)} value={form.tradeInDescription} onChange={(event) => updateField('tradeInDescription', event.target.value)} />
               </CompletionField>
 
@@ -590,7 +698,7 @@ export function NewFilePage() {
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.warrantyIncluded} onChange={(event) => updateField('warrantyIncluded', event.target.checked)} />
-                Garantie mécanique
+                Garantie mecanique
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.assistanceIncluded} onChange={(event) => updateField('assistanceIncluded', event.target.checked)} />
@@ -629,17 +737,17 @@ export function NewFilePage() {
                   <p className="text-muted-foreground">{formatPrice(selectedVehicle.price)} · {selectedVehicle.mileage.toLocaleString('fr-FR')} km · {selectedVehicle.energy}</p>
                   <p className="text-muted-foreground">{selectedVehicle.seatCount} places · {selectedVehicle.doorCount} portes · {selectedVehicle.color}</p>
                   <div className="flex flex-wrap gap-2 pt-2">
-                    <Button type="button" onClick={() => void handleSaveDraft()} disabled={isSavingDraft || isLoadingVehicles || !form.vehicleId}>
-                      {isSavingDraft ? 'Enregistrement...' : 'Enregistrer le brouillon'}
+                    <Button type="button" onClick={() => void handleSaveDraft()} disabled={isSavingDraft || isLoadingVehicles || isLoadingApplication || !form.vehicleId}>
+                      {isSavingDraft ? 'Enregistrement...' : fileId ? 'Mettre a jour le brouillon' : 'Enregistrer le brouillon'}
                     </Button>
                     <Button type="button" variant="outline" asChild>
-                      <Link to="/vehicles">Changer le véhicule</Link>
+                      <Link to="/vehicles">Changer le vehicule</Link>
                     </Button>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Sélectionnez un véhicule pour enregistrer votre dossier.</p>
+              <p className="text-sm text-muted-foreground">Selectionnez un vehicule pour enregistrer votre dossier.</p>
             )}
           </CardContent>
         </Card>

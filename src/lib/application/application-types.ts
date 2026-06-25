@@ -4,6 +4,15 @@ export type ApplicationStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COMPLE
 
 export type ApplicationBoardColumn = 'UNPROCESSED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED'
 
+export type ApplicationStatusHistoryEntry = {
+  id: string
+  status: ApplicationStatus
+  comment: string | null
+  createdByUserId: string | null
+  visibleToClient: boolean
+  createdAt: string
+}
+
 export type VehicleApplication = {
   id: string
   vehicleId: string

@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { applicationApi } from '@/lib/api/application-api'
 import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
-import type { VehicleApplication } from '@/lib/application/application-types'
+import type { ApplicationStatusHistoryEntry, VehicleApplication } from '@/lib/application/application-types'
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return 'Non renseigné'
+    return 'Non renseigne'
   }
 
   const date = new Date(value)
@@ -41,6 +41,7 @@ export function FileTrackingPage() {
   const { fileId } = useParams()
   const [application, setApplication] = useState<VehicleApplication | null>(null)
   const [vehicle, setVehicle] = useState<VehicleResponse | null>(null)
+  const [history, setHistory] = useState<ApplicationStatusHistoryEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,18 +57,23 @@ export function FileTrackingPage() {
 
       try {
         setIsLoading(true)
-        const response = await applicationApi.getMine(fileId)
-        const vehicleResponse = await vehicleApi.getPublicVehicle(response.vehicleId).catch(() => null)
+        const [applicationResponse, historyResponse] = await Promise.all([
+          applicationApi.getMine(fileId),
+          applicationApi.listHistoryMine(fileId),
+        ])
+        const vehicleResponse = await vehicleApi.getPublicVehicle(applicationResponse.vehicleId).catch(() => null)
 
         if (!cancelled) {
-          setApplication(response)
+          setApplication(applicationResponse)
           setVehicle(vehicleResponse)
+          setHistory(historyResponse)
           setError(null)
         }
       } catch (cause) {
         if (!cancelled) {
           setError(cause instanceof Error ? cause.message : 'Impossible de charger la demande')
           setApplication(null)
+          setHistory([])
         }
       } finally {
         if (!cancelled) {
@@ -90,8 +96,10 @@ export function FileTrackingPage() {
 
     try {
       setIsSubmitting(true)
-      const response = await applicationApi.submitMine(application.id)
-      setApplication(response)
+      const applicationResponse = await applicationApi.submitMine(application.id)
+      const historyResponse = await applicationApi.listHistoryMine(application.id)
+      setApplication(applicationResponse)
+      setHistory(historyResponse)
       setError(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Soumission impossible')
@@ -100,40 +108,17 @@ export function FileTrackingPage() {
     }
   }
 
+  const canEdit = application?.status === 'DRAFT' || application?.status === 'COMPLEMENT_REQUESTED' || application?.status === 'WAITING_CUSTOMER'
+  const canSubmit = canEdit
+
   const timeline = useMemo(() => {
-    if (!application) {
-      return []
-    }
-
-    const items = [
-      {
-        key: 'created',
-        title: 'Brouillon enregistré',
-        date: application.createdAt,
-        detail: 'Le dossier a été créé et reste modifiable.',
-      },
-    ]
-
-    if (application.submittedAt) {
-      items.push({
-        key: 'submitted',
-        title: 'Dossier soumis',
-        date: application.submittedAt,
-        detail: 'La demande a été transmise à l’équipe de gestion.',
-      })
-    }
-
-    if (application.reviewedAt && application.status !== 'SUBMITTED' && application.status !== 'DRAFT') {
-      items.push({
-        key: 'reviewed',
-        title: applicationStatusMap[application.status].label,
-        date: application.reviewedAt,
-        detail: application.internalComment?.trim() || applicationStatusMap[application.status].helper,
-      })
-    }
-
-    return items
-  }, [application])
+    return history.map((entry) => ({
+      key: entry.id,
+      title: applicationStatusMap[entry.status].label,
+      date: entry.createdAt,
+      detail: entry.comment?.trim() || applicationStatusMap[entry.status].helper,
+    }))
+  }, [history])
 
   if (isLoading) {
     return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du suivi...</div>
@@ -156,7 +141,7 @@ export function FileTrackingPage() {
     return (
       <Card>
         <CardContent className="space-y-3 p-4">
-          <p className="text-sm text-muted-foreground">Aucune demande sélectionnée.</p>
+          <p className="text-sm text-muted-foreground">Aucune demande selectionnee.</p>
           <Button asChild>
             <Link to="/app/files">Voir mes demandes</Link>
           </Button>
@@ -190,7 +175,7 @@ export function FileTrackingPage() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Référence</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Reference</p>
                 <p className="font-medium">{application.id}</p>
               </div>
               <ApplicationStatusBadge status={application.status} />
@@ -199,20 +184,20 @@ export function FileTrackingPage() {
             <div className="grid gap-2 text-sm md:grid-cols-2">
               <p><span className="font-medium">Prix :</span> {formatPrice(application.vehiclePrice)}</p>
               <p><span className="font-medium">Mode :</span> {application.acquisitionType}</p>
-              <p><span className="font-medium">Kilométrage :</span> {application.vehicleMileage.toLocaleString('fr-FR')} km</p>
-              <p><span className="font-medium">Complétude du profil :</span> {application.profileCompletionPercent}%</p>
+              <p><span className="font-medium">Kilometrage :</span> {application.vehicleMileage.toLocaleString('fr-FR')} km</p>
+              <p><span className="font-medium">Completude du profil :</span> {application.profileCompletionPercent}%</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {application.status === 'DRAFT' ? (
-                <>
-                  <Button onClick={() => void submitApplication()} disabled={isSubmitting}>
-                    {isSubmitting ? 'Soumission...' : 'Soumettre le dossier'}
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link to={`/app/files/new/${application.vehicleId}`}>Modifier le brouillon</Link>
-                  </Button>
-                </>
+              {canSubmit ? (
+                <Button onClick={() => void submitApplication()} disabled={isSubmitting}>
+                  {isSubmitting ? 'Soumission...' : application.status === 'DRAFT' ? 'Soumettre le dossier' : 'Soumettre a nouveau'}
+                </Button>
+              ) : null}
+              {canEdit ? (
+                <Button asChild variant="outline">
+                  <Link to={`/app/files/${application.id}/edit`}>Completer le dossier</Link>
+                </Button>
               ) : null}
               <Button asChild variant="outline">
                 <Link to="/app/files">Retour aux demandes</Link>
@@ -227,7 +212,7 @@ export function FileTrackingPage() {
           <CardContent className="space-y-4 p-4">
             <h2 className="text-lg font-semibold">Historique</h2>
             <div className="space-y-3">
-              {timeline.map((item) => (
+              {timeline.length > 0 ? timeline.map((item) => (
                 <div key={item.key} className="rounded-lg border px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium">{item.title}</p>
@@ -235,7 +220,11 @@ export function FileTrackingPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">{item.detail}</p>
                 </div>
-              ))}
+              )) : (
+                <div className="rounded-lg border px-3 py-4 text-sm text-muted-foreground">
+                  Aucun evenement enregistre pour le moment.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -246,12 +235,12 @@ export function FileTrackingPage() {
             <p className="text-sm text-muted-foreground">{applicationStatusMap[application.status].helper}</p>
             {application.internalComment ? (
               <div className="rounded-lg border bg-muted/20 p-3 text-sm">
-                <p className="font-medium">Commentaire interne transmis</p>
+                <p className="font-medium">Retour du gestionnaire</p>
                 <p className="mt-1 text-muted-foreground">{application.internalComment}</p>
               </div>
             ) : null}
             <Button asChild className="w-full">
-              <Link to="/app/profile">Vérifier mon profil</Link>
+              <Link to="/app/profile">Verifier mon profil</Link>
             </Button>
           </CardContent>
         </Card>
