@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, FileCheck2, FileWarning, Send, XCircle } from 'lucide-react'
 import { ApplicationStatusBadge, applicationStatusMap } from '@/components/shared/application-status-badge'
 import { DocumentRecordList } from '@/components/shared/document-record-list'
 import { Button } from '@/components/ui/button'
@@ -7,10 +8,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { applicationApi } from '@/lib/api/application-api'
 import { documentApi } from '@/lib/api/document-api'
-import type { ApplicationStatus, ApplicationStatusHistoryEntry, VehicleApplication } from '@/lib/application/application-types'
-import type { DocumentRecord } from '@/lib/documents/document-types'
-
-const MANAGER_STATUSES: ApplicationStatus[] = ['UNDER_REVIEW', 'COMPLEMENT_REQUESTED', 'WAITING_CUSTOMER', 'APPROVED', 'REJECTED']
+import type { ApplicationHistoryActorType, ApplicationStatus, ApplicationStatusHistoryEntry, VehicleApplication } from '@/lib/application/application-types'
+import { countCompletedDocuments, getDocumentCompletionPercent, getMissingRequiredDocuments, getRequiredDocuments, type DocumentRecord } from '@/lib/documents/document-types'
 
 function formatDate(value?: string | null) {
   if (!value) {
@@ -22,6 +21,83 @@ function formatDate(value?: string | null) {
     timeStyle: 'short',
   }).format(new Date(value))
 }
+
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="h-2 w-full rounded-full bg-muted">
+      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    </div>
+  )
+}
+
+function actorMeta(actorType: ApplicationHistoryActorType) {
+  switch (actorType) {
+    case 'CLIENT':
+      return {
+        label: 'Client',
+        icon: ArrowUpFromLine,
+        className: 'border-blue-200 bg-blue-50 text-blue-800',
+      }
+    case 'MANAGER':
+      return {
+        label: 'Gestionnaire',
+        icon: ArrowDownToLine,
+        className: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+      }
+    default:
+      return {
+        label: 'Systeme',
+        icon: Clock3,
+        className: 'border-slate-200 bg-slate-50 text-slate-700',
+      }
+  }
+}
+
+type ManagerAction = {
+  status: ApplicationStatus
+  title: string
+  helper: string
+  icon: typeof CheckCircle2
+  variant?: 'default' | 'outline' | 'secondary' | 'destructive'
+}
+
+const MANAGER_ACTIONS: ManagerAction[] = [
+  {
+    status: 'UNDER_REVIEW',
+    title: 'Passer en verification',
+    helper: 'Le dossier est pris en charge et les pieces sont en cours de controle.',
+    icon: FileCheck2,
+    variant: 'outline',
+  },
+  {
+    status: 'COMPLEMENT_REQUESTED',
+    title: 'Demander un complement',
+    helper: 'Utiliser ce statut lorsqu il manque des pieces ou une correction cote client.',
+    icon: FileWarning,
+    variant: 'outline',
+  },
+  {
+    status: 'WAITING_CUSTOMER',
+    title: 'Attendre la validation client',
+    helper: 'Utiliser ce statut apres envoi du contrat ou pour une confirmation finale cote client.',
+    icon: Send,
+    variant: 'secondary',
+  },
+  {
+    status: 'APPROVED',
+    title: 'Valider le dossier',
+    helper: 'Le dossier est conforme et peut etre accepte definitivement.',
+    icon: CheckCircle2,
+    variant: 'default',
+  },
+  {
+    status: 'REJECTED',
+    title: 'Refuser le dossier',
+    helper: 'A utiliser uniquement si la demande ne peut pas aboutir.',
+    icon: XCircle,
+    variant: 'destructive',
+  },
+]
 
 export function BackofficeFileDetailPage() {
   const { fileId } = useParams()
@@ -75,13 +151,40 @@ export function BackofficeFileDetailPage() {
     }
   }, [fileId])
 
+  const requiredDocuments = useMemo(() => {
+    return application ? getRequiredDocuments(application.acquisitionType) : []
+  }, [application])
+
+  const completedDocumentsCount = useMemo(() => {
+    return countCompletedDocuments(documents, requiredDocuments)
+  }, [documents, requiredDocuments])
+
+  const missingRequiredDocuments = useMemo(() => {
+    return getMissingRequiredDocuments(documents, requiredDocuments)
+  }, [documents, requiredDocuments])
+
+  const documentCompletionPercent = useMemo(() => {
+    return getDocumentCompletionPercent(documents, requiredDocuments)
+  }, [documents, requiredDocuments])
+
+  const dossierCompletionPercent = useMemo(() => {
+    if (!application) {
+      return 0
+    }
+
+    return Math.round((application.profileCompletionPercent + documentCompletionPercent) / 2)
+  }, [application, documentCompletionPercent])
+
   const timeline = useMemo(() => {
-    return history.map((item) => ({
-      key: item.id,
-      label: applicationStatusMap[item.status].label,
-      date: item.createdAt,
-      detail: item.comment?.trim() || applicationStatusMap[item.status].helper,
-    }))
+    return [...history]
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+      .map((item) => ({
+        key: item.id,
+        label: applicationStatusMap[item.status].label,
+        date: item.createdAt,
+        detail: item.comment?.trim() || applicationStatusMap[item.status].helper,
+        actorType: item.actorType,
+      }))
   }, [history])
 
   async function changeStatus(status: ApplicationStatus) {
@@ -89,8 +192,8 @@ export function BackofficeFileDetailPage() {
       return
     }
 
-    if (status === 'COMPLEMENT_REQUESTED' && !comment.trim()) {
-      setError('Un commentaire est requis pour demander un complement.')
+    if ((status === 'COMPLEMENT_REQUESTED' || status === 'WAITING_CUSTOMER') && !comment.trim()) {
+      setError('Un commentaire est requis pour informer le client.')
       return
     }
 
@@ -146,7 +249,7 @@ export function BackofficeFileDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Revue du dossier</h1>
+          <h1 className="text-2xl font-semibold">Traitement du dossier</h1>
           <p className="text-sm text-muted-foreground">
             {application.vehicleBrand} {application.vehicleTitle}
           </p>
@@ -161,25 +264,59 @@ export function BackofficeFileDetailPage() {
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
           <Card>
-            <CardContent className="space-y-4 p-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div><p className="text-xs text-muted-foreground">Client</p><p className="font-medium">{application.firstName} {application.lastName}</p></div>
-                <div><p className="text-xs text-muted-foreground">Mode d'acquisition</p><p className="font-medium">{application.acquisitionType}</p></div>
-                <div><p className="text-xs text-muted-foreground">Completude du profil</p><p className="font-medium">{application.profileCompletionPercent}%</p></div>
-                <div><p className="text-xs text-muted-foreground">Derniere mise a jour</p><p className="font-medium">{formatDate(application.updatedAt)}</p></div>
+            <CardContent className="space-y-5 p-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1 rounded-xl border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Client</p>
+                  <p className="font-medium">{application.firstName} {application.lastName}</p>
+                </div>
+                <div className="space-y-1 rounded-xl border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Mode</p>
+                  <p className="font-medium">{application.acquisitionType}</p>
+                </div>
+                <div className="space-y-1 rounded-xl border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Profil</p>
+                  <p className="font-medium">{application.profileCompletionPercent}%</p>
+                </div>
+                <div className="space-y-1 rounded-xl border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Derniere mise a jour</p>
+                  <p className="font-medium">{formatDate(application.updatedAt)}</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">Completion du dossier</p>
+                  <p className="text-lg font-semibold">{dossierCompletionPercent}%</p>
+                </div>
+                <ProgressBar value={dossierCompletionPercent} />
+                <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
+                  <p><span className="font-medium">Profil :</span> {application.profileCompletionPercent}%</p>
+                  <p><span className="font-medium">Pieces :</span> {completedDocumentsCount}/{requiredDocuments.length}</p>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <h2 className="font-medium">Chronologie</h2>
-                {timeline.length > 0 ? timeline.map((item) => (
-                  <div key={item.key} className="rounded-lg border px-3 py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(item.date)}</p>
+                <h2 className="font-medium">Historique du traitement</h2>
+                {timeline.length > 0 ? timeline.map((item) => {
+                  const actor = actorMeta(item.actorType)
+                  const ActorIcon = actor.icon
+                  return (
+                    <div key={item.key} className="rounded-lg border px-3 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium ${actor.className}`}>
+                            <ActorIcon className="h-3 w-3" />
+                            {actor.label}
+                          </span>
+                          <p className="text-sm font-medium">{item.label}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{formatDate(item.date)}</p>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">{item.detail}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">{item.detail}</p>
-                  </div>
-                )) : (
+                  )
+                }) : (
                   <div className="rounded-lg border px-3 py-4 text-sm text-muted-foreground">
                     Aucun evenement enregistre pour le moment.
                   </div>
@@ -206,15 +343,33 @@ export function BackofficeFileDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <h2 className="font-medium">Parametres du dossier</h2>
+                <h2 className="font-medium">Parametres de la demande</h2>
                 <div className="grid gap-2 text-sm md:grid-cols-2">
                   <p><span className="font-medium">Apport :</span> {application.contributionAmount ?? '-'}</p>
                   <p><span className="font-medium">Duree :</span> {application.durationMonths ? `${application.durationMonths} mois` : '-'}</p>
                   <p><span className="font-medium">Kilometrage annuel :</span> {application.annualMileage ? `${application.annualMileage} km` : '-'}</p>
                   <p><span className="font-medium">Debut souhaite :</span> {application.expectedStartDate ?? '-'}</p>
-                  <p><span className="font-medium">Reprise / remarque :</span> {application.tradeInDescription ?? '-'}</p>
+                  <p><span className="font-medium">Reprise ou remarque :</span> {application.tradeInDescription ?? '-'}</p>
                   <p><span className="font-medium">Commentaire client :</span> {application.comment ?? '-'}</p>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="font-medium">Pieces encore attendues</h2>
+                {missingRequiredDocuments.length > 0 ? (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {missingRequiredDocuments.map((document) => (
+                      <div key={document.documentType} className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                        <p className="font-medium">{document.label}</p>
+                        {document.note ? <p className="text-xs text-amber-700">{document.note}</p> : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+                    Toutes les pieces requises sont deja presentes dans le profil client.
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -240,9 +395,9 @@ export function BackofficeFileDetailPage() {
         <Card>
           <CardContent className="space-y-4 p-4">
             <div className="space-y-1">
-              <h2 className="text-lg font-semibold">Traitement</h2>
+              <h2 className="text-lg font-semibold">Actions gestionnaire</h2>
               <p className="text-sm text-muted-foreground">
-                Le gestionnaire peut faire avancer le dossier sans modifier les donnees du client.
+                Le commentaire ci-dessous sera utilise pour informer le client lorsqu une action le concerne.
               </p>
             </div>
 
@@ -253,18 +408,29 @@ export function BackofficeFileDetailPage() {
               className="min-h-24"
             />
 
-            <div className="grid gap-2">
-              {MANAGER_STATUSES.map((status) => (
-                <Button
-                  key={status}
-                  type="button"
-                  variant={status === 'APPROVED' ? 'default' : status === 'REJECTED' ? 'destructive' : 'outline'}
-                  onClick={() => void changeStatus(status)}
-                  disabled={isSaving}
-                >
-                  {applicationStatusMap[status].label}
-                </Button>
-              ))}
+            <div className="grid gap-3">
+              {MANAGER_ACTIONS.map((action) => {
+                const Icon = action.icon
+                return (
+                  <button
+                    key={action.status}
+                    type="button"
+                    onClick={() => void changeStatus(action.status)}
+                    disabled={isSaving}
+                    className="rounded-xl border p-4 text-left transition hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-primary/10 p-2 text-primary">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-medium">{action.title}</p>
+                        <p className="text-sm text-muted-foreground">{action.helper}</p>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
 
             <Button asChild variant="outline" className="w-full">

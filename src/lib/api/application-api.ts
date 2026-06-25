@@ -34,6 +34,11 @@ export const applicationApi = {
       method: 'POST',
     })
   },
+  confirmCustomerAction(applicationId: string) {
+    return apiRequest<VehicleApplication>(`/applications/${applicationId}/customer-confirmation`, {
+      method: 'POST',
+    })
+  },
   listAdmin() {
     return apiRequest<VehicleApplication[]>('/applications/admin')
   },
