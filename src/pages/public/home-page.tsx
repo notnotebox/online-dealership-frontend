@@ -12,29 +12,16 @@ function pickFeaturedVehicles(vehicles: VehicleResponse[]) {
     return []
   }
 
-  const featured: VehicleResponse[] = []
-  const remaining = [...vehicles]
+  const uniqueVehicles = [...vehicles]
+    .sort((left, right) => {
+      const priceDiff = Number(left.price) - Number(right.price)
+      if (priceDiff !== 0) {
+        return priceDiff
+      }
+      return left.mileage - right.mileage
+    })
 
-  const cheapest = [...remaining].sort((left, right) => Number(left.price) - Number(right.price))[0]
-  if (cheapest) {
-    featured.push(cheapest)
-  }
-
-  const withoutCheapest = remaining.filter((vehicle) => vehicle.id !== cheapest?.id)
-  const lowestMileage = [...withoutCheapest].sort((left, right) => left.mileage - right.mileage)[0]
-  if (lowestMileage) {
-    featured.push(lowestMileage)
-  }
-
-  const withoutFirstTwo = withoutCheapest.filter((vehicle) => vehicle.id !== lowestMileage?.id)
-  const mostRecent = [...withoutFirstTwo].sort(
-    (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
-  )[0]
-  if (mostRecent) {
-    featured.push(mostRecent)
-  }
-
-  return featured
+  return uniqueVehicles.slice(0, 9)
 }
 
 export function HomePage() {
@@ -98,7 +85,7 @@ export function HomePage() {
           <p className="text-sm text-muted-foreground">Achat et location de véhicules</p>
           <h1 className="text-3xl font-semibold">Trouvez votre prochain véhicule en quelques clics</h1>
           <p className="text-muted-foreground">
-            Catalogue public, espace client, suivi de dossier et sélection de véhicules mise en avant.
+            Catalogue public, espace client, suivi de dossier et meilleures affaires du moment.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button asChild>
@@ -133,11 +120,16 @@ export function HomePage() {
       </section>
 
       <section className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold">Véhicules mis en avant</h2>
-          <p className="text-sm text-muted-foreground">
-            Sélection automatique: le moins cher, le moins kilométré, puis le plus récemment mis à jour.
-          </p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold">Meilleures affaires du site</h2>
+            <p className="text-sm text-muted-foreground">
+              Une selection limitee a 9 vehicules, mise en avant selon le prix et le kilometrage.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link to="/vehicles">Acceder au catalogue</Link>
+          </Button>
         </div>
 
         {isLoading ? (
@@ -151,8 +143,8 @@ export function HomePage() {
           />
         ) : featuredVehicles.length === 0 ? (
           <ContentStateCard
-            title="Aucun véhicule mis en avant"
-            description="Les offres publiées apparaîtront ici automatiquement dès qu’un véhicule sera disponible."
+            title="Aucun véhicule à afficher"
+            description="Les meilleures affaires apparaitront ici dès qu'un véhicule sera disponible."
             actionLabel="Voir le catalogue"
             onAction={() => navigate('/vehicles')}
           />
@@ -163,38 +155,12 @@ export function HomePage() {
             ))}
           </div>
         )}
-      </section>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold">Tout le catalogue</h2>
-            <p className="text-sm text-muted-foreground">Retrouvez toutes les offres publiques en dessous de la sélection mise en avant.</p>
-          </div>
-          <Button asChild variant="outline">
-            <Link to="/vehicles">Ouvrir la page catalogue</Link>
+        <div className="flex justify-center pt-2">
+          <Button asChild>
+            <Link to="/vehicles">Voir tout le catalogue</Link>
           </Button>
         </div>
-
-        {isLoading ? (
-          <div className="rounded-lg border p-6 text-sm text-muted-foreground">Chargement...</div>
-        ) : error ? (
-          <ContentStateCard
-            title="Catalogue indisponible"
-            description="Le catalogue ne peut pas être affiché pour le moment."
-          />
-        ) : vehicles.length === 0 ? (
-          <ContentStateCard
-            title="Aucun véhicule disponible"
-            description="Aucune offre n’est publiée pour le moment."
-          />
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {vehicles.map((vehicle) => (
-              <CatalogVehicleCard key={vehicle.id} vehicle={vehicle} />
-            ))}
-          </div>
-        )}
       </section>
     </div>
   )

@@ -74,19 +74,19 @@ export function ClientFilesPage() {
     return [
       {
         key: 'in-progress',
-        title: 'Demandes en cours',
-        description: 'Brouillons, dossiers envoyés ou en attente de pièces.',
+        title: '🟡 Demandes en cours',
+        description: 'Brouillons, dossiers envoyes ou en attente de pieces.',
         applications: deduplicatedApplications.filter((application) => inProgressStatuses.has(application.status)),
       },
       {
         key: 'approved',
-        title: 'Demandes validées',
+        title: '🟢 Demandes validées',
         description: 'Dossiers acceptés.',
         applications: deduplicatedApplications.filter((application) => approvedStatuses.has(application.status)),
       },
       {
         key: 'rejected',
-        title: 'Demandes clôturées',
+        title: '🔒 Demandes clôturées',
         description: 'Dossiers refusés ou fermés.',
         applications: deduplicatedApplications.filter((application) => rejectedStatuses.has(application.status)),
       },
@@ -147,10 +147,10 @@ export function ClientFilesPage() {
                     {application.vehicleBrand} {application.vehicleTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Créée le {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(application.createdAt))}
+                    Creee le {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(application.createdAt))}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Complétude du profil : {application.profileCompletionPercent}%
+                    Completude du profil : {application.profileCompletionPercent}%
                   </p>
                   <p className="text-xs text-muted-foreground">{applicationStatusMap[application.status].helper}</p>
                 </div>
@@ -166,7 +166,7 @@ export function ClientFilesPage() {
                     </Button>
                   )}
                   <Button asChild variant="outline">
-                    <Link to={`/app/files/${application.id}`}>Voir le détail</Link>
+                    <Link to={`/app/files/${application.id}`}>Voir le detail</Link>
                   </Button>
                 </div>
               </div>

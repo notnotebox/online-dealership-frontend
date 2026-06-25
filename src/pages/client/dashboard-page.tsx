@@ -54,7 +54,7 @@ export function ClientDashboardPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="space-y-1 p-4"><p className="text-sm text-muted-foreground">Total demandes</p><p className="text-2xl font-semibold">{isLoading ? '...' : stats.total}</p></CardContent></Card>
         <Card><CardContent className="space-y-1 p-4"><p className="text-sm text-muted-foreground">En cours</p><p className="text-2xl font-semibold">{isLoading ? '...' : stats.inProgress}</p></CardContent></Card>
-        <Card><CardContent className="space-y-1 p-4"><p className="text-sm text-muted-foreground">Validees</p><p className="text-2xl font-semibold">{isLoading ? '...' : stats.approved}</p></CardContent></Card>
+        <Card><CardContent className="space-y-1 p-4"><p className="text-sm text-muted-foreground">Validées</p><p className="text-2xl font-semibold">{isLoading ? '...' : stats.approved}</p></CardContent></Card>
         <Card><CardContent className="space-y-1 p-4"><p className="text-sm text-muted-foreground">Pieces manquantes</p><p className="text-2xl font-semibold">{isLoading ? '...' : stats.needInfo}</p></CardContent></Card>
       </div>
 
