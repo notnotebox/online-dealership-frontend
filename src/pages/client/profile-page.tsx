@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CompletionField, completionInputClassName } from '@/components/shared/completion-field'
 import { ProfileDocumentsPanel } from '@/components/shared/profile-documents-panel'
@@ -34,7 +34,7 @@ type ProfileFormState = {
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return 'Non renseignÃ©'
+    return 'Non renseigne'
   }
 
   const date = new Date(value)
@@ -171,18 +171,18 @@ export function ClientProfilePage() {
 
   const profileSummary = useMemo(
     () => [
-      { label: 'PrÃ©nom', value: form.firstName || 'Non renseignÃ©' },
-      { label: 'Nom', value: form.lastName || 'Non renseignÃ©' },
-      { label: 'Email', value: profile?.email ?? session?.user.email ?? 'Non renseignÃ©' },
-      { label: 'RÃ´le', value: profile?.role ?? session?.user.role ?? 'CLIENT' },
-      { label: 'Date de naissance', value: form.dateOfBirth ? formatDate(form.dateOfBirth) : 'Non renseignÃ©' },
-      { label: 'Compte crÃ©Ã© le', value: formatDate(profile?.createdAt) },
-      { label: 'TÃ©lÃ©phone', value: form.phoneNumber || 'Non renseignÃ©' },
+      { label: 'Prenom', value: form.firstName || 'Non renseigne' },
+      { label: 'Nom', value: form.lastName || 'Non renseigne' },
+      { label: 'Email', value: profile?.email ?? session?.user.email ?? 'Non renseigne' },
+      { label: 'Role', value: profile?.role ?? session?.user.role ?? 'CLIENT' },
+      { label: 'Date de naissance', value: form.dateOfBirth ? formatDate(form.dateOfBirth) : 'Non renseigne' },
+      { label: 'Compte cree le', value: formatDate(profile?.createdAt) },
+      { label: 'Telephone', value: form.phoneNumber || 'Non renseigne' },
       {
         label: 'Adresse',
-        value: [form.addressLine1, form.postalCode, form.city].filter(Boolean).join(', ') || 'Non renseignÃ©',
+        value: [form.addressLine1, form.postalCode, form.city].filter(Boolean).join(', ') || 'Non renseigne',
       },
-      { label: 'ComplÃ©tude du profil', value: `${completionPercent}%` },
+      { label: 'Completude du profil', value: `${completionPercent}%` },
     ],
     [completionPercent, form.addressLine1, form.city, form.dateOfBirth, form.firstName, form.lastName, form.phoneNumber, form.postalCode, profile?.createdAt, profile?.email, profile?.role, session?.user.email, session?.user.role],
   )
@@ -213,9 +213,9 @@ export function ClientProfilePage() {
     try {
       await authApi.updateProfile(toUpdatePayload(form))
       await refreshProfile()
-      setMessage('Profil mis Ã  jour.')
+      setMessage('Profil mis a jour.')
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Mise Ã  jour impossible')
+      setError(cause instanceof Error ? cause.message : 'Mise à jour impossible')
     } finally {
       setIsSaving(false)
     }
@@ -246,7 +246,7 @@ export function ClientProfilePage() {
           <CardContent className="space-y-4 p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium">ComplÃ©tude du profil</p>
+                <p className="text-sm font-medium">Completude du profil</p>
                 <p className="text-sm text-muted-foreground">{completionPercent}%</p>
               </div>
               <ProgressBar value={completionPercent} />
@@ -264,7 +264,7 @@ export function ClientProfilePage() {
             {missingFields.length > 0 ? (
               <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
                 <p className="mb-1 font-medium text-foreground">Champs encore attendus</p>
-                <p>{missingFields.slice(0, 5).join(', ')}{missingFields.length > 5 ? 'â€¦' : ''}</p>
+                <p>{missingFields.slice(0, 5).join(', ')}{missingFields.length > 5 ? '...' : ''}</p>
               </div>
             ) : null}
           </CardContent>
@@ -274,7 +274,7 @@ export function ClientProfilePage() {
           <CardContent className="space-y-3 p-4">
             <h2 className="text-lg font-semibold">Actions</h2>
             <Button asChild className="w-full">
-              <a href="#profile-form">{isProfileComplete ? 'Modifier le profil' : 'ComplÃ©ter le profil'}</a>
+              <a href="#profile-form">{isProfileComplete ? 'Modifier le profil' : 'Completer le profil'}</a>
             </Button>
 
             <Button asChild variant="outline" className="w-full">
@@ -284,7 +284,7 @@ export function ClientProfilePage() {
               <Link to="/app/files">Voir mes demandes</Link>
             </Button>
             <Button variant="outline" className="w-full" onClick={() => { logout(); navigate('/'); }}>
-              Se dÃ©connecter
+              Se deconnecter
             </Button>
           </CardContent>
         </Card>
@@ -300,15 +300,15 @@ export function ClientProfilePage() {
       <Card id="profile-form">
         <CardContent className="space-y-5 p-4">
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold">ComplÃ©ter le profil</h2>
-            <p className="text-sm text-muted-foreground">Les indicateurs disparaissent dÃ¨s quâ€™un champ contient une valeur exploitable.</p>
+            <h2 className="text-lg font-semibold">Completer le profil</h2>
+            <p className="text-sm text-muted-foreground">Les indicateurs disparaissent des qu un champ contient une valeur exploitable.</p>
           </div>
 
           {error ? <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
           {message ? <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">{message}</p> : null}
 
           <div className="grid gap-3 md:grid-cols-2">
-            <CompletionField label="PrÃ©nom" missing={missingFieldKeys.has('firstName')}>
+            <CompletionField label="Prenom" missing={missingFieldKeys.has('firstName')}>
               <input className={completionInputClassName(missingFieldKeys.has('firstName'))} value={form.firstName} onChange={(event) => updateField('firstName', event.target.value)} />
             </CompletionField>
             <CompletionField label="Nom" missing={missingFieldKeys.has('lastName')}>
@@ -317,13 +317,13 @@ export function ClientProfilePage() {
             <CompletionField label="Date de naissance" missing={missingFieldKeys.has('dateOfBirth')}>
               <input className={completionInputClassName(missingFieldKeys.has('dateOfBirth'))} type="date" value={form.dateOfBirth} onChange={(event) => updateField('dateOfBirth', event.target.value)} />
             </CompletionField>
-            <CompletionField label="TÃ©lÃ©phone" missing={missingFieldKeys.has('phoneNumber')}>
+            <CompletionField label="Telephone" missing={missingFieldKeys.has('phoneNumber')}>
               <input className={completionInputClassName(missingFieldKeys.has('phoneNumber'))} value={form.phoneNumber} onChange={(event) => updateField('phoneNumber', event.target.value)} />
             </CompletionField>
             <CompletionField label="Adresse" missing={missingFieldKeys.has('addressLine1')} className="md:col-span-2">
               <input className={completionInputClassName(missingFieldKeys.has('addressLine1'))} value={form.addressLine1} onChange={(event) => updateField('addressLine1', event.target.value)} />
             </CompletionField>
-            <CompletionField label="ComplÃ©ment dâ€™adresse" missing={false}>
+            <CompletionField label="Complement d'adresse" missing={false}>
               <input className={completionInputClassName(false)} value={form.addressLine2} onChange={(event) => updateField('addressLine2', event.target.value)} />
             </CompletionField>
             <CompletionField label="Code postal" missing={missingFieldKeys.has('postalCode')}>
@@ -335,7 +335,7 @@ export function ClientProfilePage() {
             <CompletionField label="Pays" missing={missingFieldKeys.has('country')}>
               <input className={completionInputClassName(missingFieldKeys.has('country'))} value={form.country} onChange={(event) => updateField('country', event.target.value)} />
             </CompletionField>
-            <CompletionField label="NationalitÃ©" missing={missingFieldKeys.has('nationality')}>
+            <CompletionField label="Nationalite" missing={missingFieldKeys.has('nationality')}>
               <input className={completionInputClassName(missingFieldKeys.has('nationality'))} value={form.nationality} onChange={(event) => updateField('nationality', event.target.value)} />
             </CompletionField>
             <CompletionField label="Situation familiale" missing={missingFieldKeys.has('familyStatus')}>
@@ -363,7 +363,7 @@ export function ClientProfilePage() {
               {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </Button>
             <Button type="button" variant="outline" asChild>
-              <Link to="/app/files/new">CrÃ©er une nouvelle demande</Link>
+              <Link to="/app/files/new">Creer une nouvelle demande</Link>
             </Button>
           </div>
         </CardContent>
@@ -377,11 +377,12 @@ export function ClientProfilePage() {
           documents={documents}
           isUploading={isUploading}
           onUpload={handleUploadDocument}
-          title="PiÃ¨ces du profil"
-          description="DÃ©posez ou remplacez ici vos PDF communs Ã  toutes les demandes."
+          title="Pieces du profil"
+          description="Déposez ou remplacez ici vos PDF communs à toutes les demandes."
         />
       )}
     </div>
   )
 }
+
 

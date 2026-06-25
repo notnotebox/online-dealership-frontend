@@ -48,17 +48,17 @@ export type RequiredDocument = {
 }
 
 export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
-  { documentType: 'IDENTITY_CARD', label: 'Carte d’identité ou passeport', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
+  { documentType: 'IDENTITY_CARD', label: "Carte d'identite ou passeport", requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
   { documentType: 'DRIVER_LICENSE', label: 'Permis de conduire', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
-  { documentType: 'PROOF_OF_ADDRESS', label: 'Justificatif de domicile', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'], note: 'Daté de moins de 3 mois' },
-  { documentType: 'BANK_STATEMENT', label: 'RIB ou relevé bancaire', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
+  { documentType: 'PROOF_OF_ADDRESS', label: 'Justificatif de domicile', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'], note: 'Date de moins de 3 mois' },
+  { documentType: 'BANK_STATEMENT', label: 'RIB ou releve bancaire', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
   { documentType: 'SALARY_SLIP', label: 'Bulletins de salaire', requiredFor: ['CREDIT', 'LOA', 'LLD'] },
-  { documentType: 'TAX_NOTICE', label: 'Dernier avis d’imposition', requiredFor: ['CREDIT', 'LOA', 'LLD'] },
+  { documentType: 'TAX_NOTICE', label: "Dernier avis d'imposition", requiredFor: ['CREDIT', 'LOA', 'LLD'] },
   { documentType: 'EMPLOYMENT_CONTRACT', label: 'Contrat de travail', requiredFor: ['CREDIT', 'LOA', 'LLD'] },
   { documentType: 'EMPLOYER_CERTIFICATE', label: 'Attestation employeur', requiredFor: ['LOA', 'LLD'] },
-  { documentType: 'DOWN_PAYMENT_PROOF', label: 'Justificatif d’apport', requiredFor: ['LOA', 'LLD'], note: 'Seulement si un apport est prévu' },
-  { documentType: 'SIGNED_LOAN_OFFER', label: 'Offre de prêt signée', requiredFor: ['CREDIT'] },
-  { documentType: 'INSURANCE_CERTIFICATE', label: 'Attestation d’assurance', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'], note: 'Demandée avant livraison' },
+  { documentType: 'DOWN_PAYMENT_PROOF', label: "Justificatif d'apport", requiredFor: ['LOA', 'LLD'], note: 'Seulement si un apport est prevu' },
+  { documentType: 'SIGNED_LOAN_OFFER', label: 'Offre de pret signee', requiredFor: ['CREDIT'] },
+  { documentType: 'INSURANCE_CERTIFICATE', label: "Attestation d'assurance", requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'], note: 'Demandee avant livraison' },
   { documentType: 'PAYMENT_PROOF', label: 'Preuve de paiement', requiredFor: ['CASH'] },
 ]
 
@@ -72,6 +72,23 @@ export function getRequiredDocuments(acquisitionType: ApplicationAcquisitionType
 
 export function findLatestDocument(documents: DocumentRecord[], documentType: DocumentType) {
   return documents.find((document) => document.documentType === documentType) ?? null
+}
+
+export function countCompletedDocuments(documents: DocumentRecord[], definitions: RequiredDocument[]) {
+  return definitions.filter((document) => findLatestDocument(documents, document.documentType)).length
+}
+
+export function getMissingRequiredDocuments(documents: DocumentRecord[], definitions: RequiredDocument[]) {
+  return definitions.filter((document) => !findLatestDocument(documents, document.documentType))
+}
+
+export function getDocumentCompletionPercent(documents: DocumentRecord[], definitions: RequiredDocument[]) {
+  if (definitions.length === 0) {
+    return 100
+  }
+
+  const completed = countCompletedDocuments(documents, definitions)
+  return Math.round((completed / definitions.length) * 100)
 }
 
 export function formatDocumentTypeLabel(documentType: DocumentType) {

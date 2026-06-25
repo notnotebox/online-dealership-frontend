@@ -13,7 +13,7 @@ import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
 import { useAuth } from '@/lib/auth/auth-context'
 import type { ApplicationAcquisitionType, CreateVehicleApplicationRequest } from '@/lib/application/application-types'
 import type { DocumentRecord, DocumentType } from '@/lib/documents/document-types'
-import { getRequiredDocuments } from '@/lib/documents/document-types'
+import { countCompletedDocuments, getDocumentCompletionPercent, getMissingRequiredDocuments, getRequiredDocuments } from '@/lib/documents/document-types'
 import { getMissingProfileFieldKeys, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
 import { downloadTextFile } from '@/lib/test-fixtures/download-text-file'
 import { buildApplicationFixtureText, createApplicationFixture } from '@/lib/test-fixtures/profile-application-fixture'
@@ -212,6 +212,18 @@ function buildPayload(form: ApplicationFormState, showLeaseFields: boolean): Cre
   }
 }
 
+function getVehicleSectionCompletionPercent(form: ApplicationFormState, showLeaseFields: boolean) {
+  const requiredValues = [
+    form.vehicleId,
+    form.acquisitionType,
+    showLeaseFields ? form.durationMonths : 'ok',
+    showLeaseFields ? form.annualMileage : 'ok',
+  ]
+
+  const completed = requiredValues.filter((value) => String(value ?? '').trim() !== '').length
+  return Math.round((completed / requiredValues.length) * 100)
+}
+
 export function NewFilePage() {
   const navigate = useNavigate()
   const { vehicleId, fileId } = useParams()
@@ -359,6 +371,13 @@ export function NewFilePage() {
   const requiredDocuments = useMemo(() => getRequiredDocuments(form.acquisitionType), [form.acquisitionType])
   const showLeaseFields = form.acquisitionType === 'LOA' || form.acquisitionType === 'LLD'
   const pageTitle = fileId ? 'Completer le dossier' : 'Preparer la demande vehicule'
+  const documentCompletionPercent = useMemo(() => getDocumentCompletionPercent(documents, requiredDocuments), [documents, requiredDocuments])
+  const completedDocumentsCount = useMemo(() => countCompletedDocuments(documents, requiredDocuments), [documents, requiredDocuments])
+  const missingRequiredDocuments = useMemo(() => getMissingRequiredDocuments(documents, requiredDocuments), [documents, requiredDocuments])
+  const vehicleSectionCompletionPercent = useMemo(() => getVehicleSectionCompletionPercent(form, showLeaseFields), [form, showLeaseFields])
+  const dossierCompletionPercent = useMemo(() => {
+    return Math.round((profileCompletionPercent + documentCompletionPercent + vehicleSectionCompletionPercent) / 3)
+  }, [documentCompletionPercent, profileCompletionPercent, vehicleSectionCompletionPercent])
 
   function updateField(field: keyof ApplicationFormState, value: string | boolean) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -452,13 +471,15 @@ export function NewFilePage() {
         <Card>
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs uppercase text-muted-foreground">Completude du profil</p>
-              <p className="text-xl font-semibold">{profileCompletionPercent}%</p>
+              <p className="text-xs uppercase text-muted-foreground">Completude du dossier</p>
+              <p className="text-xl font-semibold">{dossierCompletionPercent}%</p>
             </div>
-            <ProgressBar value={profileCompletionPercent} />
-            <p className="text-xs text-muted-foreground">
-              La soumission sera disponible une fois le profil et les pieces completes.
-            </p>
+            <ProgressBar value={dossierCompletionPercent} />
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p>Profil: {profileCompletionPercent}%</p>
+              <p>Pieces requises: {completedDocumentsCount}/{requiredDocuments.length}</p>
+              <p>Parametres dossier: {vehicleSectionCompletionPercent}%</p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -489,7 +510,7 @@ export function NewFilePage() {
                 </h2>
                 {selectedVehicle ? (
                   <p className="text-sm text-muted-foreground">
-                    {formatPrice(selectedVehicle.price)} Â· {selectedVehicle.mileage.toLocaleString('fr-FR')} km Â· {selectedVehicle.energy}
+                    {formatPrice(selectedVehicle.price)} | {selectedVehicle.mileage.toLocaleString('fr-FR')} km | {selectedVehicle.energy}
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">Choisissez un vehicule pour poursuivre.</p>
@@ -625,31 +646,45 @@ export function NewFilePage() {
             isUploading={isUploadingDocument}
             onUpload={handleUploadDocument}
             title="2. Pieces du profil"
-            description="Deposez ou remplacez ici les PDF utilises sur toutes vos demandes."
+            description="Deposez ici les PDF requis pour ce dossier. Ils restent attaches a votre profil et seront reutilises pour les autres demandes."
+            documentDefinitions={requiredDocuments}
           />
         )}
 
         <Card>
           <CardContent className="space-y-4 p-5">
             <div>
-              <h2 className="text-lg font-semibold">3. Pieces attendues</h2>
-              <p className="text-sm text-muted-foreground">Cette liste depend du mode choisi. Les pieces sont centralisees dans le profil client.</p>
+              <h2 className="text-lg font-semibold">3. Suivi des pieces</h2>
+              <p className="text-sm text-muted-foreground">Cette synthese reprend uniquement les pieces utiles pour le mode choisi.</p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {requiredDocuments.map((document) => (
-                <div key={document.documentType} className="rounded-xl border p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium">{document.label}</p>
-                      {document.note ? <p className="text-xs text-muted-foreground">{document.note}</p> : null}
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => navigate('/app/profile')}>
-                      Modifier
-                    </Button>
-                  </div>
+            <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">Pieces deposees</p>
+                  <span className="text-sm text-muted-foreground">{completedDocumentsCount}/{requiredDocuments.length}</span>
                 </div>
-              ))}
+                <ProgressBar value={documentCompletionPercent} />
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Les pieces du profil restent modifiables a tout moment. La soumission pourra ensuite etre faite depuis le suivi de dossier.
+                </p>
+              </div>
+
+              <div className="rounded-xl border p-4">
+                <p className="font-medium">Pieces encore attendues</p>
+                <div className="mt-3 space-y-2">
+                  {missingRequiredDocuments.length > 0 ? missingRequiredDocuments.map((document) => (
+                    <div key={document.documentType} className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                      <p className="font-medium">{document.label}</p>
+                      {document.note ? <p className="text-xs text-amber-700">{document.note}</p> : null}
+                    </div>
+                  )) : (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                      Toutes les pieces requises pour ce dossier sont deja presentes.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -755,8 +790,8 @@ export function NewFilePage() {
 
                 <div className="space-y-2 text-sm">
                   <p className="text-lg font-semibold">{selectedVehicle.brand} {selectedVehicle.title}</p>
-                  <p className="text-muted-foreground">{formatPrice(selectedVehicle.price)} Â· {selectedVehicle.mileage.toLocaleString('fr-FR')} km Â· {selectedVehicle.energy}</p>
-                  <p className="text-muted-foreground">{selectedVehicle.seatCount} places Â· {selectedVehicle.doorCount} portes Â· {selectedVehicle.color}</p>
+                  <p className="text-muted-foreground">{formatPrice(selectedVehicle.price)} | {selectedVehicle.mileage.toLocaleString('fr-FR')} km | {selectedVehicle.energy}</p>
+                  <p className="text-muted-foreground">{selectedVehicle.seatCount} places | {selectedVehicle.doorCount} portes | {selectedVehicle.color}</p>
                   <div className="flex flex-wrap gap-2 pt-2">
                     <Button type="button" onClick={() => void handleSaveDraft()} disabled={isSavingDraft || isLoadingVehicles || isLoadingApplication || !form.vehicleId}>
                       {isSavingDraft ? 'Enregistrement...' : fileId ? 'Mettre a jour le brouillon' : 'Enregistrer le brouillon'}

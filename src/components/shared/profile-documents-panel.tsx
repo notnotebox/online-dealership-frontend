@@ -9,6 +9,7 @@ import {
   PROFILE_DOCUMENTS,
   type DocumentRecord,
   type DocumentType,
+  type RequiredDocument,
 } from '@/lib/documents/document-types'
 
 type ProfileDocumentsPanelProps = {
@@ -17,6 +18,7 @@ type ProfileDocumentsPanelProps = {
   onUpload: (payload: { file: File; documentType: DocumentType }) => Promise<void>
   title?: string
   description?: string
+  documentDefinitions?: RequiredDocument[]
 }
 
 type DocumentSlotCardProps = {
@@ -78,7 +80,7 @@ function DocumentSlotCard({
             {isMissing ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold tracking-[0.12em] text-amber-800">
                 <AlertCircle className="h-3 w-3 shrink-0" />
-                À compléter
+                A completer
               </span>
             ) : null}
           </div>
@@ -91,7 +93,7 @@ function DocumentSlotCard({
           disabled={isUploading}
           onClick={() => inputRef.current?.click()}
         >
-          {currentDocument ? 'Modifier' : 'Déposer'}
+          {currentDocument ? 'Modifier' : 'Deposer'}
         </Button>
       </div>
 
@@ -121,7 +123,7 @@ function DocumentSlotCard({
               size="sm"
               onClick={() => void downloadProtectedFile(currentDocument.downloadUrl, currentDocument.originalFileName)}
             >
-              Télécharger
+              Telecharger
             </Button>
           </div>
         </div>
@@ -129,7 +131,7 @@ function DocumentSlotCard({
         <div className="mt-4 rounded-lg border border-dashed bg-background/80 p-3 text-sm text-amber-800">
           <div className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
-            <span>PDF à déposer pour compléter cette pièce.</span>
+            <span>PDF a deposer pour completer cette piece.</span>
           </div>
         </div>
       )}
@@ -141,18 +143,19 @@ export function ProfileDocumentsPanel({
   documents,
   isUploading,
   onUpload,
-  title = 'Pièces du profil',
-  description = 'Ces documents sont stockés dans le profil client et réutilisés sur les demandes.',
+  title = 'Pieces du profil',
+  description = 'Ces documents sont stockes dans le profil client et reutilises sur les demandes.',
+  documentDefinitions = PROFILE_DOCUMENTS,
 }: ProfileDocumentsPanelProps) {
   const latestDocumentsByType = useMemo(() => {
     return new Map(
-      PROFILE_DOCUMENTS.map((document) => [document.documentType, findLatestDocument(documents, document.documentType)]),
+      documentDefinitions.map((document) => [document.documentType, findLatestDocument(documents, document.documentType)]),
     )
-  }, [documents])
+  }, [documentDefinitions, documents])
 
   const missingCount = useMemo(() => {
-    return PROFILE_DOCUMENTS.filter((document) => !latestDocumentsByType.get(document.documentType)).length
-  }, [latestDocumentsByType])
+    return documentDefinitions.filter((document) => !latestDocumentsByType.get(document.documentType)).length
+  }, [documentDefinitions, latestDocumentsByType])
 
   return (
     <Card>
@@ -163,7 +166,7 @@ export function ProfileDocumentsPanel({
             {missingCount > 0 ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold tracking-[0.12em] text-amber-800">
                 <AlertCircle className="h-3 w-3 shrink-0" />
-                {missingCount} à compléter
+                {missingCount} a completer
               </span>
             ) : null}
           </div>
@@ -171,7 +174,7 @@ export function ProfileDocumentsPanel({
         </div>
 
         <div className="grid gap-3 lg:grid-cols-2">
-          {PROFILE_DOCUMENTS.map((document) => (
+          {documentDefinitions.map((document) => (
             <DocumentSlotCard
               key={document.documentType}
               documentType={document.documentType}
