@@ -49,7 +49,7 @@ export function RegisterPage() {
     }
 
     if (!acceptedTerms) {
-      setError('Vous devez accepter la politique de confidentialite.')
+      setError('Vous devez accepter la politique de confidentialité.')
       return
     }
 
@@ -63,7 +63,7 @@ export function RegisterPage() {
         dateOfBirth,
         password,
       })
-      navigate('/app/dashboard', { replace: true })
+      navigate('/vehicles', { replace: true })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Inscription impossible')
     } finally {
@@ -75,17 +75,17 @@ export function RegisterPage() {
     <div className="mx-auto max-w-md space-y-4 rounded-lg border p-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Inscription</h1>
-        <p className="text-sm text-muted-foreground">Creation de compte client avec controle des donnees a l'envoi.</p>
+        <p className="text-sm text-muted-foreground">Création de compte client avec contrôle des données à l'envoi.</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-sm font-medium" htmlFor="register-first-name">Prenom</label>
+            <label className="text-sm font-medium" htmlFor="register-first-name">Prénom</label>
             <input
               id="register-first-name"
               className="h-10 w-full rounded-md border px-3"
-              placeholder="Prenom"
+              placeholder="Prénom"
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
               required
@@ -180,13 +180,13 @@ export function RegisterPage() {
 
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} />
-          J'accepte la politique de confidentialite
+          J'accepte la politique de confidentialité
         </label>
 
         {error && <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
         <Button className="w-full" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creation...' : 'Creer un compte'}
+          {isSubmitting ? 'Création...' : 'Créer un compte'}
         </Button>
       </form>
 
@@ -194,7 +194,7 @@ export function RegisterPage() {
         <div className="space-y-1">
           <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">Outil de test formateurs</p>
           <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
-            Remplit le formulaire avec des donnees de demonstration et telecharge un fichier texte.
+            Remplit le formulaire avec des données de démonstration et télécharge un fichier texte.
           </p>
         </div>
         <Button
@@ -203,11 +203,11 @@ export function RegisterPage() {
           className="mt-3 w-full border-amber-500/50 text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-500/20"
           onClick={generateTestData}
         >
-          Generer un profil de test
+          Générer un profil de test
         </Button>
       </div>
 
-      <p className="text-sm">Deja inscrit ? <Link to="/login" className="underline">Connexion</Link></p>
+      <p className="text-sm">Déjà inscrit ? <Link to="/login" className="underline">Connexion</Link></p>
     </div>
   )
 }

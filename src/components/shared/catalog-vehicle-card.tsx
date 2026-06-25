@@ -52,7 +52,7 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
         <div className="absolute left-3 top-3 flex gap-2">
           <Badge variant="secondary">{vehicle.brand}</Badge>
           <Badge variant={vehicle.published ? 'default' : 'outline'}>
-            {vehicle.published ? 'Publie' : 'Brouillon'}
+            {vehicle.published ? 'Publié' : 'Brouillon'}
           </Badge>
         </div>
         <div className="absolute right-3 top-3">
@@ -74,14 +74,14 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
         <div className="flex items-end justify-between gap-2">
           <p className="text-lg font-semibold">{formatPrice(vehicle.price)}</p>
           <p className="text-sm text-muted-foreground">
-            {vehicle.mileage == null ? 'Kilometrage non renseigne' : `${vehicle.mileage.toLocaleString('fr-FR')} km`}
+            {vehicle.mileage == null ? 'Kilométrage non renseigné' : `${vehicle.mileage.toLocaleString('fr-FR')} km`}
           </p>
         </div>
       </CardContent>
 
       <CardFooter className="mt-auto p-4">
         <Button asChild className="w-full">
-          <Link to={`/vehicles/${vehicle.id}`}>Voir le detail</Link>
+          <Link to={`/vehicles/${vehicle.id}`}>Voir le détail</Link>
         </Button>
       </CardFooter>
     </Card>
