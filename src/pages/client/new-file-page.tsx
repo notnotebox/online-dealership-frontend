@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CompletionField, completionInputClassName, completionTextareaClassName } from '@/components/shared/completion-field'
 import { ProfileDocumentsPanel } from '@/components/shared/profile-documents-panel'
+import { TestHelperCard } from '@/components/shared/test-helper-card'
 import { VehicleImage } from '@/components/shared/vehicle-image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -445,11 +446,7 @@ export function NewFilePage() {
             Le profil et les pieces communes sont reutilises. Cette page enregistre un brouillon.
             La soumission se fait ensuite depuis le suivi du dossier.
           </p>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={fillApplicationAutomatically}>
-              Completer automatiquement
-            </Button>
-          </div>
+
         </div>
 
         <Card>
@@ -474,10 +471,17 @@ export function NewFilePage() {
         <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
       ) : null}
 
+      <TestHelperCard
+        title="Outil de test dossier"
+        description="Preremplit le profil et la demande vehicule avec un jeu de donnees de demonstration, puis telecharge un fichier texte."
+        buttonLabel="Completer automatiquement"
+        onClick={fillApplicationAutomatically}
+      />
+
       <Card>
-        <CardContent className="grid gap-5 p-5 lg:grid-cols-[1.15fr_1fr]">
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-3">
+        <CardContent className="grid gap-6 p-5 lg:grid-cols-[1.2fr_1fr]">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Vehicule selectionne</p>
                 <h2 className="text-2xl font-semibold">
@@ -485,7 +489,7 @@ export function NewFilePage() {
                 </h2>
                 {selectedVehicle ? (
                   <p className="text-sm text-muted-foreground">
-                    {formatPrice(selectedVehicle.price)} · {selectedVehicle.mileage.toLocaleString('fr-FR')} km · {selectedVehicle.energy}
+                    {formatPrice(selectedVehicle.price)} Â· {selectedVehicle.mileage.toLocaleString('fr-FR')} km Â· {selectedVehicle.energy}
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">Choisissez un vehicule pour poursuivre.</p>
@@ -498,10 +502,27 @@ export function NewFilePage() {
             </div>
 
             {selectedVehicle ? (
-              <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
-                <p>{selectedVehicle.seatCount} places</p>
-                <p>{selectedVehicle.doorCount} portes</p>
-                <p>{selectedVehicle.color}</p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border bg-muted/20 p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Places</p>
+                  <p className="mt-1 text-lg font-semibold">{selectedVehicle.seatCount}</p>
+                </div>
+                <div className="rounded-xl border bg-muted/20 p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Portes</p>
+                  <p className="mt-1 text-lg font-semibold">{selectedVehicle.doorCount}</p>
+                </div>
+                <div className="rounded-xl border bg-muted/20 p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Couleur</p>
+                  <p className="mt-1 text-lg font-semibold">{selectedVehicle.color}</p>
+                </div>
+              </div>
+            ) : null}
+
+            {selectedVehicle ? (
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full border bg-background px-3 py-1 text-muted-foreground">{selectedVehicle.energy}</span>
+                <span className="rounded-full border bg-background px-3 py-1 text-muted-foreground">{selectedVehicle.mileage.toLocaleString('fr-FR')} km</span>
+                <span className="rounded-full border bg-background px-3 py-1 text-muted-foreground">{formatPrice(selectedVehicle.price)}</span>
               </div>
             ) : null}
           </div>
@@ -618,7 +639,7 @@ export function NewFilePage() {
             <div className="grid gap-3 md:grid-cols-2">
               {requiredDocuments.map((document) => (
                 <div key={document.documentType} className="rounded-xl border p-4">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="font-medium">{document.label}</p>
                       {document.note ? <p className="text-xs text-muted-foreground">{document.note}</p> : null}
@@ -734,8 +755,8 @@ export function NewFilePage() {
 
                 <div className="space-y-2 text-sm">
                   <p className="text-lg font-semibold">{selectedVehicle.brand} {selectedVehicle.title}</p>
-                  <p className="text-muted-foreground">{formatPrice(selectedVehicle.price)} · {selectedVehicle.mileage.toLocaleString('fr-FR')} km · {selectedVehicle.energy}</p>
-                  <p className="text-muted-foreground">{selectedVehicle.seatCount} places · {selectedVehicle.doorCount} portes · {selectedVehicle.color}</p>
+                  <p className="text-muted-foreground">{formatPrice(selectedVehicle.price)} Â· {selectedVehicle.mileage.toLocaleString('fr-FR')} km Â· {selectedVehicle.energy}</p>
+                  <p className="text-muted-foreground">{selectedVehicle.seatCount} places Â· {selectedVehicle.doorCount} portes Â· {selectedVehicle.color}</p>
                   <div className="flex flex-wrap gap-2 pt-2">
                     <Button type="button" onClick={() => void handleSaveDraft()} disabled={isSavingDraft || isLoadingVehicles || isLoadingApplication || !form.vehicleId}>
                       {isSavingDraft ? 'Enregistrement...' : fileId ? 'Mettre a jour le brouillon' : 'Enregistrer le brouillon'}
@@ -755,3 +776,5 @@ export function NewFilePage() {
     </div>
   )
 }
+
+
