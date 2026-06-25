@@ -61,24 +61,34 @@ export function ClientFilesPage() {
   }
 
   const groups = useMemo(() => {
+    const latestByVehicle = new Map<string, VehicleApplication>()
+    for (const application of applications) {
+      const current = latestByVehicle.get(application.vehicleId)
+      if (!current || new Date(application.updatedAt).getTime() > new Date(current.updatedAt).getTime()) {
+        latestByVehicle.set(application.vehicleId, application)
+      }
+    }
+
+    const deduplicatedApplications = Array.from(latestByVehicle.values())
+
     return [
       {
         key: 'in-progress',
         title: 'Demandes en cours',
-        description: 'Brouillons, envoyees ou en attente de pieces.',
-        applications: applications.filter((application) => inProgressStatuses.has(application.status)),
+        description: 'Brouillons, dossiers envoyés ou en attente de pièces.',
+        applications: deduplicatedApplications.filter((application) => inProgressStatuses.has(application.status)),
       },
       {
         key: 'approved',
-        title: 'Demandes validees',
-        description: 'Demandes acceptees.',
-        applications: applications.filter((application) => approvedStatuses.has(application.status)),
+        title: 'Demandes validées',
+        description: 'Dossiers acceptés.',
+        applications: deduplicatedApplications.filter((application) => approvedStatuses.has(application.status)),
       },
       {
         key: 'rejected',
-        title: 'Demandes cloturees',
-        description: 'Demandes refusees ou annulees.',
-        applications: applications.filter((application) => rejectedStatuses.has(application.status)),
+        title: 'Demandes clôturées',
+        description: 'Dossiers refusés ou fermés.',
+        applications: deduplicatedApplications.filter((application) => rejectedStatuses.has(application.status)),
       },
     ]
   }, [applications])
@@ -97,7 +107,7 @@ export function ClientFilesPage() {
     <div className="space-y-5">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">Mes demandes</h1>
-        <p className="text-muted-foreground">Chaque demande est maintenant liee a un vehicule et au profil client.</p>
+        <p className="text-muted-foreground">Chaque demande reprend votre profil et évolue ensuite selon son état de traitement.</p>
       </div>
 
       <div className="rounded-lg border bg-muted/20 p-3">
@@ -137,10 +147,10 @@ export function ClientFilesPage() {
                     {application.vehicleBrand} {application.vehicleTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Creee le {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(application.createdAt))}
+                    Créée le {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(application.createdAt))}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Completion profil: {application.profileCompletionPercent}%
+                    Complétude du profil : {application.profileCompletionPercent}%
                   </p>
                   <p className="text-xs text-muted-foreground">{applicationStatusMap[application.status].helper}</p>
                 </div>
@@ -156,7 +166,7 @@ export function ClientFilesPage() {
                     </Button>
                   )}
                   <Button asChild variant="outline">
-                    <Link to={`/app/files/${application.id}`}>Voir le detail</Link>
+                    <Link to={`/app/files/${application.id}`}>Voir le détail</Link>
                   </Button>
                 </div>
               </div>

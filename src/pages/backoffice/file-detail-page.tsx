@@ -77,15 +77,38 @@ export function BackofficeFileDetailPage() {
       return []
     }
 
-    return [
-      { label: 'Création', date: application.createdAt, detail: 'Dossier enregistré.' },
-      { label: 'Soumission', date: application.submittedAt, detail: application.submittedAt ? 'Envoyé par le client.' : 'Pas encore soumis.' },
-      { label: 'Traitement', date: application.reviewedAt, detail: application.internalComment ?? 'Aucun commentaire interne.' },
+    const items = [
+      { key: 'created', label: 'Création', date: application.createdAt, detail: 'Dossier enregistré.' },
     ]
+
+    if (application.submittedAt) {
+      items.push({
+        key: 'submitted',
+        label: 'Soumission',
+        date: application.submittedAt,
+        detail: 'Dossier transmis par le client.',
+      })
+    }
+
+    if (application.reviewedAt) {
+      items.push({
+        key: 'reviewed',
+        label: applicationStatusMap[application.status].label,
+        date: application.reviewedAt,
+        detail: application.internalComment?.trim() || applicationStatusMap[application.status].helper,
+      })
+    }
+
+    return items
   }, [application])
 
   async function changeStatus(status: ApplicationStatus) {
     if (!application) {
+      return
+    }
+
+    if (status === 'COMPLEMENT_REQUESTED' && !comment.trim()) {
+      setError('Un commentaire interne est requis pour demander un complément.')
       return
     }
 
@@ -96,6 +119,7 @@ export function BackofficeFileDetailPage() {
         internalComment: comment.trim() || undefined,
       })
       setApplication(response)
+      setComment(response.internalComment ?? '')
       setError(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Mise à jour impossible')
@@ -105,10 +129,10 @@ export function BackofficeFileDetailPage() {
   }
 
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du dossier…</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du dossier...</div>
   }
 
-  if (error) {
+  if (error && !application) {
     return (
       <Card>
         <CardContent className="space-y-3 p-4">
@@ -146,6 +170,10 @@ export function BackofficeFileDetailPage() {
         <ApplicationStatusBadge status={application.status} />
       </div>
 
+      {error ? (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+      ) : null}
+
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
           <Card>
@@ -160,7 +188,7 @@ export function BackofficeFileDetailPage() {
               <div className="space-y-2">
                 <h2 className="font-medium">Chronologie</h2>
                 {timeline.map((item) => (
-                  <div key={`${item.label}-${item.date ?? 'none'}`} className="rounded-lg border px-3 py-2">
+                  <div key={item.key} className="rounded-lg border px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">{item.label}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(item.date)}</p>
@@ -226,7 +254,7 @@ export function BackofficeFileDetailPage() {
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Traitement</h2>
               <p className="text-sm text-muted-foreground">
-                Le gestionnaire peut faire avancer le dossier sans modifier les données déposées par le client.
+                Le gestionnaire peut faire avancer le dossier sans modifier les données du client.
               </p>
             </div>
 

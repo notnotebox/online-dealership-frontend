@@ -85,7 +85,7 @@ export function BackofficeFilesPage() {
               </div>
 
               {isLoading ? (
-                <p className="text-sm text-muted-foreground">Chargement…</p>
+                <p className="text-sm text-muted-foreground">Chargement...</p>
               ) : group.applications.length === 0 ? (
                 <ContentStateCard
                   title="Aucun dossier dans cette colonne"
