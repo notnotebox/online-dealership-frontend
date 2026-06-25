@@ -16,6 +16,7 @@ import type { DocumentRecord, DocumentType } from '@/lib/documents/document-type
 import { countCompletedDocuments, getDocumentCompletionPercent, getMissingRequiredDocuments, getRequiredDocuments } from '@/lib/documents/document-types'
 import { getMissingProfileFieldKeys, getProfileCompletionPercent } from '@/lib/profile/profile-completeness'
 import { downloadTextFile } from '@/lib/test-fixtures/download-text-file'
+import { createPlaceholderPdfFile } from '@/lib/test-fixtures/placeholder-pdf'
 import { buildApplicationFixtureText, createApplicationFixture } from '@/lib/test-fixtures/profile-application-fixture'
 
 const PROFESSIONAL_STATUSES = ['CDI', 'CDD', 'Independant', 'Fonctionnaire', 'Retraite', 'Etudiant']
@@ -224,6 +225,10 @@ function getVehicleSectionCompletionPercent(form: ApplicationFormState, showLeas
   return Math.round((completed / requiredValues.length) * 100)
 }
 
+function buildFixtureDocumentFileName(documentType: DocumentType) {
+  return `${documentType.toLowerCase()}-test.pdf`
+}
+
 export function NewFilePage() {
   const navigate = useNavigate()
   const { vehicleId, fileId } = useParams()
@@ -383,7 +388,7 @@ export function NewFilePage() {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
-  function fillApplicationAutomatically() {
+  async function fillApplicationAutomatically() {
     const fixture = createApplicationFixture()
     const targetVehicle = vehicles.length > 0
       ? vehicles[Math.floor(Math.random() * vehicles.length)]
@@ -401,6 +406,33 @@ export function NewFilePage() {
       `dossier-test-${fixture.firstName.toLowerCase()}-${fixture.lastName.toLowerCase()}.txt`,
       buildApplicationFixtureText(fixture, targetVehicle),
     )
+
+    const fixtureRequiredDocuments = getRequiredDocuments(fixture.acquisitionType)
+
+    try {
+      setIsUploadingDocument(true)
+      const uploads = await Promise.all(
+        fixtureRequiredDocuments.map((document) => documentApi.upload({
+          documentType: document.documentType,
+          file: createPlaceholderPdfFile(
+            buildFixtureDocumentFileName(document.documentType),
+            'document place holder pour les tests',
+          ),
+        })),
+      )
+
+      setDocuments((current) => {
+        const withoutReplacedTypes = current.filter(
+          (document) => !uploads.some((uploaded) => uploaded.documentType === document.documentType),
+        )
+        return [...uploads, ...withoutReplacedTypes]
+      })
+      setDocumentError(null)
+    } catch (cause) {
+      setDocumentError(cause instanceof Error ? cause.message : 'Impossible de deposer les PDF de test')
+    } finally {
+      setIsUploadingDocument(false)
+    }
   }
 
   async function handleUploadDocument(payload: { file: File; documentType: DocumentType }) {

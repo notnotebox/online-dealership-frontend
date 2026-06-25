@@ -1,10 +1,10 @@
 const FIRST_NAMES = ['Alex', 'Camille', 'Jordan', 'Lina', 'Noah', 'Sofia', 'Malo', 'Ines']
 const LAST_NAMES = ['Martin', 'Bernard', 'Thomas', 'Petit', 'Robert', 'Durand', 'Dubois', 'Moreau']
-const PROFESSIONAL_STATUSES = ['CDI', 'CDD', 'Indépendant', 'Fonctionnaire', 'Retraité', 'Étudiant']
-const FAMILY_STATUSES = ['Célibataire', 'Marié', 'Pacsé', 'En union', 'Divorcé']
-const NATIONALITIES = ['Française', 'Belge', 'Suisse', 'Portugaise', 'Espagnole']
+const PROFESSIONAL_STATUSES = ['CDI', 'CDD', 'Independant', 'Fonctionnaire', 'Retraite', 'Etudiant']
+const FAMILY_STATUSES = ['Celibataire', 'Marie', 'Pacse', 'En union', 'Divorce']
+const NATIONALITIES = ['Francaise', 'Belge', 'Suisse', 'Portugaise', 'Espagnole']
 const CITIES = ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nantes']
-const STREETS = ['Paix', 'République', 'Liberté', 'Victoire', 'Gare']
+const STREETS = ['Paix', 'Republique', 'Liberte', 'Victoire', 'Gare']
 
 function randomItem<T>(items: T[]) {
   return items[Math.floor(Math.random() * items.length)]
@@ -69,7 +69,7 @@ export function createProfileFixture(): ProfileFixture {
     dateOfBirth: randomBirthDate(),
     phoneNumber: `06${randomDigits(8)}`,
     addressLine1: `${Math.floor(10 + Math.random() * 180)} Rue de la ${randomItem(STREETS)}`,
-    addressLine2: Math.random() > 0.6 ? `Bâtiment ${randomItem(['A', 'B', 'C'])}` : '',
+    addressLine2: Math.random() > 0.6 ? `Batiment ${randomItem(['A', 'B', 'C'])}` : '',
     postalCode: String(Math.floor(10000 + Math.random() * 89999)),
     city: randomItem(CITIES),
     country: 'France',
@@ -92,12 +92,12 @@ export function createApplicationFixture(): ApplicationFixture {
     annualMileage: String(randomItem([10000, 12000, 15000, 18000, 20000])),
     contributionAmount: String(randomItem([0, 1500, 3000, 5000, 8000])),
     expectedStartDate: randomFutureDate(),
-    tradeInDescription: Math.random() > 0.5 ? 'Reprise à estimer' : '',
+    tradeInDescription: Math.random() > 0.5 ? 'Reprise a estimer' : '',
     insuranceIncluded: Math.random() > 0.5,
     warrantyIncluded: Math.random() > 0.5,
     assistanceIncluded: Math.random() > 0.5,
     maintenanceIncluded: Math.random() > 0.5,
-    comment: 'Génération de test pour le parcours client.',
+    comment: 'Generation de test pour le parcours client.',
   }
 }
 
