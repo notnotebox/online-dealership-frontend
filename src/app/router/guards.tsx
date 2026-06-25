@@ -31,3 +31,14 @@ export function StaffRoute() {
 
   return isAuthenticated && isStaff ? <Outlet /> : <Navigate to="/login" replace />
 }
+
+export function AdminRoute() {
+  const { isReady, isAuthenticated, profile, session } = useAuth()
+
+  if (!isReady) {
+    return null
+  }
+
+  const role = profile?.role ?? session?.user.role
+  return isAuthenticated && role === 'ADMIN' ? <Outlet /> : <Navigate to="/backoffice/dashboard" replace />
+}

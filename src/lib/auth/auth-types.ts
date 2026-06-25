@@ -1,3 +1,6 @@
+import type { DocumentRecord } from '@/lib/documents/document-types'
+import type { ApplicationStatus } from '@/lib/application/application-types'
+
 export type AuthRole = 'CLIENT' | 'MANAGER' | 'ADMIN'
 
 export type AuthResponse = {
@@ -33,6 +36,34 @@ export type UserProfile = {
   iban?: string | null
   createdAt: string
   profileCompletionPercent?: number
+}
+
+export type AdminUserSummary = {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  role: AuthRole
+  createdAt: string
+  profileCompletionPercent: number
+  applicationCount: number
+  activeApplicationCount: number
+}
+
+export type AdminUserApplicationSummary = {
+  id: string
+  vehicleId: string
+  vehicleBrand: string
+  vehicleTitle: string
+  status: ApplicationStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export type AdminUserDetail = {
+  profile: UserProfile
+  applications: AdminUserApplicationSummary[]
+  documents: DocumentRecord[]
 }
 
 export type FavoriteVehicle = {

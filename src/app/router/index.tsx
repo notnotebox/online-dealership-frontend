@@ -2,10 +2,12 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { BackofficeLayout } from '@/app/layouts/backoffice-layout'
 import { ClientLayout } from '@/app/layouts/client-layout'
 import { PublicLayout } from '@/app/layouts/public-layout'
-import { ClientRoute, StaffRoute } from '@/app/router/guards'
+import { AdminRoute, ClientRoute, StaffRoute } from '@/app/router/guards'
 import { BackofficeDashboardPage } from '@/pages/backoffice/dashboard-page'
 import { BackofficeFileDetailPage } from '@/pages/backoffice/file-detail-page'
 import { BackofficeFilesPage } from '@/pages/backoffice/files-page'
+import { BackofficeUserDetailPage } from '@/pages/backoffice/user-detail-page'
+import { BackofficeUsersPage } from '@/pages/backoffice/users-page'
 import { BackofficeVehicleFormPage } from '@/pages/backoffice/vehicle-form-page'
 import { BackofficeVehiclePreviewPage } from '@/pages/backoffice/vehicle-preview-page'
 import { BackofficeVehiclesPage } from '@/pages/backoffice/vehicles-page'
@@ -68,6 +70,13 @@ export function AppRouter() {
           <Route path="/backoffice/vehicles/:vehicleId/preview" element={<BackofficeVehiclePreviewPage />} />
           <Route path="/backoffice/files" element={<BackofficeFilesPage />} />
           <Route path="/backoffice/files/:fileId" element={<BackofficeFileDetailPage />} />
+          <Route path="/backoffice/users" element={<BackofficeUsersPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<AdminRoute />}>
+        <Route element={<BackofficeLayout />}>
+          <Route path="/backoffice/users/:userId" element={<BackofficeUserDetailPage />} />
         </Route>
       </Route>
     </Routes>
