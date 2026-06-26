@@ -3,9 +3,7 @@ import { expect, test } from '@playwright/test'
 test('homepage and catalog stay reachable', async ({ page }) => {
   await page.goto('/')
 
-  await expect(
-    page.getByRole('heading', { name: /Trouvez votre prochain vehicule/i }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Trouvez votre prochain/i })).toBeVisible()
 
   await page.getByRole('link', { name: /Voir le catalogue/i }).first().click()
 

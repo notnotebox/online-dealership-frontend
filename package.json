@@ -8,8 +8,11 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e": "pnpm run build && playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e:report": "playwright show-report playwright-report",
+    "test:ci": "pnpm run build && playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
