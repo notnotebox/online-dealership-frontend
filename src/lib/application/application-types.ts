@@ -1,5 +1,5 @@
 export type ApplicationAcquisitionType = 'CASH' | 'CREDIT' | 'LOA' | 'LLD'
-export type VehicleCommercialType = 'PURCHASE' | 'LEASE'
+export type VehicleCommercialType = 'UNSPECIFIED' | 'PURCHASE' | 'LEASE'
 
 export type ApplicationStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COMPLEMENT_REQUESTED' | 'WAITING_CUSTOMER' | 'APPROVED' | 'REJECTED'
 

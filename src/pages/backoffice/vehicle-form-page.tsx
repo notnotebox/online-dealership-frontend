@@ -24,6 +24,7 @@ const ENERGY_OPTIONS: { value: VehicleEnergy; label: string }[] = [
 ]
 
 const COMMERCIAL_TYPE_OPTIONS: { value: VehicleCommercialType; label: string }[] = [
+  { value: 'UNSPECIFIED', label: 'Neutre / a classer' },
   { value: 'PURCHASE', label: 'Achat' },
   { value: 'LEASE', label: 'Location' },
 ]
@@ -53,8 +54,8 @@ const DEFAULT_STATE: FormState = {
   doorCount: '5',
   color: 'Noir',
   energy: 'GASOLINE',
-  commercialType: 'PURCHASE',
-  published: true,
+  commercialType: 'UNSPECIFIED',
+  published: false,
 }
 
 function isAcceptedImage(file: File) {
@@ -265,7 +266,7 @@ export function BackofficeVehicleFormPage() {
         doorCount: Math.trunc(doorCount),
         color: form.color.trim(),
         commercialType: form.commercialType,
-        published: form.published,
+        published: form.commercialType === 'UNSPECIFIED' ? false : form.published,
       }
 
       const savedVehicle = vehicleId
@@ -447,6 +448,8 @@ export function BackofficeVehicleFormPage() {
                   setForm((current) => ({
                     ...current,
                     commercialType: event.target.value as VehicleCommercialType,
+                    published:
+                      event.target.value === 'UNSPECIFIED' ? false : current.published,
                   }))
                 }
               >
@@ -481,7 +484,8 @@ export function BackofficeVehicleFormPage() {
             <label className="flex items-center gap-2 text-sm md:col-span-2">
               <input
                 type="checkbox"
-                checked={form.published}
+                checked={form.commercialType === 'UNSPECIFIED' ? false : form.published}
+                disabled={form.commercialType === 'UNSPECIFIED'}
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
@@ -491,6 +495,11 @@ export function BackofficeVehicleFormPage() {
               />
               Vehicule visible
             </label>
+            {form.commercialType === 'UNSPECIFIED' ? (
+              <p className="text-sm text-amber-700 md:col-span-2">
+                Un vehicule neutre reste masque tant que sa destination achat ou location n est pas definie.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 

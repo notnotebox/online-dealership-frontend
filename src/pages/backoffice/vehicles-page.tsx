@@ -29,7 +29,13 @@ function formatPrice(price: AdminVehicleResponse['price']) {
 }
 
 function getCommercialTypeLabel(type: VehicleCommercialType) {
-  return type === 'LEASE' ? 'Location' : 'Achat'
+  if (type === 'LEASE') {
+    return 'Location'
+  }
+  if (type === 'PURCHASE') {
+    return 'Achat'
+  }
+  return 'Neutre'
 }
 
 export function BackofficeVehiclesPage() {
@@ -132,6 +138,7 @@ export function BackofficeVehiclesPage() {
             <span className="text-muted-foreground">Catalogue</span>
             <select className="h-10 w-full rounded-md border px-3" value={commercialTypeFilter} onChange={(event) => setCommercialTypeFilter(event.target.value as VehicleCommercialType | 'ALL')}>
               <option value="ALL">Tous</option>
+              <option value="UNSPECIFIED">Neutre</option>
               <option value="PURCHASE">Achat</option>
               <option value="LEASE">Location</option>
             </select>

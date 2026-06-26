@@ -29,6 +29,10 @@ const ACQUISITIONS: Array<{ value: ApplicationAcquisitionType; label: string }> 
 ]
 
 function allowedAcquisitionTypes(commercialType?: VehicleCommercialType | null) {
+  if (commercialType === 'UNSPECIFIED') {
+    return []
+  }
+
   if (commercialType === 'LEASE') {
     return ACQUISITIONS.filter((item) => item.value === 'LOA' || item.value === 'LLD')
   }
@@ -772,9 +776,19 @@ export function NewFilePage() {
 
               <label className="space-y-1 text-sm">
                 <span className="font-medium text-muted-foreground">Mode d'acquisition</span>
-                <select className="h-10 w-full rounded-md border px-3" value={form.acquisitionType} onChange={(event) => updateField('acquisitionType', event.target.value as ApplicationAcquisitionType)}>
+                <select
+                  className="h-10 w-full rounded-md border px-3"
+                  value={form.acquisitionType}
+                  onChange={(event) => updateField('acquisitionType', event.target.value as ApplicationAcquisitionType)}
+                  disabled={allowedAcquisitions.length === 0}
+                >
                   {allowedAcquisitions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
+                {allowedAcquisitions.length === 0 ? (
+                  <p className="text-xs text-amber-700">
+                    Ce vehicule n est pas encore classe en achat ou location.
+                  </p>
+                ) : null}
               </label>
 
               <label className="space-y-1 text-sm">

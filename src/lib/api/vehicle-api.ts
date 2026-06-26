@@ -1,7 +1,7 @@
 import { apiRequest } from './client'
 
 export type VehicleEnergy = 'GASOLINE' | 'DIESEL' | 'HYBRID' | 'ELECTRIC' | 'LPG' | 'OTHER'
-export type VehicleCommercialType = 'PURCHASE' | 'LEASE'
+export type VehicleCommercialType = 'UNSPECIFIED' | 'PURCHASE' | 'LEASE'
 export type VehicleCatalogSort = 'UPDATED_DESC' | 'PRICE_ASC' | 'PRICE_DESC' | 'MILEAGE_ASC' | 'MILEAGE_DESC'
 
 export type VehicleResponse = {

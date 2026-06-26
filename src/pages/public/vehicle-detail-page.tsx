@@ -42,7 +42,13 @@ function getEnergyLabel(energy: VehicleEnergy) {
 }
 
 function getCommercialTypeLabel(type: VehicleResponse['commercialType']) {
-  return type === 'LEASE' ? 'Location' : 'Achat'
+  if (type === 'LEASE') {
+    return 'Location'
+  }
+  if (type === 'PURCHASE') {
+    return 'Achat'
+  }
+  return 'A definir'
 }
 
 export function VehicleDetailPage() {

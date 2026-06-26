@@ -21,7 +21,13 @@ const SORT_OPTIONS: Array<{ value: VehicleCatalogSort; label: string }> = [
 ]
 
 function getCommercialTypeLabel(type: VehicleCommercialType) {
-  return type === 'LEASE' ? 'Location' : 'Achat'
+  if (type === 'LEASE') {
+    return 'Location'
+  }
+  if (type === 'PURCHASE') {
+    return 'Achat'
+  }
+  return 'A definir'
 }
 
 function getEnergyLabel(energy: VehicleEnergy) {

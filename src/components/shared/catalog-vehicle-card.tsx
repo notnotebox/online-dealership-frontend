@@ -15,7 +15,7 @@ type CatalogVehicle = {
   seatCount?: number
   doorCount?: number
   color?: string
-  commercialType?: 'PURCHASE' | 'LEASE'
+  commercialType?: 'UNSPECIFIED' | 'PURCHASE' | 'LEASE'
   published: boolean
   imageUrl?: string | null
 }
@@ -33,8 +33,14 @@ function formatPrice(price: CatalogVehicle['price']) {
   }).format(numericPrice)
 }
 
-function commercialTypeLabel(type?: 'PURCHASE' | 'LEASE') {
-  return type === 'LEASE' ? 'Location' : 'Achat'
+function commercialTypeLabel(type?: 'UNSPECIFIED' | 'PURCHASE' | 'LEASE') {
+  if (type === 'LEASE') {
+    return 'Location'
+  }
+  if (type === 'PURCHASE') {
+    return 'Achat'
+  }
+  return 'A definir'
 }
 
 type CatalogVehicleCardProps = {

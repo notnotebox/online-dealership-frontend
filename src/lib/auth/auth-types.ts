@@ -76,7 +76,7 @@ export type FavoriteVehicle = {
   seatCount?: number
   doorCount?: number
   color?: string
-  commercialType?: 'PURCHASE' | 'LEASE'
+  commercialType?: 'UNSPECIFIED' | 'PURCHASE' | 'LEASE'
   published: boolean
   imageUrl?: string | null
 }
