@@ -65,21 +65,21 @@ const MANAGER_ACTIONS: ManagerAction[] = [
   {
     status: 'UNDER_REVIEW',
     title: 'Passer en verification',
-    helper: 'Le dossier est pris en charge et les pieces sont en cours de controle.',
+    helper: 'Le dossier est pris en charge et les pièces sont en cours de contrôle.',
     icon: FileCheck2,
     variant: 'outline',
   },
   {
     status: 'COMPLEMENT_REQUESTED',
     title: 'Demander un complement',
-    helper: 'Utiliser ce statut lorsqu il manque des pieces ou une correction cote client.',
+    helper: 'Utiliser ce statut lorsqu’il manque des pièces ou une correction côté client.',
     icon: FileWarning,
     variant: 'outline',
   },
   {
     status: 'WAITING_CUSTOMER',
     title: 'Attendre la validation client',
-    helper: 'Utiliser ce statut apres envoi du contrat ou pour une confirmation finale cote client.',
+    helper: 'Utiliser ce statut après envoi du contrat ou pour une confirmation finale côté client.',
     icon: Send,
     variant: 'secondary',
   },
@@ -211,7 +211,7 @@ export function BackofficeFileDetailPage() {
       setComment(response.internalComment ?? '')
       setError(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Mise a jour impossible')
+      setError(cause instanceof Error ? cause.message : 'Mise à jour impossible')
     } finally {
       setIsSaving(false)
     }
@@ -238,7 +238,7 @@ export function BackofficeFileDetailPage() {
     return (
       <Card>
         <CardContent className="space-y-3 p-4">
-          <p className="text-sm text-muted-foreground">Aucun dossier selectionne.</p>
+          <p className="text-sm text-muted-foreground">Aucun dossier sélectionné.</p>
           <Button asChild>
             <Link to="/backoffice/files">Voir les dossiers</Link>
           </Button>
@@ -281,7 +281,7 @@ export function BackofficeFileDetailPage() {
                   <p className="font-medium">{application.profileCompletionPercent}%</p>
                 </div>
                 <div className="space-y-1 rounded-xl border p-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Derniere mise a jour</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Dernière mise à jour</p>
                   <p className="font-medium">{formatDate(application.updatedAt)}</p>
                 </div>
               </div>
@@ -328,13 +328,13 @@ export function BackofficeFileDetailPage() {
               <div className="space-y-2">
                 <h2 className="font-medium">Profil client</h2>
                 <div className="grid gap-2 text-sm md:grid-cols-2">
-                  <p><span className="font-medium">Telephone :</span> {application.phoneNumber ?? '-'}</p>
+                  <p><span className="font-medium">Téléphone :</span> {application.phoneNumber ?? '-'}</p>
                   <p><span className="font-medium">Date de naissance :</span> {application.dateOfBirth ?? '-'}</p>
                   <p><span className="font-medium">Adresse :</span> {application.addressLine1 ?? '-'}</p>
                   <p><span className="font-medium">Ville :</span> {application.city ?? '-'}</p>
                   <p><span className="font-medium">Code postal :</span> {application.postalCode ?? '-'}</p>
                   <p><span className="font-medium">Pays :</span> {application.country ?? '-'}</p>
-                  <p><span className="font-medium">Nationalite :</span> {application.nationality ?? '-'}</p>
+                  <p><span className="font-medium">Nationalité :</span> {application.nationality ?? '-'}</p>
                   <p><span className="font-medium">Situation familiale :</span> {application.familyStatus ?? '-'}</p>
                   <p><span className="font-medium">Foyer :</span> {application.householdSize ?? '-'}</p>
                   <p><span className="font-medium">Situation professionnelle :</span> {application.professionalStatus ?? '-'}</p>
@@ -349,7 +349,7 @@ export function BackofficeFileDetailPage() {
                 <div className="grid gap-2 text-sm md:grid-cols-2">
                   <p><span className="font-medium">Apport :</span> {application.contributionAmount ?? '-'}</p>
                   <p><span className="font-medium">Duree :</span> {application.durationMonths ? `${application.durationMonths} mois` : '-'}</p>
-                  <p><span className="font-medium">Kilometrage annuel :</span> {application.annualMileage ? `${application.annualMileage} km` : '-'}</p>
+                  <p><span className="font-medium">Kilométrage annuel :</span> {application.annualMileage ? `${application.annualMileage} km` : '-'}</p>
                   <p><span className="font-medium">Debut souhaite :</span> {application.expectedStartDate ?? '-'}</p>
                   <p><span className="font-medium">Reprise ou remarque :</span> {application.tradeInDescription ?? '-'}</p>
                   <p><span className="font-medium">Commentaire client :</span> {application.comment ?? '-'}</p>
@@ -369,7 +369,7 @@ export function BackofficeFileDetailPage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
-                    Toutes les pieces requises sont deja presentes dans le profil client.
+                    Toutes les pièces requises sont déjà présentes dans le profil client.
                   </div>
                 )}
               </div>
@@ -381,14 +381,14 @@ export function BackofficeFileDetailPage() {
               <div>
                 <h2 className="text-lg font-semibold">Pieces du profil</h2>
                 <p className="text-sm text-muted-foreground">
-                  Ces PDF sont deposes une seule fois par le client et reutilises pour toutes ses demandes.
+                  Ces PDF sont déposés une seule fois par le client et réutilisés pour toutes ses demandes.
                 </p>
               </div>
 
               <DocumentRecordList
                 documents={documents}
                 emptyTitle="Aucun document disponible"
-                emptyDescription="Le client n'a encore depose aucune piece PDF dans son profil."
+                emptyDescription="Le client n'a encore déposé aucune pièce PDF dans son profil."
               />
             </CardContent>
           </Card>

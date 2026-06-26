@@ -13,11 +13,11 @@ import {
 } from '@/lib/api/vehicle-api'
 
 const SORT_OPTIONS: Array<{ value: VehicleCatalogSort; label: string }> = [
-  { value: 'UPDATED_DESC', label: 'Plus recents' },
+  { value: 'UPDATED_DESC', label: 'Plus récents' },
   { value: 'PRICE_ASC', label: 'Prix croissant' },
-  { value: 'PRICE_DESC', label: 'Prix decroissant' },
-  { value: 'MILEAGE_ASC', label: 'Moins de kilometres' },
-  { value: 'MILEAGE_DESC', label: 'Plus de kilometres' },
+  { value: 'PRICE_DESC', label: 'Prix décroissant' },
+  { value: 'MILEAGE_ASC', label: 'Moins de kilomètres' },
+  { value: 'MILEAGE_DESC', label: 'Plus de kilomètres' },
 ]
 
 function getCommercialTypeLabel(type: VehicleCommercialType) {
@@ -27,7 +27,7 @@ function getCommercialTypeLabel(type: VehicleCommercialType) {
   if (type === 'PURCHASE') {
     return 'Achat'
   }
-  return 'A definir'
+  return 'À définir'
 }
 
 function getEnergyLabel(energy: VehicleEnergy) {
@@ -39,7 +39,7 @@ function getEnergyLabel(energy: VehicleEnergy) {
     case 'HYBRID':
       return 'Hybride'
     case 'ELECTRIC':
-      return 'Electrique'
+      return 'Électrique'
     case 'LPG':
       return 'GPL'
     default:
@@ -176,18 +176,18 @@ export function VehiclesPage() {
               className="h-11 rounded-md border px-3 text-sm"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Marque, modele, couleur... utilisez des virgules pour plusieurs termes"
+              placeholder="Marque, modèle, couleur... utilisez des virgules pour plusieurs termes"
             />
             <select
               className="h-11 rounded-md border px-3 text-sm"
               value={energy}
               onChange={(event) => setEnergy(event.target.value as VehicleEnergy | 'ALL')}
             >
-              <option value="ALL">Toutes les energies</option>
+              <option value="ALL">Toutes les énergies</option>
               <option value="GASOLINE">Essence</option>
               <option value="DIESEL">Diesel</option>
               <option value="HYBRID">Hybride</option>
-              <option value="ELECTRIC">Electrique</option>
+              <option value="ELECTRIC">Électrique</option>
               <option value="LPG">GPL</option>
               <option value="OTHER">Autre</option>
             </select>
@@ -216,7 +216,7 @@ export function VehiclesPage() {
               className="h-10 rounded-md border px-3 text-sm"
               value={maxMileage}
               onChange={(event) => setMaxMileage(event.target.value)}
-              placeholder="Kilometrage max"
+              placeholder="Kilométrage max"
               inputMode="numeric"
             />
             <select
@@ -256,7 +256,7 @@ export function VehiclesPage() {
               ))}
             </div>
             <Button variant="outline" onClick={resetFilters}>
-              Reinitialiser
+              Réinitialiser
             </Button>
           </div>
         </div>
@@ -264,18 +264,18 @@ export function VehiclesPage() {
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {isLoading ? 'Chargement du catalogue...' : `${vehicles.length} vehicule${vehicles.length > 1 ? 's' : ''} disponible${vehicles.length > 1 ? 's' : ''}`}
+          {isLoading ? 'Chargement du catalogue...' : `${vehicles.length} véhicule${vehicles.length > 1 ? 's' : ''} disponible${vehicles.length > 1 ? 's' : ''}`}
         </p>
       </div>
 
       {isLoading ? (
         <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
-          Chargement des vehicules...
+          Chargement des véhicules...
         </div>
       ) : error ? (
         <ContentStateCard
           title="Catalogue indisponible"
-          description="Le catalogue ne repond pas pour le moment. Reessayez dans un instant."
+          description="Le catalogue ne répond pas pour le moment. Réessayez dans un instant."
           actionLabel="Recharger"
           onAction={() => window.location.reload()}
         />
@@ -287,8 +287,8 @@ export function VehiclesPage() {
         </div>
       ) : (
         <ContentStateCard
-          title="Aucun vehicule ne correspond a cette recherche"
-          description="Essayez une autre combinaison de filtres ou revenez a une recherche plus large."
+          title="Aucun véhicule ne correspond à cette recherche"
+          description="Essayez une autre combinaison de filtres ou revenez à une recherche plus large."
           actionLabel="Effacer les filtres"
           onAction={resetFilters}
         />

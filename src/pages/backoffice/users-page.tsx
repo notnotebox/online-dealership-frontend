@@ -44,7 +44,7 @@ function UserSection({
                   <p className="font-medium">{user.firstName} {user.lastName}</p>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span>Role : {user.role}</span>
+                    <span>Rôle : {user.role}</span>
                     <span>Profil : {user.profileCompletionPercent}%</span>
                     <span>Dossiers : {user.applicationCount}</span>
                     <span>Actifs : {user.activeApplicationCount}</span>
@@ -111,9 +111,9 @@ export function BackofficeUsersPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">{isAdmin ? 'Utilisateurs' : 'Equipe'}</h1>
+        <h1 className="text-2xl font-semibold">{isAdmin ? 'Utilisateurs' : 'Équipe'}</h1>
         <p className="text-sm text-muted-foreground">
-          Les gestionnaires peuvent consulter l equipe interne. Les profils clients complets restent reserves aux administrateurs.
+          Les gestionnaires peuvent consulter l'équipe interne. Les profils clients complets restent réservés aux administrateurs.
         </p>
       </div>
 
@@ -129,7 +129,7 @@ export function BackofficeUsersPage() {
         <div className="space-y-4">
           <UserSection
             title="Staff"
-            description="Liste des administrateurs et gestionnaires accessibles a toute l equipe interne."
+            description="Liste des administrateurs et gestionnaires accessibles à toute l'équipe interne."
             users={staffUsers}
             showDetails={isAdmin}
           />
@@ -137,7 +137,7 @@ export function BackofficeUsersPage() {
           {isAdmin ? (
             <UserSection
               title="Clients"
-              description="Liste reservee aux administrateurs. Vous pouvez consulter le profil client, ses brouillons et ses informations deposees."
+              description="Liste réservée aux administrateurs. Vous pouvez consulter le profil client, ses brouillons et ses informations déposées."
               users={clientUsers}
               showDetails
             />

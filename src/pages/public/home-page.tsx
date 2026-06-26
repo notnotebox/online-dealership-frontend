@@ -74,10 +74,10 @@ export function HomePage() {
       <section className="grid gap-6 rounded-lg border bg-card p-8 md:grid-cols-2">
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Achat et location de vehicules
+            Achat et location de véhicules
           </p>
           <h1 className="text-3xl font-semibold">
-            Trouvez votre prochain vehicule en quelques clics
+            Trouvez votre prochain véhicule en quelques clics
           </h1>
           <p className="text-muted-foreground">
             Catalogue public, espace client, suivi de dossier et meilleures
@@ -88,7 +88,7 @@ export function HomePage() {
               <Link to="/vehicles">Voir le catalogue</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to={depositPath}>Deposer un dossier</Link>
+              <Link to={depositPath}>Déposer un dossier</Link>
             </Button>
           </div>
         </div>
@@ -101,12 +101,12 @@ export function HomePage() {
               Meilleures affaires du site
             </h2>
             <p className="text-sm text-muted-foreground">
-              Une selection limitee a 9 vehicules, mise en avant selon le prix
-              et le kilometrage.
+              Une sélection limitée à 9 véhicules, mise en avant selon le prix
+              et le kilométrage.
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link to="/vehicles">Acceder au catalogue</Link>
+            <Link to="/vehicles">Accéder au catalogue</Link>
           </Button>
         </div>
 
@@ -117,14 +117,14 @@ export function HomePage() {
         ) : error ? (
           <ContentStateCard
             title="Catalogue temporairement indisponible"
-            description="Le chargement des vehicules a echoue. Vous pouvez reessayer un peu plus tard."
+            description="Le chargement des véhicules a échoué. Vous pouvez réessayer un peu plus tard."
             actionLabel="Voir le catalogue"
             onAction={() => navigate("/vehicles")}
           />
         ) : featuredVehicles.length === 0 ? (
           <ContentStateCard
-            title="Aucun vehicule a afficher"
-            description="Les meilleures affaires apparaitront ici des qu'un vehicule sera disponible."
+            title="Aucun véhicule à afficher"
+            description="Les meilleures affaires apparaîtront ici dès qu'un véhicule sera disponible."
             actionLabel="Voir le catalogue"
             onAction={() => navigate("/vehicles")}
           />

@@ -25,10 +25,10 @@ function formatPrice(price: AdminVehicleResponse['price'], commercialType: Admin
 
 function getVisibilityLabel(vehicle: AdminVehicleResponse) {
   if (vehicle.archived) {
-    return 'Archive'
+    return 'Archivé'
   }
 
-  return vehicle.published ? 'Visible' : 'Masque'
+  return vehicle.published ? 'Visible' : 'Masqué'
 }
 
 export function BackofficeVehiclePreviewPage() {
@@ -41,7 +41,7 @@ export function BackofficeVehiclePreviewPage() {
   const [error, setError] = useState<string | null>(null)
   const { items: galleryItems, error: galleryError } = useVehicleGalleryItems(media, {
     requiresAuth: true,
-    altPrefix: 'Apercu interne',
+    altPrefix: 'Aperçu interne',
     labelPrefix: 'Vue',
   })
 
@@ -72,7 +72,7 @@ export function BackofficeVehiclePreviewPage() {
         setError(null)
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger le vehicule')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le véhicule')
           setVehicle(null)
           setMedia([])
         }
@@ -97,7 +97,7 @@ export function BackofficeVehiclePreviewPage() {
   }, [galleryError])
 
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement de l&apos;apercu...</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement de l&apos;aperçu...</div>
   }
 
   if (error) {
@@ -105,18 +105,18 @@ export function BackofficeVehiclePreviewPage() {
   }
 
   if (!vehicle) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Vehicule introuvable.</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Véhicule introuvable.</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Apercu interne</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Aperçu interne</p>
           <h1 className="text-3xl font-semibold">
             {vehicle.brand} {vehicle.title}
           </h1>
-          <p className="text-sm text-muted-foreground">Previsualisation back-office du vehicule avant publication.</p>
+          <p className="text-sm text-muted-foreground">Prévisualisation back-office du véhicule avant publication.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => navigate(-1)}>Retour</Button>
@@ -134,7 +134,7 @@ export function BackofficeVehiclePreviewPage() {
               imageClassName="min-h-[22rem]"
               emptyContent={
                 <div className="flex min-h-[22rem] items-center justify-center px-6 text-sm text-muted-foreground">
-                  Aucun media principal
+                  Aucun média principal
                 </div>
               }
             />
@@ -153,9 +153,9 @@ export function BackofficeVehiclePreviewPage() {
               <p className="text-lg font-semibold">{formatPrice(vehicle.price, vehicle.commercialType)}</p>
               <p className="text-sm text-muted-foreground">{vehicle.energy} - {vehicle.mileage.toLocaleString('fr-FR')} km</p>
               <p className="text-sm text-muted-foreground">Places: {vehicle.seatCount} | Portes: {vehicle.doorCount}</p>
-              <p className="text-sm text-muted-foreground">Couleur: {vehicle.color}</p>
+              <p className="text-sm text-muted-foreground">Couleur : {vehicle.color}</p>
               <p className="text-sm text-muted-foreground">
-                Mise a jour: {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}
+                Mise à jour : {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt))}
               </p>
             </CardContent>
           </Card>
@@ -164,7 +164,7 @@ export function BackofficeVehiclePreviewPage() {
             <CardContent className="space-y-2 p-4">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Galerie</h2>
               {media.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun media charge.</p>
+                <p className="text-sm text-muted-foreground">Aucun média chargé.</p>
               ) : (
                 <div className="space-y-2 text-xs">
                   {media.map((item) => (
@@ -182,10 +182,10 @@ export function BackofficeVehiclePreviewPage() {
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center gap-2">
                 <History className="h-4 w-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Historique du vehicule</h2>
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Historique du véhicule</h2>
               </div>
               {history.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune action enregistree pour le moment.</p>
+                <p className="text-sm text-muted-foreground">Aucune action enregistrée pour le moment.</p>
               ) : (
                 <div className="space-y-3">
                   {history.map((entry) => (
@@ -223,7 +223,7 @@ function formatDateTime(value: string) {
 function formatActionLabel(action: VehicleHistoryResponse['action']) {
   switch (action) {
     case 'CREATED':
-      return 'Creation'
+      return 'Création'
     case 'UPDATED':
       return 'Modification'
     case 'PUBLISHED':
@@ -237,7 +237,7 @@ function formatActionLabel(action: VehicleHistoryResponse['action']) {
     case 'DELETED':
       return 'Retrait'
     case 'MEDIA_ADDED':
-      return 'Media'
+      return 'Média'
     default:
       return action
   }

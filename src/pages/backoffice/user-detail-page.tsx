@@ -9,7 +9,7 @@ import type { AdminUserDetail } from '@/lib/auth/auth-types'
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return 'Non renseigne'
+    return 'Non renseigné'
   }
 
   return new Intl.DateTimeFormat('fr-FR', {
@@ -70,7 +70,7 @@ export function BackofficeUserDetailPage() {
       setDetail((current) => current ? { ...current, profile: updatedProfile } : current)
       setError(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Impossible de modifier le role')
+      setError(cause instanceof Error ? cause.message : 'Impossible de modifier le rôle')
     } finally {
       setIsSavingRole(false)
     }
@@ -130,19 +130,19 @@ export function BackofficeUserDetailPage() {
         <Card>
           <CardContent className="space-y-4 p-4">
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Role</p><p className="font-medium">{profile.role}</p></div>
-              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Completude</p><p className="font-medium">{profile.profileCompletionPercent ?? 0}%</p></div>
-              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Telephone</p><p className="font-medium">{profile.phoneNumber ?? '-'}</p></div>
+              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Rôle</p><p className="font-medium">{profile.role}</p></div>
+              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Complétude</p><p className="font-medium">{profile.profileCompletionPercent ?? 0}%</p></div>
+              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Téléphone</p><p className="font-medium">{profile.phoneNumber ?? '-'}</p></div>
               <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Date de naissance</p><p className="font-medium">{profile.dateOfBirth ?? '-'}</p></div>
               <div className="rounded-lg border p-3 md:col-span-2"><p className="text-xs text-muted-foreground">Adresse</p><p className="font-medium">{[profile.addressLine1, profile.addressLine2, profile.postalCode, profile.city, profile.country].filter(Boolean).join(', ') || '-'}</p></div>
-              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Nationalite</p><p className="font-medium">{profile.nationality ?? '-'}</p></div>
+              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Nationalité</p><p className="font-medium">{profile.nationality ?? '-'}</p></div>
               <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Situation familiale</p><p className="font-medium">{profile.familyStatus ?? '-'}</p></div>
               <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Situation professionnelle</p><p className="font-medium">{profile.professionalStatus ?? '-'}</p></div>
               <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Foyer</p><p className="font-medium">{profile.householdSize ?? '-'}</p></div>
               <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Revenus mensuels</p><p className="font-medium">{profile.monthlyIncome ?? '-'}</p></div>
               <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Charges mensuelles</p><p className="font-medium">{profile.monthlyCharges ?? '-'}</p></div>
               <div className="rounded-lg border p-3 md:col-span-2"><p className="text-xs text-muted-foreground">IBAN</p><p className="font-medium">{profile.iban ?? '-'}</p></div>
-              <div className="rounded-lg border p-3 md:col-span-2"><p className="text-xs text-muted-foreground">Compte cree le</p><p className="font-medium">{formatDate(profile.createdAt)}</p></div>
+              <div className="rounded-lg border p-3 md:col-span-2"><p className="text-xs text-muted-foreground">Compte créé le</p><p className="font-medium">{formatDate(profile.createdAt)}</p></div>
             </div>
           </CardContent>
         </Card>
@@ -152,7 +152,7 @@ export function BackofficeUserDetailPage() {
             <CardContent className="space-y-4 p-4">
               <div>
                 <h2 className="text-lg font-semibold">Dossiers du client</h2>
-                <p className="text-sm text-muted-foreground">Brouillons et demandes deja deposees.</p>
+                <p className="text-sm text-muted-foreground">Brouillons et demandes déjà déposées.</p>
               </div>
 
               {detail.applications.length === 0 ? (
@@ -168,8 +168,8 @@ export function BackofficeUserDetailPage() {
                         <ApplicationStatusBadge status={application.status} />
                       </div>
                       <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        <span>Creation : {formatDate(application.createdAt)}</span>
-                        <span>Mise a jour : {formatDate(application.updatedAt)}</span>
+                        <span>Création : {formatDate(application.createdAt)}</span>
+                        <span>Mise à jour : {formatDate(application.updatedAt)}</span>
                       </div>
                       <div className="mt-3">
                         <Button asChild size="sm" variant="outline">
@@ -187,7 +187,7 @@ export function BackofficeUserDetailPage() {
             <CardContent className="space-y-3 p-4">
               <h2 className="text-lg font-semibold">Statut interne</h2>
               <p className="text-sm text-muted-foreground">
-                Ce collaborateur fait partie de l equipe interne. Les droits peuvent etre ajustes ici par un administrateur.
+                Ce collaborateur fait partie de l'équipe interne. Les droits peuvent être ajustés ici par un administrateur.
               </p>
             </CardContent>
           </Card>
@@ -204,7 +204,7 @@ export function BackofficeUserDetailPage() {
             <DocumentRecordList
               documents={detail.documents}
               emptyTitle="Aucun document disponible"
-              emptyDescription="Le client n'a encore depose aucune piece dans son profil."
+              emptyDescription="Le client n'a encore déposé aucune pièce dans son profil."
             />
           </CardContent>
         </Card>

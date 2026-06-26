@@ -44,7 +44,7 @@ export function ContactPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold">Contact</h1>
         <p className="text-muted-foreground">
-          Une question sur un vehicule ou sur votre dossier ? Notre equipe vous repond rapidement.
+          Une question sur un véhicule ou sur votre dossier ? Notre équipe vous répond rapidement.
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export function ContactPage() {
             <input className="h-10 rounded border px-3" placeholder="Prenom" value={form.firstName} readOnly={readOnly} onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))} />
             <input className="h-10 rounded border px-3" placeholder="Nom" value={form.lastName} readOnly={readOnly} onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))} />
             <input className="h-10 rounded border px-3" placeholder="Email" type="email" value={form.email} readOnly={readOnly} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
-            <input className="h-10 rounded border px-3" placeholder="Telephone" type="tel" value={form.phone} readOnly={readOnly} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
+            <input className="h-10 rounded border px-3" placeholder="Téléphone" type="tel" value={form.phone} readOnly={readOnly} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
             <input className="h-10 rounded border px-3 md:col-span-2" placeholder="Sujet" value={form.subject} readOnly={readOnly} onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))} />
           </div>
           <textarea className="min-h-32 w-full rounded border px-3 py-2" placeholder="Votre message" value={form.message} readOnly={readOnly} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} />

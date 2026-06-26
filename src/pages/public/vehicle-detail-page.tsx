@@ -35,7 +35,7 @@ function getEnergyLabel(energy: VehicleEnergy) {
     case 'HYBRID':
       return 'Hybride'
     case 'ELECTRIC':
-      return 'Electrique'
+      return 'Électrique'
     case 'LPG':
       return 'GPL'
     default:
@@ -50,7 +50,7 @@ function getCommercialTypeLabel(type: VehicleResponse['commercialType']) {
   if (type === 'PURCHASE') {
     return 'Achat'
   }
-  return 'A definir'
+  return 'À définir'
 }
 
 function getCommercialTypeBadgeClassName(type: VehicleResponse['commercialType']) {
@@ -71,7 +71,7 @@ export function VehicleDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { items: galleryItems, error: galleryError } = useVehicleGalleryItems(media, {
-    altPrefix: 'Photo vehicule',
+    altPrefix: 'Photo véhicule',
     labelPrefix: 'Photo',
   })
 
@@ -98,7 +98,7 @@ export function VehicleDetailPage() {
         }
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger le vehicule')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger le véhicule')
           setVehicle(null)
           setMedia([])
         }
@@ -123,7 +123,7 @@ export function VehicleDetailPage() {
   }, [galleryError])
 
   if (isLoading) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du vehicule...</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Chargement du véhicule...</div>
   }
 
   if (error) {
@@ -131,17 +131,17 @@ export function VehicleDetailPage() {
   }
 
   if (!vehicle) {
-    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Vehicule introuvable.</div>
+    return <div className="rounded-lg border p-4 text-sm text-muted-foreground">Véhicule introuvable.</div>
   }
 
   const specifications = [
-    { label: 'Kilometrage', value: `${vehicle.mileage.toLocaleString('fr-FR')} km`, icon: Gauge },
-    { label: 'Energie', value: getEnergyLabel(vehicle.energy), icon: Fuel },
+    { label: 'Kilométrage', value: `${vehicle.mileage.toLocaleString('fr-FR')} km`, icon: Gauge },
+    { label: 'Énergie', value: getEnergyLabel(vehicle.energy), icon: Fuel },
     { label: 'Places', value: `${vehicle.seatCount}`, icon: Sofa },
     { label: 'Portes', value: `${vehicle.doorCount}`, icon: DoorOpen },
     { label: 'Couleur', value: vehicle.color, icon: Palette },
     {
-      label: 'Mis a jour',
+      label: 'Mis à jour',
       value: new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt)),
       icon: CalendarClock,
     },
@@ -186,7 +186,7 @@ export function VehicleDetailPage() {
             <h1 className="text-3xl font-semibold tracking-tight">{vehicle.title}</h1>
             <p className="text-2xl font-semibold">{formatPrice(vehicle.price, vehicle.commercialType)}</p>
             <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-              Fiche vehicule claire et prete pour une demande d achat, de credit ou de location selon sa destination.
+              Fiche véhicule claire et prête pour une demande d'achat, de crédit ou de location selon sa destination.
             </p>
           </div>
         </div>
@@ -195,8 +195,8 @@ export function VehicleDetailPage() {
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold">Details du vehicule</h2>
-                <p className="text-sm text-muted-foreground">Informations essentielles presentees de maniere lisible.</p>
+                <h2 className="text-base font-semibold">Détails du véhicule</h2>
+                <p className="text-sm text-muted-foreground">Informations essentielles présentées de manière lisible.</p>
               </div>
               <Badge variant="outline" className={getCommercialTypeBadgeClassName(vehicle.commercialType)}>
                 {getCommercialTypeLabel(vehicle.commercialType)}
@@ -225,7 +225,7 @@ export function VehicleDetailPage() {
 
         <div className="flex flex-wrap gap-2">
           <Button asChild>
-            <Link to={isAuthenticated ? `/app/files/new/${vehicle.id}` : '/login'}>Creer ma demande</Link>
+            <Link to={isAuthenticated ? `/app/files/new/${vehicle.id}` : '/login'}>Créer ma demande</Link>
           </Button>
           <Button variant="secondary" asChild>
             <Link to="/vehicles">Retour au catalogue</Link>

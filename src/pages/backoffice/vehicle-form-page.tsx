@@ -18,13 +18,13 @@ const ENERGY_OPTIONS: { value: VehicleEnergy; label: string }[] = [
   { value: 'GASOLINE', label: 'Essence' },
   { value: 'DIESEL', label: 'Diesel' },
   { value: 'HYBRID', label: 'Hybride' },
-  { value: 'ELECTRIC', label: 'Electrique' },
+  { value: 'ELECTRIC', label: 'Électrique' },
   { value: 'LPG', label: 'GPL' },
   { value: 'OTHER', label: 'Autre' },
 ]
 
 const COMMERCIAL_TYPE_OPTIONS: { value: VehicleCommercialType; label: string }[] = [
-  { value: 'UNSPECIFIED', label: 'Neutre / a classer' },
+  { value: 'UNSPECIFIED', label: 'Neutre / à classer' },
   { value: 'PURCHASE', label: 'Achat' },
   { value: 'LEASE', label: 'Location' },
 ]
@@ -101,20 +101,20 @@ export function BackofficeVehicleFormPage() {
 
   const previewLabel = useMemo(() => {
     if (selectedFiles.length === 0) {
-      return 'Glissez une ou plusieurs images ou cliquez pour les selectionner.'
+      return 'Glissez une ou plusieurs images ou cliquez pour les sélectionner.'
     }
 
     if (selectedFiles.length === 1) {
       return selectedFiles[0].name
     }
 
-    return `${selectedFiles.length} fichiers selectionnes`
+    return `${selectedFiles.length} fichiers sélectionnés`
   }, [selectedFiles])
 
   const { items: existingGalleryItems, error: existingGalleryError } = useVehicleGalleryItems(existingMedia, {
     requiresAuth: true,
     altPrefix: 'Visuel enregistre',
-    labelPrefix: 'Enregistree',
+    labelPrefix: 'Enregistrée',
   })
 
   const galleryItems = useMemo(
@@ -165,7 +165,7 @@ export function BackofficeVehicleFormPage() {
       } catch (cause) {
         if (!cancelled) {
           setError(
-            cause instanceof Error ? cause.message : 'Impossible de charger le vehicule',
+            cause instanceof Error ? cause.message : 'Impossible de charger le véhicule',
           )
         }
       } finally {
@@ -192,8 +192,8 @@ export function BackofficeVehicleFormPage() {
       return {
         id: `local-${file.name}-${file.lastModified}-${index}`,
         src,
-        alt: `Image ajoutee ${index + 1}`,
-        label: `Ajoutee ${index + 1}`,
+        alt: `Image ajoutée ${index + 1}`,
+        label: `Ajoutée ${index + 1}`,
       } satisfies VehicleGalleryItem
     })
 
@@ -213,7 +213,7 @@ export function BackofficeVehicleFormPage() {
   function addFiles(files: FileList | File[]) {
     const incoming = Array.from(files).filter(isAcceptedImage)
     if (incoming.length === 0) {
-      setError(`Seuls les fichiers ${ACCEPTED_IMAGE_LABEL} sont acceptes.`)
+      setError(`Seuls les fichiers ${ACCEPTED_IMAGE_LABEL} sont acceptés.`)
       return
     }
 
@@ -233,22 +233,22 @@ export function BackofficeVehicleFormPage() {
     const doorCount = Number(form.doorCount)
 
     if (!Number.isFinite(price) || price < 0) {
-      setError('Le prix doit etre un nombre positif.')
+      setError('Le prix doit être un nombre positif.')
       return
     }
 
     if (!Number.isFinite(mileage) || mileage < 0) {
-      setError('Le kilometrage doit etre un nombre positif.')
+      setError('Le kilométrage doit être un nombre positif.')
       return
     }
 
     if (!Number.isFinite(seatCount) || seatCount < 1) {
-      setError('Le nombre de places doit etre au moins egal a 1.')
+      setError('Le nombre de places doit être au moins égal à 1.')
       return
     }
 
     if (!Number.isFinite(doorCount) || doorCount < 1) {
-      setError('Le nombre de portes doit etre au moins egal a 1.')
+      setError('Le nombre de portes doit être au moins égal à 1.')
       return
     }
 
@@ -289,7 +289,7 @@ export function BackofficeVehicleFormPage() {
       navigate('/backoffice/vehicles')
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'Impossible de sauvegarder le vehicule',
+        cause instanceof Error ? cause.message : 'Impossible de sauvegarder le véhicule',
       )
     } finally {
       setIsSaving(false)
@@ -308,12 +308,12 @@ export function BackofficeVehicleFormPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">
-          {vehicleId ? 'Modifier un vehicule' : 'Ajouter un vehicule'}
+          {vehicleId ? 'Modifier un véhicule' : 'Ajouter un véhicule'}
         </h1>
         <p className="text-sm text-muted-foreground">
           {vehicleId
-            ? 'Mettre a jour les informations et les medias du vehicule.'
-            : 'Creer une nouvelle fiche vehicule et joindre ses images par glisser-deposer.'}
+            ? 'Mettre à jour les informations et les médias du véhicule.'
+            : 'Créer une nouvelle fiche véhicule et joindre ses images par glisser-déposer.'}
         </p>
       </div>
 
@@ -326,7 +326,7 @@ export function BackofficeVehicleFormPage() {
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Informations vehicule</CardTitle>
+            <CardTitle>Informations véhicule</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <label className="space-y-1 text-sm">
@@ -345,7 +345,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Modele / titre</span>
+              <span className="text-muted-foreground">Modèle / titre</span>
               <input
                 className="h-10 w-full rounded-md border px-3"
                 value={form.title}
@@ -377,15 +377,15 @@ export function BackofficeVehicleFormPage() {
               />
               <p className="text-xs text-muted-foreground">
                 {isLeaseVehicle
-                  ? 'Montant mensuel affiche dans le catalogue et les fiches client.'
+                  ? 'Montant mensuel affiché dans le catalogue et les fiches client.'
                   : isPurchaseVehicle
-                    ? 'Montant total affiche pour un achat.'
-                    : 'Definissez la categorie pour adapter automatiquement le champ tarifaire.'}
+                    ? 'Montant total affiché pour un achat.'
+                    : 'Définissez la catégorie pour adapter automatiquement le champ tarifaire.'}
               </p>
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Kilometrage</span>
+              <span className="text-muted-foreground">Kilométrage</span>
               <input
                 className="h-10 w-full rounded-md border px-3"
                 type="number"
@@ -452,7 +452,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Categorie catalogue</span>
+              <span className="text-muted-foreground">Catégorie catalogue</span>
               <select
                 className="h-10 w-full rounded-md border px-3"
                 value={form.commercialType}
@@ -474,7 +474,7 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Energie</span>
+              <span className="text-muted-foreground">Énergie</span>
               <select
                 className="h-10 w-full rounded-md border px-3"
                 value={form.energy}
@@ -505,18 +505,18 @@ export function BackofficeVehicleFormPage() {
                   }))
                 }
               />
-              Vehicule visible
+              Véhicule visible
             </label>
             {form.commercialType === 'UNSPECIFIED' ? (
               <p className="text-sm text-amber-700 md:col-span-2">
-                Un vehicule neutre reste masque tant que sa destination achat ou location n est pas definie.
+                Un véhicule neutre reste masqué tant que sa destination achat ou location n'est pas définie.
               </p>
             ) : null}
             {isLeaseVehicle ? (
               <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 md:col-span-2">
                 <p className="font-medium">Mode location</p>
                 <p className="mt-1 text-sky-800">
-                  Ce vehicule sera presente avec un loyer mensuel. Le catalogue et les dossiers afficheront automatiquement le tarif au mois.
+                  Ce véhicule sera présenté avec un loyer mensuel. Le catalogue et les dossiers afficheront automatiquement le tarif au mois.
                 </p>
               </div>
             ) : null}
@@ -559,9 +559,9 @@ export function BackofficeVehicleFormPage() {
                   <ImagePlus className="h-5 w-5" />
                 </div>
                 <div className="space-y-1">
-                  <p className="font-medium">Glisser deposer les images du vehicule</p>
+                  <p className="font-medium">Glisser-déposer les images du véhicule</p>
                   <p className="text-sm text-muted-foreground">
-                    Formats acceptes: {ACCEPTED_IMAGE_LABEL}
+                    Formats acceptés : {ACCEPTED_IMAGE_LABEL}
                   </p>
                 </div>
                 <Button type="button" variant="outline">
@@ -621,7 +621,7 @@ export function BackofficeVehicleFormPage() {
 
             {existingMedia.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Medias deja enregistres</p>
+                <p className="text-sm font-medium">Médias déjà enregistrés</p>
                 {existingMedia.map((media) => (
                   <div
                     key={media.id}
@@ -660,7 +660,7 @@ export function BackofficeVehicleFormPage() {
         </Button>
         {loadedVehicle && (
           <Badge variant="outline">
-            Vehicule charge: {loadedVehicle.brand} {loadedVehicle.title}
+            Véhicule chargé : {loadedVehicle.brand} {loadedVehicle.title}
           </Badge>
         )}
       </div>

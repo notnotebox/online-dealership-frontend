@@ -79,7 +79,7 @@ export function BackofficeVehiclesPage() {
         }
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : 'Impossible de charger les vehicules')
+          setError(cause instanceof Error ? cause.message : 'Impossible de charger les véhicules')
           setVehicles([])
         }
       } finally {
@@ -131,7 +131,7 @@ export function BackofficeVehiclesPage() {
           <p className="text-sm text-muted-foreground">Pilotage du catalogue, des statuts et des aperçus internes.</p>
         </div>
         <Button asChild>
-          <Link to="/backoffice/vehicles/new">Ajouter un vehicule</Link>
+          <Link to="/backoffice/vehicles/new">Ajouter un véhicule</Link>
         </Button>
       </div>
 
@@ -143,7 +143,7 @@ export function BackofficeVehiclesPage() {
               className="h-10 w-full rounded-md border px-3"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Marque, modele, couleur..."
+              placeholder="Marque, modèle, couleur..."
             />
           </label>
           <label className="space-y-1 text-sm">
@@ -165,7 +165,7 @@ export function BackofficeVehiclesPage() {
             </select>
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-muted-foreground">Energie</span>
+            <span className="text-muted-foreground">Énergie</span>
             <select className="h-10 w-full rounded-md border px-3" value={energyFilter} onChange={(event) => setEnergyFilter(event.target.value as VehicleEnergy | 'ALL')}>
               <option value="ALL">Toutes</option>
               <option value="GASOLINE">GASOLINE</option>
@@ -188,7 +188,7 @@ export function BackofficeVehiclesPage() {
       )}
 
       {!isLoading && !error && vehicles.length === 0 && (
-        <div className="rounded-lg border p-4 text-sm text-muted-foreground">Aucun vehicule ne correspond aux filtres.</div>
+        <div className="rounded-lg border p-4 text-sm text-muted-foreground">Aucun véhicule ne correspond aux filtres.</div>
       )}
 
       {!isLoading && !error && vehicles.length > 0 && (
@@ -196,9 +196,9 @@ export function BackofficeVehiclesPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="p-3">Vehicule</th>
+                <th className="p-3">Véhicule</th>
                 <th className="p-3">Tarif</th>
-                <th className="p-3">Etat</th>
+                <th className="p-3">État</th>
                 <th className="p-3">Actions</th>
               </tr>
             </thead>
@@ -217,7 +217,7 @@ export function BackofficeVehiclesPage() {
                       <Badge variant="outline" className={getCommercialTypeBadgeClassName(vehicle.commercialType)}>
                         {getCommercialTypeLabel(vehicle.commercialType)}
                       </Badge>
-                      <Badge variant="secondary">{vehicle.imageUrl ? 'Media disponible' : 'Sans media'}</Badge>
+                      <Badge variant="secondary">{vehicle.imageUrl ? 'Média disponible' : 'Sans média'}</Badge>
                     </div>
                   </td>
                   <td className="p-3">{formatPrice(vehicle.price, vehicle.commercialType)}</td>
@@ -231,7 +231,7 @@ export function BackofficeVehiclesPage() {
                   <td className="p-3">
                     <div className="flex flex-wrap gap-2">
                       <Button asChild variant="outline" size="sm">
-                        <Link to={`/backoffice/vehicles/${vehicle.id}/preview`}>Apercu</Link>
+                        <Link to={`/backoffice/vehicles/${vehicle.id}/preview`}>Aperçu</Link>
                       </Button>
                       <Button asChild variant="outline" size="sm">
                         <Link to={`/backoffice/vehicles/${vehicle.id}/edit`}>Modifier</Link>
@@ -245,8 +245,8 @@ export function BackofficeVehiclesPage() {
                             ? vehicleApi.unpublishAdminVehicle(vehicle.id)
                             : vehicleApi.publishAdminVehicle(vehicle.id)),
                           vehicle.published && !vehicle.archived
-                            ? 'Masquer ce vehicule ?'
-                            : 'Rendre ce vehicule visible ?',
+                            ? 'Masquer ce véhicule ?'
+                            : 'Rendre ce véhicule visible ?',
                         )}
                       >
                         {vehicle.published && !vehicle.archived ? 'Masquer' : 'Afficher'}
@@ -260,8 +260,8 @@ export function BackofficeVehiclesPage() {
                             ? vehicleApi.unarchiveAdminVehicle(vehicle.id)
                             : vehicleApi.archiveAdminVehicle(vehicle.id)),
                           vehicle.archived
-                            ? 'Restaurer ce vehicule ?'
-                            : 'Archiver ce vehicule ?',
+                            ? 'Restaurer ce véhicule ?'
+                            : 'Archiver ce véhicule ?',
                         )}
                       >
                         {vehicle.archived ? 'Restaurer' : 'Archiver'}
@@ -272,7 +272,7 @@ export function BackofficeVehiclesPage() {
                         disabled={isActionLoading}
                         onClick={() => void handleAction(
                           () => vehicleApi.deleteAdminVehicle(vehicle.id),
-                          'Supprimer ce vehicule ? Cette action le masque du public et l archive.',
+                          'Supprimer ce véhicule ? Cette action le masque du public et l’archive.',
                         )}
                       >
                         Supprimer

@@ -76,7 +76,7 @@ export function RegisterPage() {
     <div className="mx-auto max-w-md space-y-4 rounded-lg border p-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Inscription</h1>
-        <p className="text-sm text-muted-foreground">Creation de compte client avec controle des donnees a l'envoi.</p>
+        <p className="text-sm text-muted-foreground">Création de compte client avec contrôle des données à l'envoi.</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
@@ -187,7 +187,7 @@ export function RegisterPage() {
         {error && <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
         <Button className="w-full" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creation...' : 'Creer un compte'}
+          {isSubmitting ? 'Création...' : 'Créer un compte'}
         </Button>
       </form>
 
