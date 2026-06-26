@@ -11,6 +11,7 @@ type AuthContextValue = {
   isReady: boolean
   isAuthenticated: boolean
   isClient: boolean
+  isAdmin: boolean
   isStaff: boolean
   login: (payload: LoginRequest) => Promise<AuthSession>
   register: (payload: RegisterRequest) => Promise<AuthSession>
@@ -200,6 +201,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const currentRole = (profile?.role ?? session?.user.role) as AuthRole | undefined
   const isAuthenticated = Boolean(session)
   const isClient = currentRole === 'CLIENT'
+  const isAdmin = currentRole === 'ADMIN'
   const isStaff = currentRole === 'MANAGER' || currentRole === 'ADMIN'
 
   const value = useMemo<AuthContextValue>(
@@ -210,6 +212,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isReady,
       isAuthenticated,
       isClient,
+      isAdmin,
       isStaff,
       login,
       register,
@@ -221,7 +224,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isFavorite,
       toggleFavorite,
     }),
-    [addFavorite, favorites, isAuthenticated, isClient, isReady, isStaff, isFavorite, login, logout, profile, refreshFavorites, refreshProfile, register, removeFavorite, session, toggleFavorite],
+    [addFavorite, favorites, isAdmin, isAuthenticated, isClient, isReady, isStaff, isFavorite, login, logout, profile, refreshFavorites, refreshProfile, register, removeFavorite, session, toggleFavorite],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

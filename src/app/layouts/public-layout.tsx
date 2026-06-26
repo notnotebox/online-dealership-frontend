@@ -4,7 +4,7 @@ import { SiteHeader } from '@/components/layout/site-header'
 import { useAuth } from '@/lib/auth/auth-context'
 
 export function PublicLayout() {
-  const { isAuthenticated, profile, logout } = useAuth()
+  const { isAuthenticated, isStaff, profile, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const contextAction = matchPath('/vehicles/:vehicleId', location.pathname)
@@ -19,7 +19,7 @@ export function PublicLayout() {
         authenticated={isAuthenticated}
         userName={profile?.firstName}
         primaryAction={isAuthenticated
-          ? { to: '/app/dashboard', label: 'Mon espace', variant: 'ghost' }
+          ? { to: isStaff ? '/backoffice/dashboard' : '/app/dashboard', label: isStaff ? 'Backoffice' : 'Mon espace', variant: 'ghost' }
           : { to: '/login', label: 'Connexion', variant: 'ghost' }}
         secondaryAction={isAuthenticated
           ? { label: 'Deconnexion', variant: 'outline', onClick: () => { logout(); navigate('/'); } }
