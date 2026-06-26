@@ -171,7 +171,9 @@ export function FileTrackingPage() {
   const canConfirmCustomerStep = application?.status === 'WAITING_CUSTOMER'
 
   const requiredDocuments = useMemo(() => {
-    return application ? getRequiredDocuments(application.acquisitionType) : []
+    return application
+      ? getRequiredDocuments(application.acquisitionType, { contributionAmount: application.contributionAmount })
+      : []
   }, [application])
 
   const completedDocumentsCount = useMemo(() => {

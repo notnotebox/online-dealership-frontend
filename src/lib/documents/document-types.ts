@@ -45,18 +45,19 @@ export type RequiredDocument = {
   label: string
   requiredFor: ApplicationAcquisitionType[]
   note?: string
+  requiresContribution?: boolean
 }
 
 export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   { documentType: 'IDENTITY_CARD', label: "Carte d'identite ou passeport", requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
-  { documentType: 'DRIVER_LICENSE', label: 'Permis de conduire', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
+  { documentType: 'DRIVER_LICENSE', label: 'Permis de conduire', requiredFor: ['CREDIT', 'LOA', 'LLD'] },
   { documentType: 'PROOF_OF_ADDRESS', label: 'Justificatif de domicile', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'], note: 'Date de moins de 3 mois' },
-  { documentType: 'BANK_STATEMENT', label: 'RIB ou releve bancaire', requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'] },
+  { documentType: 'BANK_STATEMENT', label: 'RIB ou releve bancaire', requiredFor: ['CREDIT', 'LOA', 'LLD'] },
   { documentType: 'SALARY_SLIP', label: 'Bulletins de salaire', requiredFor: ['CREDIT', 'LOA', 'LLD'] },
   { documentType: 'TAX_NOTICE', label: "Dernier avis d'imposition", requiredFor: ['CREDIT', 'LOA', 'LLD'] },
   { documentType: 'EMPLOYMENT_CONTRACT', label: 'Contrat de travail', requiredFor: ['CREDIT', 'LOA', 'LLD'] },
   { documentType: 'EMPLOYER_CERTIFICATE', label: 'Attestation employeur', requiredFor: ['LOA', 'LLD'] },
-  { documentType: 'DOWN_PAYMENT_PROOF', label: "Justificatif d'apport", requiredFor: ['LOA', 'LLD'], note: 'Seulement si un apport est prevu' },
+  { documentType: 'DOWN_PAYMENT_PROOF', label: "Justificatif d'apport", requiredFor: ['LOA', 'LLD'], note: 'Seulement si un apport est prevu', requiresContribution: true },
   { documentType: 'SIGNED_LOAN_OFFER', label: 'Offre de pret signee', requiredFor: ['CREDIT'] },
   { documentType: 'INSURANCE_CERTIFICATE', label: "Attestation d'assurance", requiredFor: ['CASH', 'CREDIT', 'LOA', 'LLD'], note: 'Demandee avant livraison' },
   { documentType: 'PAYMENT_PROOF', label: 'Preuve de paiement', requiredFor: ['CASH'] },
@@ -66,8 +67,24 @@ export const PROFILE_DOCUMENTS = REQUIRED_DOCUMENTS.filter((document, index, sou
   return source.findIndex((candidate) => candidate.documentType === document.documentType) === index
 })
 
-export function getRequiredDocuments(acquisitionType: ApplicationAcquisitionType) {
-  return REQUIRED_DOCUMENTS.filter((document) => document.requiredFor.includes(acquisitionType))
+export function getRequiredDocuments(
+  acquisitionType: ApplicationAcquisitionType,
+  options?: { contributionAmount?: number | string | null },
+) {
+  const contributionValue = Number(options?.contributionAmount ?? 0)
+  const hasContribution = Number.isFinite(contributionValue) && contributionValue > 0
+
+  return REQUIRED_DOCUMENTS.filter((document) => {
+    if (!document.requiredFor.includes(acquisitionType)) {
+      return false
+    }
+
+    if (document.requiresContribution && !hasContribution) {
+      return false
+    }
+
+    return true
+  })
 }
 
 export function findLatestDocument(documents: DocumentRecord[], documentType: DocumentType) {

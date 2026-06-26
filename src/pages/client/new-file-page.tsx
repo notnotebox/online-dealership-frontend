@@ -373,7 +373,10 @@ export function NewFilePage() {
 
   const profileCompletionPercent = useMemo(() => getProfileCompletionPercent(profileDraft), [profileDraft])
   const missingProfileFieldKeys = useMemo(() => new Set(getMissingProfileFieldKeys(profileDraft)), [profileDraft])
-  const requiredDocuments = useMemo(() => getRequiredDocuments(form.acquisitionType), [form.acquisitionType])
+  const requiredDocuments = useMemo(
+    () => getRequiredDocuments(form.acquisitionType, { contributionAmount: form.contributionAmount }),
+    [form.acquisitionType, form.contributionAmount],
+  )
   const showLeaseFields = form.acquisitionType === 'LOA' || form.acquisitionType === 'LLD'
   const pageTitle = fileId ? 'Completer le dossier' : 'Preparer la demande vehicule'
   const documentCompletionPercent = useMemo(() => getDocumentCompletionPercent(documents, requiredDocuments), [documents, requiredDocuments])
@@ -407,7 +410,9 @@ export function NewFilePage() {
       buildApplicationFixtureText(fixture, targetVehicle),
     )
 
-    const fixtureRequiredDocuments = getRequiredDocuments(fixture.acquisitionType)
+    const fixtureRequiredDocuments = getRequiredDocuments(fixture.acquisitionType, {
+      contributionAmount: fixture.contributionAmount,
+    })
 
     try {
       setIsUploadingDocument(true)
