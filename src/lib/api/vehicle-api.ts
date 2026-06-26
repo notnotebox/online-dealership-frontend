@@ -1,6 +1,8 @@
 import { apiRequest } from './client'
 
 export type VehicleEnergy = 'GASOLINE' | 'DIESEL' | 'HYBRID' | 'ELECTRIC' | 'LPG' | 'OTHER'
+export type VehicleCommercialType = 'PURCHASE' | 'LEASE'
+export type VehicleCatalogSort = 'UPDATED_DESC' | 'PRICE_ASC' | 'PRICE_DESC' | 'MILEAGE_ASC' | 'MILEAGE_DESC'
 
 export type VehicleResponse = {
   id: string
@@ -12,6 +14,7 @@ export type VehicleResponse = {
   seatCount: number
   doorCount: number
   color: string
+  commercialType: VehicleCommercialType
   published: boolean
   updatedAt: string
   imageUrl: string | null
@@ -27,6 +30,7 @@ export type AdminVehicleResponse = {
   seatCount: number
   doorCount: number
   color: string
+  commercialType: VehicleCommercialType
   published: boolean
   archived: boolean
   updatedAt: string
@@ -51,19 +55,27 @@ export type CreateVehiclePayload = {
   seatCount: number
   doorCount: number
   color: string
+  commercialType: VehicleCommercialType
   published: boolean
 }
 
 type PublicVehicleFilters = {
-  brand?: string
+  query?: string
+  commercialType?: VehicleCommercialType
   energy?: VehicleEnergy
   maxPrice?: number
+  maxMileage?: number
+  seatCount?: number
+  doorCount?: number
+  color?: string
+  sort?: VehicleCatalogSort
 }
 
 type AdminVehicleFilters = {
   query?: string
   status?: 'ALL' | 'VISIBLE' | 'HIDDEN' | 'ARCHIVED'
   energy?: VehicleEnergy
+  commercialType?: VehicleCommercialType
 }
 
 function buildQueryString(filters?: PublicVehicleFilters) {
@@ -72,14 +84,32 @@ function buildQueryString(filters?: PublicVehicleFilters) {
   }
 
   const params = new URLSearchParams()
-  if (filters.brand) {
-    params.set('brand', filters.brand)
+  if (filters.query) {
+    params.set('query', filters.query)
+  }
+  if (filters.commercialType) {
+    params.set('commercialType', filters.commercialType)
   }
   if (filters.energy) {
     params.set('energy', filters.energy)
   }
   if (filters.maxPrice != null && Number.isFinite(filters.maxPrice)) {
     params.set('maxPrice', String(filters.maxPrice))
+  }
+  if (filters.maxMileage != null && Number.isFinite(filters.maxMileage)) {
+    params.set('maxMileage', String(filters.maxMileage))
+  }
+  if (filters.seatCount != null && Number.isFinite(filters.seatCount)) {
+    params.set('seatCount', String(filters.seatCount))
+  }
+  if (filters.doorCount != null && Number.isFinite(filters.doorCount)) {
+    params.set('doorCount', String(filters.doorCount))
+  }
+  if (filters.color) {
+    params.set('color', filters.color)
+  }
+  if (filters.sort) {
+    params.set('sort', filters.sort)
   }
 
   const query = params.toString()
@@ -100,6 +130,9 @@ function buildAdminQueryString(filters?: AdminVehicleFilters) {
   }
   if (filters.energy) {
     params.set('energy', filters.energy)
+  }
+  if (filters.commercialType) {
+    params.set('commercialType', filters.commercialType)
   }
 
   const query = params.toString()

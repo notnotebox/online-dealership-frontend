@@ -9,6 +9,7 @@ import { useVehicleGalleryItems } from '@/hooks/use-vehicle-gallery-items'
 import {
   vehicleApi,
   type AdminVehicleResponse,
+  type VehicleCommercialType,
   type VehicleEnergy,
   type VehicleMediaResponse,
 } from '@/lib/api/vehicle-api'
@@ -20,6 +21,11 @@ const ENERGY_OPTIONS: { value: VehicleEnergy; label: string }[] = [
   { value: 'ELECTRIC', label: 'Electrique' },
   { value: 'LPG', label: 'GPL' },
   { value: 'OTHER', label: 'Autre' },
+]
+
+const COMMERCIAL_TYPE_OPTIONS: { value: VehicleCommercialType; label: string }[] = [
+  { value: 'PURCHASE', label: 'Achat' },
+  { value: 'LEASE', label: 'Location' },
 ]
 
 const ACCEPTED_IMAGE_LABEL = 'PNG, JPG ou WEBP'
@@ -34,6 +40,7 @@ type FormState = {
   doorCount: string
   color: string
   energy: VehicleEnergy
+  commercialType: VehicleCommercialType
   published: boolean
 }
 
@@ -46,6 +53,7 @@ const DEFAULT_STATE: FormState = {
   doorCount: '5',
   color: 'Noir',
   energy: 'GASOLINE',
+  commercialType: 'PURCHASE',
   published: true,
 }
 
@@ -144,6 +152,7 @@ export function BackofficeVehicleFormPage() {
           doorCount: String(vehicle.doorCount),
           color: vehicle.color,
           energy: vehicle.energy,
+          commercialType: vehicle.commercialType,
           published: vehicle.published,
         })
         setError(null)
@@ -255,6 +264,7 @@ export function BackofficeVehicleFormPage() {
         seatCount: Math.trunc(seatCount),
         doorCount: Math.trunc(doorCount),
         color: form.color.trim(),
+        commercialType: form.commercialType,
         published: form.published,
       }
 
@@ -426,6 +436,26 @@ export function BackofficeVehicleFormPage() {
                 }
                 placeholder="Noir, blanc, gris..."
               />
+            </label>
+
+            <label className="space-y-1 text-sm md:col-span-2">
+              <span className="text-muted-foreground">Categorie catalogue</span>
+              <select
+                className="h-10 w-full rounded-md border px-3"
+                value={form.commercialType}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    commercialType: event.target.value as VehicleCommercialType,
+                  }))
+                }
+              >
+                {COMMERCIAL_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="space-y-1 text-sm md:col-span-2">

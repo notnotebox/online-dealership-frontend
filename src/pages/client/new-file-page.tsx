@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { applicationApi } from '@/lib/api/application-api'
 import { authApi } from '@/lib/api/auth-api'
 import { documentApi } from '@/lib/api/document-api'
-import { vehicleApi, type VehicleResponse } from '@/lib/api/vehicle-api'
+import { vehicleApi, type VehicleCommercialType, type VehicleResponse } from '@/lib/api/vehicle-api'
 import { useAuth } from '@/lib/auth/auth-context'
 import type { ApplicationAcquisitionType, CreateVehicleApplicationRequest } from '@/lib/application/application-types'
 import type { DocumentRecord, DocumentType } from '@/lib/documents/document-types'
@@ -27,6 +27,14 @@ const ACQUISITIONS: Array<{ value: ApplicationAcquisitionType; label: string }> 
   { value: 'LOA', label: 'LOA' },
   { value: 'LLD', label: 'LLD' },
 ]
+
+function allowedAcquisitionTypes(commercialType?: VehicleCommercialType | null) {
+  if (commercialType === 'LEASE') {
+    return ACQUISITIONS.filter((item) => item.value === 'LOA' || item.value === 'LLD')
+  }
+
+  return ACQUISITIONS.filter((item) => item.value === 'CASH' || item.value === 'CREDIT')
+}
 
 type ApplicationFormState = {
   vehicleId: string
@@ -347,11 +355,27 @@ export function NewFilePage() {
       ?? null
   }, [form.vehicleId, vehicleId, vehicles])
 
+  const allowedAcquisitions = useMemo(
+    () => allowedAcquisitionTypes(selectedVehicle?.commercialType),
+    [selectedVehicle?.commercialType],
+  )
+
   useEffect(() => {
     if (!form.vehicleId && selectedVehicle) {
       setForm((current) => ({ ...current, vehicleId: selectedVehicle.id }))
     }
   }, [form.vehicleId, selectedVehicle])
+
+  useEffect(() => {
+    if (!selectedVehicle) {
+      return
+    }
+
+    const isCurrentAllowed = allowedAcquisitions.some((item) => item.value === form.acquisitionType)
+    if (!isCurrentAllowed && allowedAcquisitions.length > 0) {
+      setForm((current) => ({ ...current, acquisitionType: allowedAcquisitions[0].value }))
+    }
+  }, [allowedAcquisitions, form.acquisitionType, selectedVehicle])
 
   const profileDraft = useMemo(() => ({
     firstName: form.firstName,
@@ -749,7 +773,7 @@ export function NewFilePage() {
               <label className="space-y-1 text-sm">
                 <span className="font-medium text-muted-foreground">Mode d'acquisition</span>
                 <select className="h-10 w-full rounded-md border px-3" value={form.acquisitionType} onChange={(event) => updateField('acquisitionType', event.target.value as ApplicationAcquisitionType)}>
-                  {ACQUISITIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                  {allowedAcquisitions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
               </label>
 

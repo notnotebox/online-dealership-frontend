@@ -242,6 +242,7 @@ export type VehicleFixture = {
   description: string
   equipments: string[]
   worksDone: string[]
+  commercialType: 'PURCHASE' | 'LEASE'
   published: boolean
 }
 
@@ -264,6 +265,7 @@ export function createVehicleFixture(): VehicleFixture {
     description: template.description,
     equipments: [...template.equipments],
     worksDone: [...template.worksDone],
+    commercialType: Math.random() > 0.5 ? 'PURCHASE' : 'LEASE',
     published: true,
   }
 }
@@ -281,6 +283,7 @@ export function buildVehicleFixtureText(data: VehicleFixture) {
     `doors=${data.doors}`,
     `price=${data.price}`,
     `monthlyPrice=${data.monthlyPrice}`,
+    `commercialType=${data.commercialType}`,
     `published=${data.published}`,
     `imageUrl=${data.imageUrl}`,
     `description=${data.description}`,

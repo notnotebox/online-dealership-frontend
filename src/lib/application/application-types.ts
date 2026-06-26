@@ -1,4 +1,5 @@
 export type ApplicationAcquisitionType = 'CASH' | 'CREDIT' | 'LOA' | 'LLD'
+export type VehicleCommercialType = 'PURCHASE' | 'LEASE'
 
 export type ApplicationStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'COMPLEMENT_REQUESTED' | 'WAITING_CUSTOMER' | 'APPROVED' | 'REJECTED'
 
@@ -22,6 +23,7 @@ export type VehicleApplication = {
   vehicleTitle: string
   vehicleBrand: string
   vehiclePrice: string
+  vehicleCommercialType: VehicleCommercialType
   vehicleEnergy: string
   vehicleMileage: number
   acquisitionType: ApplicationAcquisitionType
