@@ -7,9 +7,11 @@ export function PublicLayout() {
   const { isAuthenticated, isStaff, profile, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const contextAction = matchPath('/vehicles/:vehicleId', location.pathname)
-    ? { to: '/vehicles', label: 'Retour catalogue', variant: 'outline' as const }
-    : undefined
+  const contextAction = isAuthenticated && isStaff
+    ? { to: '/backoffice/dashboard', label: 'Backoffice', variant: 'outline' as const }
+    : matchPath('/vehicles/:vehicleId', location.pathname)
+      ? { to: '/vehicles', label: 'Retour catalogue', variant: 'outline' as const }
+      : undefined
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -19,7 +21,7 @@ export function PublicLayout() {
         authenticated={isAuthenticated}
         userName={profile?.firstName}
         primaryAction={isAuthenticated
-          ? { to: isStaff ? '/backoffice/dashboard' : '/app/dashboard', label: isStaff ? 'Backoffice' : 'Mon espace', variant: 'ghost' }
+          ? { to: '/app/dashboard', label: 'Mon espace', variant: 'ghost' }
           : { to: '/login', label: 'Connexion', variant: 'ghost' }}
         secondaryAction={isAuthenticated
           ? { label: 'Deconnexion', variant: 'outline', onClick: () => { logout(); navigate('/'); } }

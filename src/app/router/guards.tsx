@@ -13,21 +13,13 @@ export function ProtectedRoute() {
 }
 
 export function ClientRoute() {
-  const { isReady, isAuthenticated, isClient, isStaff } = useAuth()
+  const { isReady, isAuthenticated } = useAuth()
 
   if (!isReady) {
     return null
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (!isClient && isStaff) {
-    return <Navigate to="/backoffice/dashboard" replace />
-  }
-
-  return isClient ? <Outlet /> : <Navigate to="/login" replace />
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />
 }
 
 export function StaffRoute() {
