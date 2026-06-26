@@ -121,6 +121,11 @@ export function BackofficeVehicleFormPage() {
     () => [...existingGalleryItems, ...localGalleryItems],
     [existingGalleryItems, localGalleryItems],
   )
+  const isLeaseVehicle = form.commercialType === 'LEASE'
+  const isPurchaseVehicle = form.commercialType === 'PURCHASE'
+  const priceLabel = isLeaseVehicle ? 'Loyer mensuel' : 'Prix de vente'
+  const pricePlaceholder = isLeaseVehicle ? '399' : '26990'
+  const priceStep = isLeaseVehicle ? '10' : '100'
 
   useEffect(() => {
     let cancelled = false
@@ -355,12 +360,12 @@ export function BackofficeVehicleFormPage() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-muted-foreground">Prix</span>
+              <span className="text-muted-foreground">{priceLabel}</span>
               <input
                 className="h-10 w-full rounded-md border px-3"
                 type="number"
                 min="0"
-                step="100"
+                step={priceStep}
                 value={form.price}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -368,8 +373,15 @@ export function BackofficeVehicleFormPage() {
                     price: event.target.value,
                   }))
                 }
-                placeholder="26990"
+                placeholder={pricePlaceholder}
               />
+              <p className="text-xs text-muted-foreground">
+                {isLeaseVehicle
+                  ? 'Montant mensuel affiche dans le catalogue et les fiches client.'
+                  : isPurchaseVehicle
+                    ? 'Montant total affiche pour un achat.'
+                    : 'Definissez la categorie pour adapter automatiquement le champ tarifaire.'}
+              </p>
             </label>
 
             <label className="space-y-1 text-sm">
@@ -499,6 +511,14 @@ export function BackofficeVehicleFormPage() {
               <p className="text-sm text-amber-700 md:col-span-2">
                 Un vehicule neutre reste masque tant que sa destination achat ou location n est pas definie.
               </p>
+            ) : null}
+            {isLeaseVehicle ? (
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 md:col-span-2">
+                <p className="font-medium">Mode location</p>
+                <p className="mt-1 text-sky-800">
+                  Ce vehicule sera presente avec un loyer mensuel. Le catalogue et les dossiers afficheront automatiquement le tarif au mois.
+                </p>
+              </div>
             ) : null}
           </CardContent>
         </Card>

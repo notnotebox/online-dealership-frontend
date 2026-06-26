@@ -1,23 +1,26 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Clock3, History } from 'lucide-react'
 import { VehicleGallery } from '@/components/shared/vehicle-gallery'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useVehicleGalleryItems } from '@/hooks/use-vehicle-gallery-items'
-import { vehicleApi, type AdminVehicleResponse, type VehicleMediaResponse } from '@/lib/api/vehicle-api'
+import { vehicleApi, type AdminVehicleResponse, type VehicleHistoryResponse, type VehicleMediaResponse } from '@/lib/api/vehicle-api'
 
-function formatPrice(price: AdminVehicleResponse['price']) {
+function formatPrice(price: AdminVehicleResponse['price'], commercialType: AdminVehicleResponse['commercialType']) {
   const numericPrice = Number(price)
   if (Number.isNaN(numericPrice)) {
-    return `${price} EUR`
+    return commercialType === 'LEASE' ? `${price} EUR/mois` : `${price} EUR`
   }
 
-  return new Intl.NumberFormat('fr-FR', {
+  const formatted = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(numericPrice)
+
+  return commercialType === 'LEASE' ? `${formatted}/mois` : formatted
 }
 
 function getVisibilityLabel(vehicle: AdminVehicleResponse) {
@@ -33,6 +36,7 @@ export function BackofficeVehiclePreviewPage() {
   const { vehicleId } = useParams()
   const [vehicle, setVehicle] = useState<AdminVehicleResponse | null>(null)
   const [media, setMedia] = useState<VehicleMediaResponse[]>([])
+  const [history, setHistory] = useState<VehicleHistoryResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { items: galleryItems, error: galleryError } = useVehicleGalleryItems(media, {
@@ -56,6 +60,7 @@ export function BackofficeVehiclePreviewPage() {
           vehicleApi.getAdminVehicle(vehicleId),
           vehicleApi.listAdminVehicleMedia(vehicleId),
         ])
+        const historyResponse = await vehicleApi.listAdminVehicleHistory(vehicleId)
 
         if (cancelled) {
           return
@@ -63,6 +68,7 @@ export function BackofficeVehiclePreviewPage() {
 
         setVehicle(vehicleResponse)
         setMedia(mediaResponse)
+        setHistory(historyResponse)
         setError(null)
       } catch (cause) {
         if (!cancelled) {
@@ -144,7 +150,7 @@ export function BackofficeVehiclePreviewPage() {
                   {getVisibilityLabel(vehicle)}
                 </Badge>
               </div>
-              <p className="text-lg font-semibold">{formatPrice(vehicle.price)}</p>
+              <p className="text-lg font-semibold">{formatPrice(vehicle.price, vehicle.commercialType)}</p>
               <p className="text-sm text-muted-foreground">{vehicle.energy} - {vehicle.mileage.toLocaleString('fr-FR')} km</p>
               <p className="text-sm text-muted-foreground">Places: {vehicle.seatCount} | Portes: {vehicle.doorCount}</p>
               <p className="text-sm text-muted-foreground">Couleur: {vehicle.color}</p>
@@ -171,8 +177,68 @@ export function BackofficeVehiclePreviewPage() {
               )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Historique du vehicule</h2>
+              </div>
+              {history.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucune action enregistree pour le moment.</p>
+              ) : (
+                <div className="space-y-3">
+                  {history.map((entry) => (
+                    <div key={entry.id} className="rounded-lg border p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="font-medium">{entry.summary}</p>
+                          {entry.details ? (
+                            <p className="text-sm text-muted-foreground">{entry.details}</p>
+                          ) : null}
+                        </div>
+                        <Badge variant="outline">{formatActionLabel(entry.action)}</Badge>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        <span>{formatDateTime(entry.createdAt)}</span>
+                        {entry.createdByUserId ? <span>· {entry.createdByUserId}</span> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   )
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+}
+
+function formatActionLabel(action: VehicleHistoryResponse['action']) {
+  switch (action) {
+    case 'CREATED':
+      return 'Creation'
+    case 'UPDATED':
+      return 'Modification'
+    case 'PUBLISHED':
+      return 'Publication'
+    case 'UNPUBLISHED':
+      return 'Masquage'
+    case 'ARCHIVED':
+      return 'Archivage'
+    case 'RESTORED':
+      return 'Restauration'
+    case 'DELETED':
+      return 'Retrait'
+    case 'MEDIA_ADDED':
+      return 'Media'
+    default:
+      return action
+  }
 }

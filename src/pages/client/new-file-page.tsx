@@ -179,17 +179,19 @@ function toOptionalNumber(value: string) {
   return Number.isFinite(next) ? next : undefined
 }
 
-function formatPrice(price: string) {
+function formatPrice(price: string, commercialType?: VehicleCommercialType | null) {
   const value = Number(price)
   if (Number.isNaN(value)) {
     return price
   }
 
-  return new Intl.NumberFormat('fr-FR', {
+  const formatted = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(value)
+
+  return commercialType === 'LEASE' ? `${formatted}/mois` : formatted
 }
 
 function buildPayload(form: ApplicationFormState, showLeaseFields: boolean): CreateVehicleApplicationRequest {
@@ -575,7 +577,7 @@ export function NewFilePage() {
                 </h2>
                 {selectedVehicle ? (
                   <p className="text-sm text-muted-foreground">
-                    {formatPrice(selectedVehicle.price)} | {selectedVehicle.mileage.toLocaleString('fr-FR')} km | {selectedVehicle.energy}
+                    {formatPrice(selectedVehicle.price, selectedVehicle.commercialType)} | {selectedVehicle.mileage.toLocaleString('fr-FR')} km | {selectedVehicle.energy}
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">Choisissez un vehicule pour poursuivre.</p>
@@ -608,7 +610,7 @@ export function NewFilePage() {
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border bg-background px-3 py-1 text-muted-foreground">{selectedVehicle.energy}</span>
                 <span className="rounded-full border bg-background px-3 py-1 text-muted-foreground">{selectedVehicle.mileage.toLocaleString('fr-FR')} km</span>
-                <span className="rounded-full border bg-background px-3 py-1 text-muted-foreground">{formatPrice(selectedVehicle.price)}</span>
+                <span className="rounded-full border bg-background px-3 py-1 text-muted-foreground">{formatPrice(selectedVehicle.price, selectedVehicle.commercialType)}</span>
               </div>
             ) : null}
           </div>
@@ -768,7 +770,7 @@ export function NewFilePage() {
                   <option value="">Choisir un vehicule</option>
                   {vehicles.map((vehicle) => (
                     <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.brand} {vehicle.title} - {formatPrice(vehicle.price)}
+                      {vehicle.brand} {vehicle.title} - {formatPrice(vehicle.price, vehicle.commercialType)}
                     </option>
                   ))}
                 </select>
@@ -865,7 +867,7 @@ export function NewFilePage() {
 
                 <div className="space-y-2 text-sm">
                   <p className="text-lg font-semibold">{selectedVehicle.brand} {selectedVehicle.title}</p>
-                  <p className="text-muted-foreground">{formatPrice(selectedVehicle.price)} | {selectedVehicle.mileage.toLocaleString('fr-FR')} km | {selectedVehicle.energy}</p>
+                  <p className="text-muted-foreground">{formatPrice(selectedVehicle.price, selectedVehicle.commercialType)} | {selectedVehicle.mileage.toLocaleString('fr-FR')} km | {selectedVehicle.energy}</p>
                   <p className="text-muted-foreground">{selectedVehicle.seatCount} places | {selectedVehicle.doorCount} portes | {selectedVehicle.color}</p>
                   <div className="flex flex-wrap gap-2 pt-2">
                     <Button type="button" onClick={() => void handleSaveDraft()} disabled={isSavingDraft || isLoadingVehicles || isLoadingApplication || !form.vehicleId}>

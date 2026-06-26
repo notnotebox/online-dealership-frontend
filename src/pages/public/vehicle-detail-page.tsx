@@ -11,17 +11,19 @@ import { useVehicleGalleryItems } from '@/hooks/use-vehicle-gallery-items'
 import { useAuth } from '@/lib/auth/auth-context'
 import { vehicleApi, type VehicleEnergy, type VehicleMediaResponse, type VehicleResponse } from '@/lib/api/vehicle-api'
 
-function formatPrice(price: VehicleResponse['price']) {
+function formatPrice(price: VehicleResponse['price'], commercialType: VehicleResponse['commercialType']) {
   const numericPrice = Number(price)
   if (Number.isNaN(numericPrice)) {
-    return `${price} EUR`
+    return commercialType === 'LEASE' ? `${price} EUR/mois` : `${price} EUR`
   }
 
-  return new Intl.NumberFormat('fr-FR', {
+  const formatted = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(numericPrice)
+
+  return commercialType === 'LEASE' ? `${formatted}/mois` : formatted
 }
 
 function getEnergyLabel(energy: VehicleEnergy) {
@@ -49,6 +51,16 @@ function getCommercialTypeLabel(type: VehicleResponse['commercialType']) {
     return 'Achat'
   }
   return 'A definir'
+}
+
+function getCommercialTypeBadgeClassName(type: VehicleResponse['commercialType']) {
+  if (type === 'LEASE') {
+    return 'border-sky-200 bg-sky-100 text-sky-900'
+  }
+  if (type === 'PURCHASE') {
+    return 'border-emerald-200 bg-emerald-100 text-emerald-900'
+  }
+  return 'border-slate-200 bg-slate-100 text-slate-800'
 }
 
 export function VehicleDetailPage() {
@@ -162,7 +174,9 @@ export function VehicleDetailPage() {
                 <CarFront className="h-3.5 w-3.5" />
                 Catalogue
               </Badge>
-              <Badge variant="outline">{getCommercialTypeLabel(vehicle.commercialType)}</Badge>
+              <Badge variant="outline" className={getCommercialTypeBadgeClassName(vehicle.commercialType)}>
+                {getCommercialTypeLabel(vehicle.commercialType)}
+              </Badge>
             </div>
             <FavoriteButton vehicleId={vehicle.id} />
           </div>
@@ -170,7 +184,7 @@ export function VehicleDetailPage() {
           <div className="mt-5 space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{vehicle.brand}</p>
             <h1 className="text-3xl font-semibold tracking-tight">{vehicle.title}</h1>
-            <p className="text-2xl font-semibold">{formatPrice(vehicle.price)}</p>
+            <p className="text-2xl font-semibold">{formatPrice(vehicle.price, vehicle.commercialType)}</p>
             <p className="max-w-xl text-sm leading-6 text-muted-foreground">
               Fiche vehicule claire et prete pour une demande d achat, de credit ou de location selon sa destination.
             </p>
@@ -184,7 +198,9 @@ export function VehicleDetailPage() {
                 <h2 className="text-base font-semibold">Details du vehicule</h2>
                 <p className="text-sm text-muted-foreground">Informations essentielles presentees de maniere lisible.</p>
               </div>
-              <Badge variant="outline">{getCommercialTypeLabel(vehicle.commercialType)}</Badge>
+              <Badge variant="outline" className={getCommercialTypeBadgeClassName(vehicle.commercialType)}>
+                {getCommercialTypeLabel(vehicle.commercialType)}
+              </Badge>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">

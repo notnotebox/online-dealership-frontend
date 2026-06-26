@@ -123,7 +123,7 @@ export function VehiclesPage() {
     const badges: string[] = [getCommercialTypeLabel(commercialType)]
     splitQueryTokens(query).forEach((token) => badges.push(token))
     if (energy !== 'ALL') badges.push(getEnergyLabel(energy))
-    if (maxPrice) badges.push(`Budget ${maxPrice} EUR max`)
+    if (maxPrice) badges.push(commercialType === 'LEASE' ? `Budget ${maxPrice} EUR/mois max` : `Budget ${maxPrice} EUR max`)
     if (maxMileage) badges.push(`${maxMileage} km max`)
     if (seatCount) badges.push(`${seatCount}+ places`)
     if (doorCount) badges.push(`${doorCount}+ portes`)

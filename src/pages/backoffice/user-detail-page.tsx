@@ -100,6 +100,8 @@ export function BackofficeUserDetailPage() {
   const { profile } = detail
   const canPromoteToManager = profile.role === 'CLIENT'
   const canDemoteToClient = profile.role === 'MANAGER'
+  const isStaffProfile = profile.role === 'MANAGER' || profile.role === 'ADMIN'
+  const pageLabel = isStaffProfile ? 'Profil collaborateur' : 'Profil client'
 
   return (
     <div className="space-y-6">
@@ -107,6 +109,7 @@ export function BackofficeUserDetailPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">{profile.firstName} {profile.lastName}</h1>
           <p className="text-sm text-muted-foreground">{profile.email}</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{pageLabel}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/backoffice/users')}>Retour</Button>
@@ -114,7 +117,7 @@ export function BackofficeUserDetailPage() {
             <Button onClick={() => void switchRole('MANAGER')} disabled={isSavingRole}>Passer en manager</Button>
           ) : null}
           {canDemoteToClient ? (
-            <Button variant="outline" onClick={() => void switchRole('CLIENT')} disabled={isSavingRole}>Repasser client</Button>
+            <Button variant="outline" onClick={() => void switchRole('CLIENT')} disabled={isSavingRole}>Retirer les permissions manager</Button>
           ) : null}
         </div>
       </div>
@@ -144,55 +147,68 @@ export function BackofficeUserDetailPage() {
           </CardContent>
         </Card>
 
+        {!isStaffProfile ? (
+          <Card>
+            <CardContent className="space-y-4 p-4">
+              <div>
+                <h2 className="text-lg font-semibold">Dossiers du client</h2>
+                <p className="text-sm text-muted-foreground">Brouillons et demandes deja deposees.</p>
+              </div>
+
+              {detail.applications.length === 0 ? (
+                <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                  Aucun dossier pour ce client.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {detail.applications.map((application) => (
+                    <div key={application.id} className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">{application.vehicleBrand} {application.vehicleTitle}</p>
+                        <ApplicationStatusBadge status={application.status} />
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <span>Creation : {formatDate(application.createdAt)}</span>
+                        <span>Mise a jour : {formatDate(application.updatedAt)}</span>
+                      </div>
+                      <div className="mt-3">
+                        <Button asChild size="sm" variant="outline">
+                          <Link to={`/backoffice/files/${application.id}`}>Ouvrir le dossier</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <h2 className="text-lg font-semibold">Statut interne</h2>
+              <p className="text-sm text-muted-foreground">
+                Ce collaborateur fait partie de l equipe interne. Les droits peuvent etre ajustes ici par un administrateur.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {!isStaffProfile ? (
         <Card>
           <CardContent className="space-y-4 p-4">
             <div>
-              <h2 className="text-lg font-semibold">Dossiers du client</h2>
-              <p className="text-sm text-muted-foreground">Brouillons et demandes deja deposees.</p>
+              <h2 className="text-lg font-semibold">Documents du profil</h2>
+              <p className="text-sm text-muted-foreground">Documents personnels visibles uniquement par les administrateurs.</p>
             </div>
-
-            {detail.applications.length === 0 ? (
-              <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-                Aucun dossier pour ce client.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {detail.applications.map((application) => (
-                  <div key={application.id} className="rounded-lg border p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium">{application.vehicleBrand} {application.vehicleTitle}</p>
-                      <ApplicationStatusBadge status={application.status} />
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span>Creation : {formatDate(application.createdAt)}</span>
-                      <span>Mise a jour : {formatDate(application.updatedAt)}</span>
-                    </div>
-                    <div className="mt-3">
-                      <Button asChild size="sm" variant="outline">
-                        <Link to={`/backoffice/files/${application.id}`}>Ouvrir le dossier</Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <DocumentRecordList
+              documents={detail.documents}
+              emptyTitle="Aucun document disponible"
+              emptyDescription="Le client n'a encore depose aucune piece dans son profil."
+            />
           </CardContent>
         </Card>
-      </div>
-
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div>
-            <h2 className="text-lg font-semibold">Documents du profil</h2>
-            <p className="text-sm text-muted-foreground">Documents personnels visibles uniquement par les administrateurs.</p>
-          </div>
-          <DocumentRecordList
-            documents={detail.documents}
-            emptyTitle="Aucun document disponible"
-            emptyDescription="Le client n'a encore depose aucune piece dans son profil."
-          />
-        </CardContent>
-      </Card>
+      ) : null}
     </div>
   )
 }

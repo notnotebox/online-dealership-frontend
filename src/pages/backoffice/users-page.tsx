@@ -131,7 +131,7 @@ export function BackofficeUsersPage() {
             title="Staff"
             description="Liste des administrateurs et gestionnaires accessibles a toute l equipe interne."
             users={staffUsers}
-            showDetails={false}
+            showDetails={isAdmin}
           />
 
           {isAdmin ? (

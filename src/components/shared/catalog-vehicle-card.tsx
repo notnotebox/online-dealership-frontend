@@ -20,17 +20,22 @@ type CatalogVehicle = {
   imageUrl?: string | null
 }
 
-function formatPrice(price: CatalogVehicle['price']) {
+function formatPrice(price: CatalogVehicle['price'], commercialType?: CatalogVehicle['commercialType']) {
   const numericPrice = Number(price)
   if (Number.isNaN(numericPrice)) {
-    return price == null ? 'Sur demande' : `${price} EUR`
+    if (price == null) {
+      return 'Sur demande'
+    }
+    return commercialType === 'LEASE' ? `${price} EUR/mois` : `${price} EUR`
   }
 
-  return new Intl.NumberFormat('fr-FR', {
+  const formatted = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(numericPrice)
+
+  return commercialType === 'LEASE' ? `${formatted}/mois` : formatted
 }
 
 function commercialTypeLabel(type?: 'UNSPECIFIED' | 'PURCHASE' | 'LEASE') {
@@ -41,6 +46,16 @@ function commercialTypeLabel(type?: 'UNSPECIFIED' | 'PURCHASE' | 'LEASE') {
     return 'Achat'
   }
   return 'A definir'
+}
+
+function commercialTypeBadgeClassName(type?: 'UNSPECIFIED' | 'PURCHASE' | 'LEASE') {
+  if (type === 'LEASE') {
+    return 'border-sky-200 bg-sky-100 text-sky-900'
+  }
+  if (type === 'PURCHASE') {
+    return 'border-emerald-200 bg-emerald-100 text-emerald-900'
+  }
+  return 'border-slate-200 bg-slate-100 text-slate-800'
 }
 
 type CatalogVehicleCardProps = {
@@ -63,7 +78,9 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
         </div>
         <div className="absolute left-3 top-3 flex gap-2">
           <Badge variant="secondary">{vehicle.brand}</Badge>
-          <Badge variant="outline">{commercialTypeLabel(vehicle.commercialType)}</Badge>
+          <Badge variant="outline" className={commercialTypeBadgeClassName(vehicle.commercialType)}>
+            {commercialTypeLabel(vehicle.commercialType)}
+          </Badge>
         </div>
         <div className="absolute right-3 top-3">
           <FavoriteButton vehicleId={vehicle.id} />
@@ -82,7 +99,7 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
         </div>
 
         <div className="flex items-end justify-between gap-2">
-          <p className="text-lg font-semibold">{formatPrice(vehicle.price)}</p>
+          <p className="text-lg font-semibold">{formatPrice(vehicle.price, vehicle.commercialType)}</p>
           <p className="text-sm text-muted-foreground">
             {vehicle.mileage == null ? 'Kilometrage non renseigne' : `${vehicle.mileage.toLocaleString('fr-FR')} km`}
           </p>

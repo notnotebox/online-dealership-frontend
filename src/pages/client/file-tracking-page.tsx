@@ -27,17 +27,19 @@ function formatDate(value?: string | null) {
   }).format(date)
 }
 
-function formatPrice(value: string) {
+function formatPrice(value: string, commercialType?: VehicleApplication['vehicleCommercialType']) {
   const numericValue = Number(value)
   if (Number.isNaN(numericValue)) {
     return value
   }
 
-  return new Intl.NumberFormat('fr-FR', {
+  const formatted = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(numericValue)
+
+  return commercialType === 'LEASE' ? `${formatted}/mois` : formatted
 }
 
 function ProgressBar({ value }: { value: number }) {
@@ -270,7 +272,7 @@ export function FileTrackingPage() {
             </div>
 
             <div className="grid gap-2 text-sm md:grid-cols-2">
-              <p><span className="font-medium">Prix :</span> {formatPrice(application.vehiclePrice)}</p>
+              <p><span className="font-medium">{application.vehicleCommercialType === 'LEASE' ? 'Loyer :' : 'Prix :'}</span> {formatPrice(application.vehiclePrice, application.vehicleCommercialType)}</p>
               <p><span className="font-medium">Mode :</span> {application.acquisitionType}</p>
               <p><span className="font-medium">Kilometrage :</span> {application.vehicleMileage.toLocaleString('fr-FR')} km</p>
               <p><span className="font-medium">Profil :</span> {application.profileCompletionPercent}%</p>

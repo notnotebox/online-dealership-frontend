@@ -46,6 +46,26 @@ export type VehicleMediaResponse = {
   downloadUrl: string
 }
 
+export type VehicleHistoryAction =
+  | 'CREATED'
+  | 'UPDATED'
+  | 'PUBLISHED'
+  | 'UNPUBLISHED'
+  | 'ARCHIVED'
+  | 'RESTORED'
+  | 'DELETED'
+  | 'MEDIA_ADDED'
+
+export type VehicleHistoryResponse = {
+  id: string
+  vehicleId: string
+  action: VehicleHistoryAction
+  summary: string
+  details: string | null
+  createdByUserId: string | null
+  createdAt: string
+}
+
 export type CreateVehiclePayload = {
   title: string
   brand: string
@@ -201,6 +221,9 @@ export const vehicleApi = {
   },
   listAdminVehicleMedia(vehicleId: string) {
     return apiRequest<VehicleMediaResponse[]>(`/admin/vehicles/${vehicleId}/media`)
+  },
+  listAdminVehicleHistory(vehicleId: string) {
+    return apiRequest<VehicleHistoryResponse[]>(`/admin/vehicles/${vehicleId}/history`)
   },
   listPublicVehicleMedia(vehicleId: string) {
     return apiRequest<VehicleMediaResponse[]>(`/catalog/vehicles/${vehicleId}/media`)

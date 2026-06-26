@@ -15,17 +15,19 @@ function getVehicleStatusLabel(vehicle: AdminVehicleResponse) {
   return vehicle.published ? 'Visible' : 'Masqué'
 }
 
-function formatPrice(price: AdminVehicleResponse['price']) {
+function formatPrice(price: AdminVehicleResponse['price'], commercialType: VehicleCommercialType) {
   const numericPrice = Number(price)
   if (Number.isNaN(numericPrice)) {
-    return `${price} EUR`
+    return commercialType === 'LEASE' ? `${price} EUR/mois` : `${price} EUR`
   }
 
-  return new Intl.NumberFormat('fr-FR', {
+  const formatted = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(numericPrice)
+
+  return commercialType === 'LEASE' ? `${formatted}/mois` : formatted
 }
 
 function getCommercialTypeLabel(type: VehicleCommercialType) {
@@ -36,6 +38,16 @@ function getCommercialTypeLabel(type: VehicleCommercialType) {
     return 'Achat'
   }
   return 'Neutre'
+}
+
+function getCommercialTypeBadgeClassName(type: VehicleCommercialType) {
+  if (type === 'LEASE') {
+    return 'border-sky-200 bg-sky-100 text-sky-900'
+  }
+  if (type === 'PURCHASE') {
+    return 'border-emerald-200 bg-emerald-100 text-emerald-900'
+  }
+  return 'border-slate-200 bg-slate-100 text-slate-800'
 }
 
 export function BackofficeVehiclesPage() {
@@ -185,7 +197,7 @@ export function BackofficeVehiclesPage() {
             <thead className="bg-muted/50 text-left">
               <tr>
                 <th className="p-3">Vehicule</th>
-                <th className="p-3">Prix</th>
+                <th className="p-3">Tarif</th>
                 <th className="p-3">Etat</th>
                 <th className="p-3">Actions</th>
               </tr>
@@ -202,11 +214,13 @@ export function BackofficeVehiclesPage() {
                       {vehicle.seatCount} places - {vehicle.doorCount} portes - {vehicle.color}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge variant="outline">{getCommercialTypeLabel(vehicle.commercialType)}</Badge>
+                      <Badge variant="outline" className={getCommercialTypeBadgeClassName(vehicle.commercialType)}>
+                        {getCommercialTypeLabel(vehicle.commercialType)}
+                      </Badge>
                       <Badge variant="secondary">{vehicle.imageUrl ? 'Media disponible' : 'Sans media'}</Badge>
                     </div>
                   </td>
-                  <td className="p-3">{formatPrice(vehicle.price)}</td>
+                  <td className="p-3">{formatPrice(vehicle.price, vehicle.commercialType)}</td>
                   <td className="p-3">
                     <div className="flex flex-wrap gap-2">
                       <Badge variant={vehicle.archived ? 'secondary' : vehicle.published ? 'default' : 'outline'}>
