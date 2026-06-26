@@ -12,7 +12,7 @@ function pickFeaturedVehicles(vehicles: VehicleResponse[]) {
     return []
   }
 
-  const uniqueVehicles = [...vehicles]
+  return [...vehicles]
     .sort((left, right) => {
       const priceDiff = Number(left.price) - Number(right.price)
       if (priceDiff !== 0) {
@@ -20,14 +20,14 @@ function pickFeaturedVehicles(vehicles: VehicleResponse[]) {
       }
       return left.mileage - right.mileage
     })
-
-  return uniqueVehicles.slice(0, 9)
+    .slice(0, 9)
 }
 
 export function HomePage() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
-  const [brand, setBrand] = useState('')
+  const [query, setQuery] = useState('')
+  const [commercialType, setCommercialType] = useState<'PURCHASE' | 'LEASE'>('PURCHASE')
   const [maxPrice, setMaxPrice] = useState('')
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -68,8 +68,9 @@ export function HomePage() {
 
   function handleSearch() {
     const params = new URLSearchParams()
-    if (brand.trim()) {
-      params.set('brand', brand.trim())
+    params.set('commercialType', commercialType)
+    if (query.trim()) {
+      params.set('query', query.trim())
     }
     if (maxPrice.trim()) {
       params.set('maxPrice', maxPrice.trim())
@@ -82,8 +83,8 @@ export function HomePage() {
     <div className="space-y-10">
       <section className="grid gap-6 rounded-lg border bg-card p-8 md:grid-cols-2">
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Achat et location de véhicules</p>
-          <h1 className="text-3xl font-semibold">Trouvez votre prochain véhicule en quelques clics</h1>
+          <p className="text-sm text-muted-foreground">Achat et location de vehicules</p>
+          <h1 className="text-3xl font-semibold">Trouvez votre prochain vehicule en quelques clics</h1>
           <p className="text-muted-foreground">
             Catalogue public, espace client, suivi de dossier et meilleures affaires du moment.
           </p>
@@ -92,18 +93,26 @@ export function HomePage() {
               <Link to="/vehicles">Voir le catalogue</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to={depositPath}>Déposer un dossier</Link>
+              <Link to={depositPath}>Deposer un dossier</Link>
             </Button>
           </div>
         </div>
 
         <Card>
           <CardContent className="grid gap-3 p-4 md:grid-cols-2">
+            <div className="flex gap-2 md:col-span-2">
+              <Button type="button" variant={commercialType === 'PURCHASE' ? 'default' : 'outline'} onClick={() => setCommercialType('PURCHASE')}>
+                Achat
+              </Button>
+              <Button type="button" variant={commercialType === 'LEASE' ? 'default' : 'outline'} onClick={() => setCommercialType('LEASE')}>
+                Location
+              </Button>
+            </div>
             <input
               className="h-9 rounded-md border bg-background px-3 text-sm"
-              value={brand}
-              onChange={(event) => setBrand(event.target.value)}
-              placeholder="Marque"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Marque ou modele"
             />
             <input
               className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -137,14 +146,14 @@ export function HomePage() {
         ) : error ? (
           <ContentStateCard
             title="Catalogue temporairement indisponible"
-            description="Le chargement des véhicules a échoué. Vous pouvez réessayer un peu plus tard."
+            description="Le chargement des vehicules a echoue. Vous pouvez reessayer un peu plus tard."
             actionLabel="Voir le catalogue"
             onAction={() => navigate('/vehicles')}
           />
         ) : featuredVehicles.length === 0 ? (
           <ContentStateCard
-            title="Aucun véhicule à afficher"
-            description="Les meilleures affaires apparaitront ici dès qu'un véhicule sera disponible."
+            title="Aucun vehicule a afficher"
+            description="Les meilleures affaires apparaitront ici des qu'un vehicule sera disponible."
             actionLabel="Voir le catalogue"
             onAction={() => navigate('/vehicles')}
           />

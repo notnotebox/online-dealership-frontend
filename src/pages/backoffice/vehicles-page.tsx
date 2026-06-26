@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { vehicleApi, type AdminVehicleResponse, type VehicleEnergy } from '@/lib/api/vehicle-api'
+import { vehicleApi, type AdminVehicleResponse, type VehicleCommercialType, type VehicleEnergy } from '@/lib/api/vehicle-api'
 
 type VehicleStatusFilter = 'ALL' | 'VISIBLE' | 'HIDDEN' | 'ARCHIVED'
 
@@ -28,6 +28,10 @@ function formatPrice(price: AdminVehicleResponse['price']) {
   }).format(numericPrice)
 }
 
+function getCommercialTypeLabel(type: VehicleCommercialType) {
+  return type === 'LEASE' ? 'Location' : 'Achat'
+}
+
 export function BackofficeVehiclesPage() {
   const [vehicles, setVehicles] = useState<AdminVehicleResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -35,6 +39,7 @@ export function BackofficeVehiclesPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<VehicleStatusFilter>('ALL')
   const [energyFilter, setEnergyFilter] = useState<VehicleEnergy | 'ALL'>('ALL')
+  const [commercialTypeFilter, setCommercialTypeFilter] = useState<VehicleCommercialType | 'ALL'>('ALL')
   const [isActionLoading, setIsActionLoading] = useState(false)
 
   useEffect(() => {
@@ -47,6 +52,7 @@ export function BackofficeVehiclesPage() {
           query: search.trim() || undefined,
           status: statusFilter,
           energy: energyFilter === 'ALL' ? undefined : energyFilter,
+          commercialType: commercialTypeFilter === 'ALL' ? undefined : commercialTypeFilter,
         })
 
         if (!cancelled) {
@@ -70,13 +76,14 @@ export function BackofficeVehiclesPage() {
     return () => {
       cancelled = true
     }
-  }, [energyFilter, search, statusFilter])
+  }, [commercialTypeFilter, energyFilter, search, statusFilter])
 
   async function refreshVehicles() {
     const response = await vehicleApi.listAdminVehicles({
       query: search.trim() || undefined,
       status: statusFilter,
       energy: energyFilter === 'ALL' ? undefined : energyFilter,
+      commercialType: commercialTypeFilter === 'ALL' ? undefined : commercialTypeFilter,
     })
     setVehicles(response)
   }
@@ -111,15 +118,23 @@ export function BackofficeVehiclesPage() {
       </div>
 
       <Card>
-        <CardContent className="grid gap-3 p-4 md:grid-cols-3">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-4">
           <label className="space-y-1 text-sm">
             <span className="text-muted-foreground">Recherche</span>
             <input
               className="h-10 w-full rounded-md border px-3"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Marque ou modele"
+              placeholder="Marque, modele, couleur..."
             />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Catalogue</span>
+            <select className="h-10 w-full rounded-md border px-3" value={commercialTypeFilter} onChange={(event) => setCommercialTypeFilter(event.target.value as VehicleCommercialType | 'ALL')}>
+              <option value="ALL">Tous</option>
+              <option value="PURCHASE">Achat</option>
+              <option value="LEASE">Location</option>
+            </select>
           </label>
           <label className="space-y-1 text-sm">
             <span className="text-muted-foreground">Statut</span>
@@ -180,6 +195,7 @@ export function BackofficeVehiclesPage() {
                       {vehicle.seatCount} places - {vehicle.doorCount} portes - {vehicle.color}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
+                      <Badge variant="outline">{getCommercialTypeLabel(vehicle.commercialType)}</Badge>
                       <Badge variant="secondary">{vehicle.imageUrl ? 'Media disponible' : 'Sans media'}</Badge>
                     </div>
                   </td>

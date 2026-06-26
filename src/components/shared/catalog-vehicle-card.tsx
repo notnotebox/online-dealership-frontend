@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { FavoriteButton } from '@/components/shared/favorite-button'
 import { VehicleImage } from '@/components/shared/vehicle-image'
+
 type CatalogVehicle = {
   id: string
   title: string
@@ -14,6 +15,7 @@ type CatalogVehicle = {
   seatCount?: number
   doorCount?: number
   color?: string
+  commercialType?: 'PURCHASE' | 'LEASE'
   published: boolean
   imageUrl?: string | null
 }
@@ -29,6 +31,10 @@ function formatPrice(price: CatalogVehicle['price']) {
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(numericPrice)
+}
+
+function commercialTypeLabel(type?: 'PURCHASE' | 'LEASE') {
+  return type === 'LEASE' ? 'Location' : 'Achat'
 }
 
 type CatalogVehicleCardProps = {
@@ -51,9 +57,7 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
         </div>
         <div className="absolute left-3 top-3 flex gap-2">
           <Badge variant="secondary">{vehicle.brand}</Badge>
-          <Badge variant={vehicle.published ? 'default' : 'outline'}>
-            {vehicle.published ? 'Publié' : 'Brouillon'}
-          </Badge>
+          <Badge variant="outline">{commercialTypeLabel(vehicle.commercialType)}</Badge>
         </div>
         <div className="absolute right-3 top-3">
           <FavoriteButton vehicleId={vehicle.id} />
@@ -74,14 +78,14 @@ export function CatalogVehicleCard({ vehicle }: CatalogVehicleCardProps) {
         <div className="flex items-end justify-between gap-2">
           <p className="text-lg font-semibold">{formatPrice(vehicle.price)}</p>
           <p className="text-sm text-muted-foreground">
-            {vehicle.mileage == null ? 'Kilométrage non renseigné' : `${vehicle.mileage.toLocaleString('fr-FR')} km`}
+            {vehicle.mileage == null ? 'Kilometrage non renseigne' : `${vehicle.mileage.toLocaleString('fr-FR')} km`}
           </p>
         </div>
       </CardContent>
 
       <CardFooter className="mt-auto p-4">
         <Button asChild className="w-full">
-          <Link to={`/vehicles/${vehicle.id}`}>Voir le détail</Link>
+          <Link to={`/vehicles/${vehicle.id}`}>Voir le detail</Link>
         </Button>
       </CardFooter>
     </Card>

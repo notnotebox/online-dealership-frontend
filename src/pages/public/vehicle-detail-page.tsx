@@ -41,6 +41,10 @@ function getEnergyLabel(energy: VehicleEnergy) {
   }
 }
 
+function getCommercialTypeLabel(type: VehicleResponse['commercialType']) {
+  return type === 'LEASE' ? 'Location' : 'Achat'
+}
+
 export function VehicleDetailPage() {
   const { vehicleId } = useParams()
   const { isAuthenticated } = useAuth()
@@ -113,31 +117,11 @@ export function VehicleDetailPage() {
   }
 
   const specifications = [
-    {
-      label: 'Kilometrage',
-      value: `${vehicle.mileage.toLocaleString('fr-FR')} km`,
-      icon: Gauge,
-    },
-    {
-      label: 'Energie',
-      value: getEnergyLabel(vehicle.energy),
-      icon: Fuel,
-    },
-    {
-      label: 'Places',
-      value: `${vehicle.seatCount}`,
-      icon: Sofa,
-    },
-    {
-      label: 'Portes',
-      value: `${vehicle.doorCount}`,
-      icon: DoorOpen,
-    },
-    {
-      label: 'Couleur',
-      value: vehicle.color,
-      icon: Palette,
-    },
+    { label: 'Kilometrage', value: `${vehicle.mileage.toLocaleString('fr-FR')} km`, icon: Gauge },
+    { label: 'Energie', value: getEnergyLabel(vehicle.energy), icon: Fuel },
+    { label: 'Places', value: `${vehicle.seatCount}`, icon: Sofa },
+    { label: 'Portes', value: `${vehicle.doorCount}`, icon: DoorOpen },
+    { label: 'Couleur', value: vehicle.color, icon: Palette },
     {
       label: 'Mis a jour',
       value: new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(vehicle.updatedAt)),
@@ -172,9 +156,7 @@ export function VehicleDetailPage() {
                 <CarFront className="h-3.5 w-3.5" />
                 Catalogue
               </Badge>
-              <Badge variant={vehicle.published ? 'default' : 'outline'}>
-                {vehicle.published ? 'Publie' : 'Brouillon'}
-              </Badge>
+              <Badge variant="outline">{getCommercialTypeLabel(vehicle.commercialType)}</Badge>
             </div>
             <FavoriteButton vehicleId={vehicle.id} />
           </div>
@@ -184,7 +166,7 @@ export function VehicleDetailPage() {
             <h1 className="text-3xl font-semibold tracking-tight">{vehicle.title}</h1>
             <p className="text-2xl font-semibold">{formatPrice(vehicle.price)}</p>
             <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-              Fiche vehicule claire et prete pour une demande de financement ou d&apos;achat.
+              Fiche vehicule claire et prete pour une demande d achat, de credit ou de location selon sa destination.
             </p>
           </div>
         </div>
@@ -196,9 +178,7 @@ export function VehicleDetailPage() {
                 <h2 className="text-base font-semibold">Details du vehicule</h2>
                 <p className="text-sm text-muted-foreground">Informations essentielles presentees de maniere lisible.</p>
               </div>
-              <Badge variant="outline">
-                {vehicle.published ? 'Vehicule publie' : 'Vehicule non publie'}
-              </Badge>
+              <Badge variant="outline">{getCommercialTypeLabel(vehicle.commercialType)}</Badge>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -211,9 +191,7 @@ export function VehicleDetailPage() {
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {item.label}
-                      </p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</p>
                       <p className="text-sm font-medium text-foreground">{item.value}</p>
                     </div>
                   </div>
